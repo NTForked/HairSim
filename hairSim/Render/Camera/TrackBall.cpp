@@ -3,19 +3,19 @@
 namespace {
 
 inline void
-rotate(scalar m[4][4], const Vec3& axis,
-       const scalar radians)
+rotate(Scalar m[4][4], const Vec3& axis,
+       const Scalar radians)
 {
   Vec3 naxis( axis );
   naxis.normalize();
 
-  scalar x = naxis[0];
-  scalar y = naxis[1];
-  scalar z = naxis[2];
+  Scalar x = naxis[0];
+  Scalar y = naxis[1];
+  Scalar z = naxis[2];
 
-  scalar c = cos( radians );
-  scalar s = sin( radians );
-  scalar t = 1 - c;
+  Scalar c = cos( radians );
+  Scalar s = sin( radians );
+  Scalar t = 1 - c;
 
   m[0][0] = t*x*x + c;
   m[0][1] = t*x*y - z*s;
@@ -58,12 +58,12 @@ void TrackBall::update(const Vec2& p)
   if (!m_rotating)
     return;
 
-  scalar m[4][4];
+  Scalar m[4][4];
   if (m_startPos != p) {
-    const scalar coef(M_PI/2.0);
+    const Scalar coef(M_PI/2.0);
 
-    const scalar left_right_motion = p[0] - m_startPos[0];
-    const scalar up_down_motion = p[1] - m_startPos[1];
+    const Scalar left_right_motion = p[0] - m_startPos[0];
+    const Scalar up_down_motion = p[1] - m_startPos[1];
 
     // rotate about the 'up' vector
     Vec3 up;
@@ -88,7 +88,7 @@ void TrackBall::stop()
   m_rotating = false;
 }
 
-void TrackBall::getRotation(scalar r[4]) const
+void TrackBall::getRotation(Scalar r[4]) const
 {
   for (int i = 0; i < 4; ++i) {
     r[i] = m_rotation[i];

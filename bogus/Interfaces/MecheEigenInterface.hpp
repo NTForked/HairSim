@@ -28,8 +28,8 @@
 #include "../Core/Utils/Signal.hpp"
 #include "../Core/Utils/Timer.hpp"
 #include "../Core/ExternalForce.hh"
-#include "../../StrandSim/Core/Definitions.hh"
-#include "../../StrandSim/Core/BandMatrixFwd.hh"
+#include "../../hairSim/Utils/Definitions.h"
+#include "../../hairSim/Math/BandMatrixFwd.h"
 
 namespace bogus
 {
@@ -51,7 +51,7 @@ public:
 	void fromPrimal (
 		const unsigned int NObj, //!< number of subsystems
 		const std::vector<unsigned> ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
-		const std::vector < strandsim::SymmetricBandMatrixSolver<double, 10>* > MassMat, //!< the square ndof[i]long mass matrix of each subsystem
+		const std::vector < SymmetricBandMatrixSolver<double, 10>* > MassMat, //!< the square ndof[i]long mass matrix of each subsystem
 		const Eigen::VectorXd  f_in, //!< the constant term in \f$ M v + f= {}^t \! H r \f$
 		const unsigned int n_in, //!< number of contact points
 		const Eigen::VectorXd  mu_in, //!< array of size \a n giving the friction coeffs
@@ -59,8 +59,8 @@ public:
 		const Eigen::VectorXd w_in, //!< array of size \a nd, the constant term in \f$ u = H v + w \f$
 		const int * const ObjA, //!< array of size \a n, the first object involved in the \a i-th contact (must be an internal object) (counted from 0)
 		const int * const ObjB, //!< array of size \a n, the second object involved in the \a i-th contact (-1 for an external object) (counted from 0)
-		const std::vector < strandsim::SparseRowMatx* > HA, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
-		const std::vector < strandsim::SparseRowMatx* > HB, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
+		const std::vector < SparseRowMatx* > HA, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
+		const std::vector < SparseRowMatx* > HB, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		const std::vector < unsigned > dofIndices // map of dofs to rods, indicates where to begin modifying force vector per globalId
 		 );
 

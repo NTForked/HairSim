@@ -1,18 +1,8 @@
-/**
- * \file BendingProducts.hh
- *
- * Created on: 22/10/2012
- * \author Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #ifndef BENDINGPRODUCTS_HH_
 #define BENDINGPRODUCTS_HH_
 
 #include "ElasticityParameters.hh"
 #include "Kappas.hh"
-
-namespace strandsim
-{
 
 typedef std::vector<Mat2x, Eigen::aligned_allocator<Mat2x> > Mat2xArray; ///< an array of 2d scalar matrices
 typedef std::vector<Mat11x, Eigen::aligned_allocator<Mat11x> > Mat11xArray; ///< an array of 11d scalar matrices
@@ -55,7 +45,5 @@ protected:
     BendingMatrixBase& m_bendingMatrixBase;
     GradKappas& m_gradKappas;
 };
-
-}
 
 #endif /* BENDINGPRODUCTS_HH_ */

@@ -15,7 +15,7 @@
 #include "GaussSeidel.hpp"
 #include "Coloring.impl.hpp"
 #include "GaussSeidelBase.impl.hpp"
-#include "../../../StrandSim/Core/Definitions.hh"
+#include "../../../hairSim/Utils/Definitions.h"
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #include <omp.h>

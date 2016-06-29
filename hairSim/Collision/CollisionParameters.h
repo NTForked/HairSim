@@ -1,7 +1,7 @@
 #ifndef COLLISIONPARAMETERS_HH_
 #define COLLISIONPARAMETERS_HH_
 
-#include "ElasticStrandParameters.hh"
+#include "../Strand/ElasticStrandParameters.h"
 
 struct CollisionParameters
 {

@@ -47,8 +47,8 @@ Camera& Camera::operator=(const Camera& other)
   return *this;
 }
 
-void Camera::setOrthographic(const scalar left, const scalar right,
-                             const scalar top, const scalar bottom)
+void Camera::setOrthographic(const Scalar left, const Scalar right,
+                             const Scalar top, const Scalar bottom)
 {
   m_projMode = ORTHOGRAPHIC;
   m_projParams.resize(4);
@@ -58,7 +58,7 @@ void Camera::setOrthographic(const scalar left, const scalar right,
   m_projParams[3] = bottom;
 }
 
-void Camera::setPerspective(const scalar fovy, const scalar aspect)
+void Camera::setPerspective(const Scalar fovy, const Scalar aspect)
 {
   m_projMode = PERSPECTIVE;
   m_projParams.resize(2);
@@ -97,7 +97,7 @@ void Camera::setUp(const Vec3& u)
   m_up = u;
 }
 
-void Camera::getViewParams(Camera::ProjMode* m, std::vector<scalar>* p) const
+void Camera::getViewParams(Camera::ProjMode* m, std::vector<Scalar>* p) const
 {
   assert(m && p);
   *m = m_projMode;
@@ -119,21 +119,21 @@ void Camera::getViewport(int* width, int* height) const
   if (height) *height = m_viewport[1];
 }
 
-void Camera::setZClipping(const scalar near, const scalar far)
+void Camera::setZClipping(const Scalar near, const Scalar far)
 {
   assert(m_zClipping.size() == 2);
   m_zClipping[0] = std::min(m_zClipping[0], near);
   m_zClipping[1] = std::max(m_zClipping[1], far);
 }
 
-void Camera::getZClipping(scalar& near, scalar& far) const
+void Camera::getZClipping(Scalar& near, Scalar& far) const
 {
   assert(m_zClipping.size() == 2);
   near = m_zClipping[0];
   far = m_zClipping[1];
 }
 
-void Camera::setDefault3D(const scalar sceneRadius)
+void Camera::setDefault3D(const Scalar sceneRadius)
 {
   m_dir = Vec3(-28, -21, -28).normalized();
   m_eye = m_viewCenter - sceneRadius * 3.0f * m_dir;
@@ -142,7 +142,7 @@ void Camera::setDefault3D(const scalar sceneRadius)
   m_up = Vec3(0,1,0);
 }
 
-void Camera::setDefault2D(const scalar sceneRadius)
+void Camera::setDefault2D(const Scalar sceneRadius)
 {
   m_eye = m_viewCenter + sceneRadius * 3.0f * Vec3(0,0,1).normalized();
   m_up = Vec3(0,1,0);
@@ -158,8 +158,8 @@ void Camera::translateCenter(const Vec3& v)
   m_viewCenter += v;
 }
 
-// The lame-o scalar pointer representation matches some legacy code we use.
-void Camera::orbit(const scalar m[4][4])
+// The lame-o Scalar pointer representation matches some legacy code we use.
+void Camera::orbit(const Scalar m[4][4])
 {
   {
     const Vec3 e = m_eye - m_viewCenter;

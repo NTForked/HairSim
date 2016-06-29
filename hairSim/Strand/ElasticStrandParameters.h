@@ -1,8 +1,8 @@
 #ifndef ELASTICSTRANDPARAMETERS_HH_
 #define ELASTICSTRANDPARAMETERS_HH_
 
-#include "Definitions.hh"
-#include "../Dependencies/BendingProducts.hh"
+#include "../Utils/Definitions.h"
+#include "Dependencies/BendingProducts.hh"
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/version.hpp>
@@ -229,6 +229,6 @@ private:
 };
 
 
-BOOST_CLASS_VERSION( strandsim::ElasticStrandParameters, 3 )
+BOOST_CLASS_VERSION( ElasticStrandParameters, 3 )
 
 #endif /* ELASTICSTRANDPARAMETERS_HH_ */

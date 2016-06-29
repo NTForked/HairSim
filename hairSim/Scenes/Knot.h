@@ -1,9 +1,9 @@
 #ifndef KNOT
 #define KNOT
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class Knot : public ProblemStepper
+class Knot : public Scene
 {
 // One strand knotted and pulled tight
 public:

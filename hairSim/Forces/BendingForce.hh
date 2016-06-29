@@ -20,7 +20,7 @@ public:
     static const IndexType s_last = 1; // The last index (counting from the end)
 
     typedef Eigen::Matrix<Scalar, 11, 1> LocalForceType;
-    typedef Vec2x LocalThetaForceType;
+    typedef Vec2 LocalThetaForceType;
     typedef Eigen::Matrix<Scalar, 11, 11> LocalJacobianType;
     typedef Mat2x LocalThetaJacobianType;
 

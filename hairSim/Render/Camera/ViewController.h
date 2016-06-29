@@ -34,8 +34,8 @@ public:
   void setCenterMode(const CenterMode m);
   void setViewCenter(const Vec3& p);
 
-  void setBoundingRadius(scalar r);
-  scalar getBoundingRadius();
+  void setBoundingRadius(Scalar r);
+  Scalar getBoundingRadius();
 
   /// Get the view center of interest.  Either parameter can be NULL if
   /// it is not needed.
@@ -51,32 +51,32 @@ public:
   //@{
 
   /// Begin a rotation drag at a point in pixel coordinates.
-  void beginRotationDrag(const scalar x, const scalar y);
+  void beginRotationDrag(const Scalar x, const Scalar y);
 
   /// End a rotation drag at a point in pixel coordinates.
-  void endRotationDrag(const scalar x, const scalar y);
+  void endRotationDrag(const Scalar x, const Scalar y);
 
   /// Begin a translation drag at a point in pixel coordinates.
-  void beginTranslationDrag(const scalar x, const scalar y);
+  void beginTranslationDrag(const Scalar x, const Scalar y);
 
   /// End a translation drag at a point in pixel coordinates.
-  void endTranslationDrag(const scalar x, const scalar y);
+  void endTranslationDrag(const Scalar x, const Scalar y);
 
   /// Begin a zoom drag at a point in pixel coordinates.
-  void beginZoomDrag(const scalar x, const scalar y);
+  void beginZoomDrag(const Scalar x, const Scalar y);
 
   /// End a zoom drag at a point in pixel coordinates.
-  void endZoomDrag(const scalar x, const scalar y);
+  void endZoomDrag(const Scalar x, const Scalar y);
 
   /// Update a current drag operation with new coordinates.
-  void updateDrag(const scalar x, const scalar y);
+  void updateDrag(const Scalar x, const Scalar y);
 
   //@}
 
 private:
 
-  /// Smallest amount that can be added to a scalar and cause a difference.
-  static const scalar eps;
+  /// Smallest amount that can be added to a Scalar and cause a difference.
+  static const Scalar eps;
 
   /// Compute the translation needed to move a point from world-space start to
   /// intersect the perpendicular line that pierces the screen at (x,y).
@@ -85,7 +85,7 @@ private:
                               const Vec3& viewCenter,
                               const Vec3& eye,
                               const Vec3& up,
-                              const scalar scale,
+                              const Scalar scale,
                               Vec3& translation);
 
   /// Not copyable
@@ -99,7 +99,7 @@ private:
   CenterMode m_centerMode;               ///< Centering mode
 
   Vec3 m_objCenter;                     ///< Center of the object.
-  scalar m_boundingRadius;               ///< Bounding radius of mesh.
+  Scalar m_boundingRadius;               ///< Bounding radius of mesh.
 
   TrackBall m_trackball;                 ///< Trackball for user rotation.
   Translator m_translator;               ///< User translations.

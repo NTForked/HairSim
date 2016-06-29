@@ -1,8 +1,8 @@
-#ifndef STRANDSIM_AIRDRAGFORCE_HH
-#define STRANDSIM_AIRDRAGFORCE_HH
+#ifndef AIRDRAGFORCE_HH
+#define AIRDRAGFORCE_HH
 
 #include "ForceBase.hh"
-#include "../Core/BandMatrixFwd.hh"
+#include "../Math/BandMatrixFwd.h"
 
 class AirDragForce : public ForceBase
 {
@@ -10,7 +10,7 @@ public:
     static const IndexType s_first = 0; // The first index on which this force can apply
     static const IndexType s_last = 0; // The last index (counting from the end)
 
-    typedef Vec3x LocalForceType;
+    typedef Vec3 LocalForceType;
     typedef Mat3x LocalJacobianType;
     typedef VecXx ForceVectorType;
 
@@ -32,15 +32,15 @@ public:
             const LocalJacobianType& localJacobian );
 
     static void setFrameVelocities(
-            const Vec3x& Omega,
-            const Vec3x& velOrigin ) ;
+            const Vec3& Omega,
+            const Vec3& velOrigin ) ;
 
 protected:
     AirDragForce();
     virtual ~AirDragForce() ;
 
-    static Vec3x s_velOrigin ;
+    static Vec3 s_velOrigin ;
     static Mat3x s_Omega_Cross ;
 };
 
-#endif // STRANDSIM_AIRDRAGFORCE_HH
+#endif

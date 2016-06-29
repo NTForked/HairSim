@@ -24,7 +24,7 @@ void Edges::compute()
 void Lengths::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& edges = m_edges.get();
+    const Vec3Array& edges = m_edges.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
@@ -38,7 +38,7 @@ void Lengths::compute()
 void Tangents::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& edges = m_edges.get();
+    const Vec3Array& edges = m_edges.get();
     const std::vector<Scalar>& lengths = m_lengths.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
@@ -52,12 +52,12 @@ void Tangents::compute()
 void CurvatureBinormals::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
+    const Vec3Array& tangents = m_tangents.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        const Vec3x& t1 = tangents[vtx - 1];
-        const Vec3x& t2 = tangents[vtx];
+        const Vec3& t1 = tangents[vtx - 1];
+        const Vec3& t2 = tangents[vtx];
 
         Scalar denominator = 1. + t1.dot( t2 );
 
@@ -70,13 +70,10 @@ void CurvatureBinormals::compute()
 
             if ( denominator <= 0. )
             {
-                std::ostringstream oss;
-                oss << "CurvatureBinormals::compute() denominator == " << denominator
-                        << " at vertex " << vtx;
-                oss << " t1 = " << t1 << " t2 = " << t2;
-                WarningStream( g_log, "" ) << oss.str();
-                //            throw std::runtime_error( oss.str().c_str() );
-                m_value[vtx] = Vec3x::Constant( std::numeric_limits<Scalar>::infinity() ); // Should not be accepted.
+                std::cerr << "CurvatureBinormals::compute() denominator == " << denominator
+                        << " at vertex " << vtx << " t1 = " << t1 << " t2 = " << t2 << std::endl;
+
+                m_value[vtx] = Vec3::Constant( std::numeric_limits<Scalar>::infinity() ); // Should not be accepted.
             }
             else
             {

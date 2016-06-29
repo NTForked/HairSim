@@ -51,7 +51,7 @@ bool Simulation::assembleBogusFrictionProblem(
         m_steppers[ globalIds[i] ]->prepareForExternalSolve();
     }
 
-    std::vector < strandsim::SymmetricBandMatrixSolver<double, 10>* > MassMat;
+    std::vector < SymmetricBandMatrixSolver<double, 10>* > MassMat;
     MassMat.resize( nSubsystems );
 
     VecXx forces( dofCount );
@@ -81,7 +81,7 @@ bool Simulation::assembleBogusFrictionProblem(
         const unsigned sIdx = it->first;
         ImplicitStepper& stepper = *m_steppers[sIdx];
 
-        strandsim::JacobianSolver *M = &stepper.linearSolver();
+        JacobianSolver *M = &stepper.linearSolver();
         MassMat[ objectId++ ] = M;
 
         if( m_params.m_alwaysUseNonLinear )
@@ -95,10 +95,10 @@ bool Simulation::assembleBogusFrictionProblem(
             currDof += stepper.impulse_rhs().size();
         }
 
-        ProximityCollisions & externalCollisions = m_externalContacts[sIdx];
+        CollidingPairs & externalCollisions = m_externalContacts[sIdx];
         for ( unsigned i = 0; i < externalCollisions.size(); ++i )
         {
-            ProximityCollision& c = externalCollisions[i];
+            CollidingPair& c = externalCollisions[i];
 
             mu[ collisionId ] = c.mu;
             E [ collisionId ] = c.transformationMatrix;
@@ -114,7 +114,7 @@ bool Simulation::assembleBogusFrictionProblem(
 #pragma omp parallel for
     for ( unsigned i = 0; i < collisionGroup.second.size(); ++i )
     {
-        ProximityCollision& collision = collisionGroup.second[i];
+        CollidingPair& collision = collisionGroup.second[i];
         const int oId1 = collisionGroup.first.find( collision.objects.first.globalIndex )->second;
         const int oId2 = collisionGroup.first.find( collision.objects.second.globalIndex )->second;
 

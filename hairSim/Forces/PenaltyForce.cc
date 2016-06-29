@@ -1,7 +1,7 @@
 #include "PenaltyForce.hh"
 
 #include "../Core/ElasticStrand.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 PenaltyForce::PenaltyForce()
     : TunneledBandRuntimeForce(),
@@ -12,7 +12,7 @@ PenaltyForce::PenaltyForce()
 PenaltyForce::~PenaltyForce()
 {}
 
-void PenaltyForce::setParameters( const std::vector< ElasticStrand* > &strands, const Vec3x& origin, const Scalar stiffness,
+void PenaltyForce::setParameters( const std::vector< ElasticStrand* > &strands, const Vec3& origin, const Scalar stiffness,
                                  const Scalar restLength, const bool allowCompression )
 {
     m_origin = origin ;
@@ -31,12 +31,12 @@ void PenaltyForce::setParameters( const std::vector< ElasticStrand* > &strands, 
 
 bool PenaltyForce::breakSprings( const std::vector< ElasticStrand* > &strands, const Scalar breakingForce )
 {
-    Vec3x localF ;
+    Vec3 localF ;
     for( auto vIt = m_vertices.begin() ; vIt != m_vertices.end() ; )
     {
        localF.setZero() ;
        ElasticStrand& strand = *strands[ (*vIt).first ] ;
-       const Vec3x &v = strand.getVertex( (*vIt).second ) ;
+       const Vec3 &v = strand.getVertex( (*vIt).second ) ;
 
        computeLocalF( v, strand, localF ) ;
        if( localF.norm() > breakingForce )
@@ -66,11 +66,11 @@ void PenaltyForce::accumulateEFJ( StrandState& geometry, const ElasticStrand& st
 
     const VerticesSet::IndexedSetType::SetType &strandVertices = setIt->second.getSet() ;
 
-    Vec3x localF ;
+    Vec3 localF ;
     Mat3x localJ ;
     for( auto vIt = strandVertices.begin() ; vIt != strandVertices.end() ; ++vIt )
     {
-       const Vec3x &v = geometry.getVertex( *vIt ) ;
+       const Vec3 &v = geometry.getVertex( *vIt ) ;
        geometry.m_totalEnergy += computeLocalE( v, strand ) ;
        computeLocalF( v, strand, localF ) ;
        geometry.m_totalForce.segment< 3 >( 4 * *vIt ) += localF ;
@@ -87,10 +87,10 @@ void PenaltyForce::accumulateEF( StrandState& geometry, const ElasticStrand& str
 
     const VerticesSet::IndexedSetType::SetType &strandVertices = setIt->second.getSet() ;
 
-    Vec3x localF ;
+    Vec3 localF ;
     for( auto vIt = strandVertices.begin() ; vIt != strandVertices.end() ; ++vIt )
     {
-       const Vec3x &v = geometry.getVertex( *vIt ) ;
+       const Vec3 &v = geometry.getVertex( *vIt ) ;
        geometry.m_totalEnergy += computeLocalE( v, strand ) ;
        computeLocalF( v, strand, localF ) ;
        geometry.m_totalForce.segment< 3 >( 4 * *vIt ) += localF ;
@@ -106,7 +106,7 @@ void PenaltyForce::accumulateE( StrandState& geometry, const ElasticStrand& stra
 
     for( auto vIt = strandVertices.begin() ; vIt != strandVertices.end() ; ++vIt )
     {
-       const Vec3x &v = geometry.getVertex( *vIt ) ;
+       const Vec3 &v = geometry.getVertex( *vIt ) ;
        geometry.m_totalEnergy += computeLocalE( v, strand ) ;
     }
 }
@@ -121,7 +121,7 @@ void PenaltyForce::accumulateJ( StrandState& geometry, const ElasticStrand& stra
     Mat3x localJ ;
     for( auto vIt = strandVertices.begin() ; vIt != strandVertices.end() ; ++vIt )
     {
-       const Vec3x &v = geometry.getVertex( *vIt ) ;
+       const Vec3 &v = geometry.getVertex( *vIt ) ;
        computeLocalJ( v, strand, localJ ) ;
        geometry.m_totalJacobian->localStencilAdd< 3 >( 4 * *vIt, localJ ) ;
     }
@@ -134,10 +134,10 @@ void PenaltyForce::accumulateCurrentF( VecXx& globalF, const ElasticStrand& stra
 
     const VerticesSet::IndexedSetType::SetType &strandVertices = setIt->second.getSet() ;
 
-    Vec3x localF ;
+    Vec3 localF ;
     for( auto vIt = strandVertices.begin() ; vIt != strandVertices.end() ; ++vIt )
     {
-       const Vec3x &v = strand.getVertex( *vIt ) ;
+       const Vec3 &v = strand.getVertex( *vIt ) ;
        computeLocalF( v, strand, localF ) ;
        globalF.segment< 3 >( 4 * *vIt ) += localF ;
     }
@@ -152,9 +152,9 @@ void PenaltyForce::accumulateFutureE( Scalar& energy, const ElasticStrand& stran
         if( edge->parents.first->m_strand.getGlobalIndex() == sidx )
         {
             int v = edge->parents.first->m_vertexIndex;
-            const Vec3x &vpos = strand.getVertex( v ) ;
+            const Vec3 &vpos = strand.getVertex( v ) ;
             energy += computeLocalE( vpos, strand );
-            const Vec3x &v1pos = strand.getVertex( v+1 ) ;
+            const Vec3 &v1pos = strand.getVertex( v+1 ) ;
             energy += computeLocalE( v1pos, strand );
         }
         else if( edge->parents.second->m_strand.getGlobalIndex() == sidx )
@@ -170,7 +170,7 @@ Scalar PenaltyForce::computeLocalE( const TwistEdge* edge, const ElasticStrand& 
     return .5 * m_stiffness * square( length - m_thickness ) ;
 }
 
-void PenaltyForce::computeLocalF( const Vec3x &v, const ElasticStrand& strand, Vec3x& localF ) const
+void PenaltyForce::computeLocalF( const Vec3 &v, const ElasticStrand& strand, Vec3& localF ) const
 {
     const Scalar length = ( m_origin - v ).norm() ;
     if( !isSmall( length ) )
@@ -179,14 +179,14 @@ void PenaltyForce::computeLocalF( const Vec3x &v, const ElasticStrand& strand, V
     }
 }
 
-void PenaltyForce::computeLocalJ( const Vec3x &v, const ElasticStrand& strand, Mat3x &localJ ) const
+void PenaltyForce::computeLocalJ( const Vec3 &v, const ElasticStrand& strand, Mat3x &localJ ) const
 {
    const Scalar length = ( m_origin - v ).norm() ;
 
    localJ.setIdentity() ;
    if( !isSmall( length ) )
    {
-       const Vec3x e = ( m_origin - v ) / length ;
+       const Vec3 e = ( m_origin - v ) / length ;
        localJ += m_restLength * ( e * e.transpose() - Mat3x::Identity() ) / length ;
    }
 

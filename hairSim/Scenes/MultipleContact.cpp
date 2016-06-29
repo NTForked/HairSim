@@ -1,14 +1,14 @@
 #include "MultipleContact.hh"
 
 MultipleContact::MultipleContact() :
-ProblemStepper("MultipleContact", "MultipleContact, one strand edge falls between fixed strands with opposing normals"),
+Scene("MultipleContact", "MultipleContact, one strand edge falls between fixed strands with opposing normals"),
 m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
 
     // Global opts
     GetScalarOpt("dt") = 1e-3;
-    GetVecOpt("gravity") = Vec3x( 0.0, -1000.0, 0.0 );
+    GetVecOpt("gravity") = Vec3( 0.0, -1000.0, 0.0 );
 
     // Rod opts
     GetIntOpt("nv") = 10; //try 11 for uneven vertices (Corner Case)
@@ -40,7 +40,7 @@ MultipleContact::~MultipleContact()
 
 void MultipleContact::setupStrands()
 {
-    std::cout << "ProblemStepper:: MultipleContact" << std::endl;
+    std::cout << "Scene:: MultipleContact" << std::endl;
 
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
@@ -64,7 +64,7 @@ void MultipleContact::setupStrands()
     for (int rod_id = 0; rod_id < 4; ++rod_id)
     {
         // Prepare initial rod/strand position
-        strandsim::Vec3xArray i_vertices;
+        Vec3Array i_vertices;
         
         // Store arbitrary vertex coordinates
         for ( int i = 0; i < nVertices; i++ )
@@ -111,7 +111,7 @@ void MultipleContact::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[i / 4];
         
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( i_vertices[0] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
         
@@ -150,7 +150,7 @@ void MultipleContact::setupStrands()
     std::cout << "num strands = " << m_strands.size() <<'\n';
     std::cout << "num dofs per strand = " << nDOFs <<'\n';
     
-    GravitationForce::setGravity( GetVecOpt("gravity").cast<strandsim::Scalar>() );
+    GravitationForce::setGravity( GetVecOpt("gravity").cast<Scalar>() );
 }
 
 void MultipleContact::setupMeshes()

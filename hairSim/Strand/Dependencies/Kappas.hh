@@ -6,12 +6,12 @@
 /**
  * Unit: no dimension.
  */
-class Kappas: public DependencyNode<Vec2xArray>
+class Kappas: public DependencyNode<Vec2Array>
 {
 public:
     Kappas( CurvatureBinormals& curvatureBinormals, MaterialFrames<1>& materialFrames1,
             MaterialFrames<2>& materialFrames2 ) :
-            DependencyNode<Vec2xArray>( 1, curvatureBinormals.size() ), m_curvatureBinormals(
+            DependencyNode<Vec2Array>( 1, curvatureBinormals.size() ), m_curvatureBinormals(
                     curvatureBinormals ), m_materialFrames1( materialFrames1 ), m_materialFrames2(
                     materialFrames2 )
     {

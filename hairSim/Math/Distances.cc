@@ -2,7 +2,7 @@
 
 #define ABSURDLY_LARGE_DISTANCE ( 1.e99 )
 
-Vec3x ClosestPtPointSegment( const Vec3x& point, const Vec3x& first, const Vec3x& last )
+Vec3 ClosestPtPointSegment( const Vec3& point, const Vec3& first, const Vec3& last )
 {
     if ( isClose( point, first ) )
         return first;
@@ -19,7 +19,7 @@ Vec3x ClosestPtPointSegment( const Vec3x& point, const Vec3x& first, const Vec3x
     const Scalar flz = first[1] * last[0] - first[0] * last[1];
 
     // First project on the line
-    Vec3x projonline( ( vz * fly - vy * flz + vx * dtp ) * inv,
+    Vec3 projonline( ( vz * fly - vy * flz + vx * dtp ) * inv,
             ( vx * flz - vz * flx + vy * dtp ) * inv, ( vy * flx - vx * fly + vz * dtp ) * inv );
 
     // Check if we are outside the interval
@@ -31,8 +31,8 @@ Vec3x ClosestPtPointSegment( const Vec3x& point, const Vec3x& first, const Vec3x
         return projonline;
 }
 
-Vec3x ClosestPtPointSegment( bool& extremum, const Vec3x& point, const Vec3x& first,
-        const Vec3x& last )
+Vec3 ClosestPtPointSegment( bool& extremum, const Vec3& point, const Vec3& first,
+        const Vec3& last )
 {
     if ( isClose( point, first ) )
     {
@@ -55,7 +55,7 @@ Vec3x ClosestPtPointSegment( bool& extremum, const Vec3x& point, const Vec3x& fi
     const Scalar flz = first[1] * last[0] - first[0] * last[1];
 
     // First project on the line
-    Vec3x projonline( ( vz * fly - vy * flz + vx * dtp ) * inv,
+    Vec3 projonline( ( vz * fly - vy * flz + vx * dtp ) * inv,
             ( vx * flz - vz * flx + vy * dtp ) * inv, ( vy * flx - vx * fly + vz * dtp ) * inv );
 
     // Check if we are outside the interval
@@ -77,31 +77,29 @@ Vec3x ClosestPtPointSegment( bool& extremum, const Vec3x& point, const Vec3x& fi
 }
 
 // Adapted from Christer Ericson, "Real Time Collision Detection"
-Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, const Vec3x& c )
+Vec3 ClosestPtPointTriangle( const Vec3& p, const Vec3& a, const Vec3& b, const Vec3& c )
 {
-    Vec3x result;
+    Vec3 result;
 
     // Check if P in vertex region outside A
-    const Vec3x ab = b - a;
-    const Vec3x ac = c - a;
-    const Vec3x ap = p - a;
+    const Vec3 ab = b - a;
+    const Vec3 ac = c - a;
+    const Vec3 ap = p - a;
     double d1 = ab.dot( ap );
     double d2 = ac.dot( ap );
     if ( d1 <= 0.0 && d2 <= 0.0 )
     {
         result = a; // barycentric coordinates (1,0,0)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 1 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
     // Check if P in vertex region outside B
-    const Vec3x bp = p - b;
+    const Vec3 bp = p - b;
     double d3 = ab.dot( bp );
     double d4 = ac.dot( bp );
     if ( d3 >= 0.0 && d4 <= d3 )
     {
         result = b; // barycentric coordinates (0,1,0)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 2 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
@@ -111,18 +109,16 @@ Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, co
     {
         double v = d1 / ( d1 - d3 );
         result = a + v * ab; // barycentric coordinates (1-v,v,0)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 3 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
     // Check if P in vertex region outside C
-    const Vec3x cp = p - c;
+    const Vec3 cp = p - c;
     double d5 = ab.dot( cp );
     double d6 = ac.dot( cp );
     if ( d6 >= 0.0 && d5 <= d6 )
     {
         result = c; // barycentric coordinates (0,0,1)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 4 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
@@ -132,7 +128,6 @@ Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, co
     {
         double w = d2 / ( d2 - d6 );
         result = a + w * ac; // barycentric coordinates (1-w,0,w)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 5 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
@@ -142,7 +137,6 @@ Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, co
     {
         double w = ( d4 - d3 ) / ( ( d4 - d3 ) + ( d5 - d6 ) );
         result = b + w * ( c - b ); // barycentric coordinates (0,1-w,w)
-        // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 6 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
         return result;
     }
 
@@ -152,8 +146,6 @@ Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, co
     double w = vc * denom;
     result = a + ab * v + ac * w; // = u*a + v*b + w*c, u = va * denom = 1.0f - v - w
 
-    // TraceStream(g_log, "") << "ClosestPtPointTriangle: CASE 7 p = " << p << " a = " << a << " b = " << b << " c = " << c << " result = " << result << '\n';
-
     return result;
 }
 
@@ -162,14 +154,14 @@ Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, co
 // S2(t)=P2+t*(Q2-P2), returning s and t. Function result is squared
 // distance between between S1(s) and S2(t).
 // TODO: Explore behavior in degenerate case more closely.
-double ClosestPtSegmentSegment( const Vec3x& p1, const Vec3x& q1, const Vec3x& p2, const Vec3x& q2,
-        double& s, double& t, Vec3x& c1, Vec3x& c2 )
+double ClosestPtSegmentSegment( const Vec3& p1, const Vec3& q1, const Vec3& p2, const Vec3& q2,
+        double& s, double& t, Vec3& c1, Vec3& c2 )
 {
     double EPSILON = 1.0e-12;
 
-    Vec3x d1 = q1 - p1; // Direction vector of segment S1
-    Vec3x d2 = q2 - p2; // Direction vector of segment S2
-    Vec3x r = p1 - p2;
+    Vec3 d1 = q1 - p1; // Direction vector of segment S1
+    Vec3 d2 = q2 - p2; // Direction vector of segment S2
+    Vec3 r = p1 - p2;
     double a = d1.dot( d1 ); // Squared length of segment S1, always nonnegative
     double e = d2.dot( d2 ); // Squared length of segment S2, always nonnegative
     double f = d2.dot( r );
@@ -242,12 +234,12 @@ double ClosestPtSegmentSegment( const Vec3x& p1, const Vec3x& q1, const Vec3x& p
 // Adapted from Christer Ericson, "Real Time Collision Detection"
 // Compute barycentric coordinates (u, v, w) for
 // point p with respect to triangle (a, b, c)
-void computeBarycentricCoordinates( const Vec3x& a, const Vec3x& b, const Vec3x& c, const Vec3x& p,
+void computeBarycentricCoordinates( const Vec3& a, const Vec3& b, const Vec3& c, const Vec3& p,
         double& u, double& v, double& w )
 {
-    const Vec3x ab = b - a;
-    const Vec3x ac = c - a;
-    const Vec3x ap = p - a;
+    const Vec3 ab = b - a;
+    const Vec3 ac = c - a;
+    const Vec3 ap = p - a;
     const double abab = ab.dot( ab );
     const double abac = ab.dot( ac );
     const double acac = ac.dot( ac );
@@ -264,8 +256,8 @@ void computeBarycentricCoordinates( const Vec3x& a, const Vec3x& b, const Vec3x&
     else // Points are aligned: next best thing,
          // compute the barycentric coordinates among the two closest points to the projection of p on the line
     {
-        const Vec3x cb = b - c;
-        const Vec3x cp = p - c;
+        const Vec3 cb = b - c;
+        const Vec3 cp = p - c;
         const double cbcb = cb.dot( cb );
         const double cpcb = cp.dot( cb );
         const double sab = apab / abab;
@@ -325,7 +317,7 @@ void computeBarycentricCoordinates( const Vec3x& a, const Vec3x& b, const Vec3x&
 
 // Utility finctions for rect/rect distance -- may be exposed later
 
-void assignIfCloser( Scalar tentativeDist, const Vec3x& tentativeP, Scalar &minDist, Vec3x &CP )
+void assignIfCloser( Scalar tentativeDist, const Vec3& tentativeP, Scalar &minDist, Vec3 &CP )
 {
     if ( tentativeDist < minDist )
     {
@@ -334,8 +326,8 @@ void assignIfCloser( Scalar tentativeDist, const Vec3x& tentativeP, Scalar &minD
     }
 }
 
-void assignIfCloser( Scalar tentativeDist, const Vec3x& tentativeP1, const Vec3x& tentativeP2,
-        Scalar &minDist, Vec3x &CP1, Vec3x &CP2 )
+void assignIfCloser( Scalar tentativeDist, const Vec3& tentativeP1, const Vec3& tentativeP2,
+        Scalar &minDist, Vec3 &CP1, Vec3 &CP2 )
 {
     if ( tentativeDist < minDist )
     {
@@ -345,20 +337,20 @@ void assignIfCloser( Scalar tentativeDist, const Vec3x& tentativeP1, const Vec3x
     }
 }
 
-Scalar sqDistPointSeg( const Vec3x &P, const Vec3x& S, const Vec3x& D, Vec3x& CP )
+Scalar sqDistPointSeg( const Vec3 &P, const Vec3& S, const Vec3& D, Vec3& CP )
 {
     CP = ClosestPtPointSegment( P, S, S + D );
     return ( P - CP ).squaredNorm();
 }
 
-Scalar sqDistSegSeg( const Vec3x& S1, const Vec3x &D1, const Vec3x& S2, const Vec3x &D2, Vec3x &CP1,
-        Vec3x&CP2 )
+Scalar sqDistSegSeg( const Vec3& S1, const Vec3 &D1, const Vec3& S2, const Vec3 &D2, Vec3 &CP1,
+        Vec3&CP2 )
 {
     Scalar s, t;
     return ClosestPtSegmentSegment( S1, S1 + D1, S2, S2 + D2, s, t, CP1, CP2 );
 
 //    Scalar s,t ;
-//    Scalar sqDist = SquareDistSegmentToSegment< Vec3x, Scalar, Vec3x >
+//    Scalar sqDist = SquareDistSegmentToSegment< Vec3, Scalar, Vec3 >
 //            ( S1, S1+D1, S2, S2+D2, s, t ) ;
 
 //    if( s < 0 || t < 0 ) return ABSURDLY_LARGE_DISTANCE ;
@@ -369,9 +361,9 @@ Scalar sqDistSegSeg( const Vec3x& S1, const Vec3x &D1, const Vec3x& S2, const Ve
 //    return sqDist ;
 }
 
-Scalar sqDistPointRect( const Vec3x& P, const Vec3x& C, const Vec3x &x, const Vec3x &y, Vec3x &CP )
+Scalar sqDistPointRect( const Vec3& P, const Vec3& C, const Vec3 &x, const Vec3 &y, Vec3 &CP )
 {
-    const Vec3x& D = P - C;
+    const Vec3& D = P - C;
 
     const Scalar xn2 = x.squaredNorm();
     const Scalar yn2 = y.squaredNorm();
@@ -388,7 +380,7 @@ Scalar sqDistPointRect( const Vec3x& P, const Vec3x& C, const Vec3x &x, const Ve
     }
 
     Scalar minDist = ABSURDLY_LARGE_DISTANCE;
-    Vec3x tCP;
+    Vec3 tCP;
 
     assignIfCloser( sqDistPointSeg( P, C - x - y, 2 * x, tCP ), tCP, minDist, CP );
     assignIfCloser( sqDistPointSeg( P, C - x + y, 2 * x, tCP ), tCP, minDist, CP );
@@ -398,13 +390,13 @@ Scalar sqDistPointRect( const Vec3x& P, const Vec3x& C, const Vec3x &x, const Ve
     return minDist;
 }
 
-bool intersectionSegmentRectangle( const Vec3x& s_edge_0, const Vec3x& s_edge_1,
-        const Vec3x& r_center, const Vec3x& r_extent_1, const Vec3x& r_extent_2, Scalar &t )
+bool intersectionSegmentRectangle( const Vec3& s_edge_0, const Vec3& s_edge_1,
+        const Vec3& r_center, const Vec3& r_extent_1, const Vec3& r_extent_2, Scalar &t )
 {
 
-    const Vec3x& n = r_extent_1.cross( r_extent_2 );
-    const Vec3x& D0 = s_edge_0 - r_center;
-    const Vec3x& D1 = s_edge_1 - r_center;
+    const Vec3& n = r_extent_1.cross( r_extent_2 );
+    const Vec3& D0 = s_edge_0 - r_center;
+    const Vec3& D1 = s_edge_1 - r_center;
 
     const Scalar D0n = D0.dot( n );
     const Scalar D1n = D1.dot( n );
@@ -415,7 +407,7 @@ bool intersectionSegmentRectangle( const Vec3x& s_edge_0, const Vec3x& s_edge_1,
 
     // time of intersection with plane
     const Scalar ti = D0n / ( D0n - D1n );
-    const Vec3x &Pi = D0 + ti * ( D1 - D0 );
+    const Vec3 &Pi = D0 + ti * ( D1 - D0 );
 
     const Scalar xn2 = r_extent_1.squaredNorm();
     const Scalar yn2 = r_extent_2.squaredNorm();
@@ -432,8 +424,8 @@ bool intersectionSegmentRectangle( const Vec3x& s_edge_0, const Vec3x& s_edge_1,
     return false;
 }
 
-Scalar sqDistSegRect( const Vec3x& S, const Vec3x &D, const Vec3x& C, const Vec3x &x,
-        const Vec3x &y, Vec3x &CP1, Vec3x&CP2 )
+Scalar sqDistSegRect( const Vec3& S, const Vec3 &D, const Vec3& C, const Vec3 &x,
+        const Vec3 &y, Vec3 &CP1, Vec3&CP2 )
 {
     Scalar t;
 
@@ -445,7 +437,7 @@ Scalar sqDistSegRect( const Vec3x& S, const Vec3x &D, const Vec3x& C, const Vec3
     }
 
     Scalar minDist = ABSURDLY_LARGE_DISTANCE;
-    Vec3x P1, P2;
+    Vec3 P1, P2;
 
     // Point Rect
     assignIfCloser( sqDistPointRect( S, C, x, y, P2 ), S, P2, minDist, CP1, CP2 );
@@ -461,12 +453,12 @@ Scalar sqDistSegRect( const Vec3x& S, const Vec3x &D, const Vec3x& C, const Vec3
 }
 
 // Requires xi . yi = 0
-Scalar SquareDistRectangleToRectangle( const Vec3x& C1, const Vec3x &x1, const Vec3x &y1,
-        const Vec3x& C2, const Vec3x &x2, const Vec3x &y2, Vec3x &CP1, Vec3x &CP2 )
+Scalar SquareDistRectangleToRectangle( const Vec3& C1, const Vec3 &x1, const Vec3 &y1,
+        const Vec3& C2, const Vec3 &x2, const Vec3 &y2, Vec3 &CP1, Vec3 &CP2 )
 {
 
     Scalar minDist = ABSURDLY_LARGE_DISTANCE;
-    Vec3x P1, P2;
+    Vec3 P1, P2;
 
     // Small dist from each edge of R1 to R2 ( and vice versa )
     assignIfCloser( sqDistSegRect( C1 + x1 - y1, 2 * y1, C2, x2, y2, P1, P2 ), P1, P2, minDist, CP1,

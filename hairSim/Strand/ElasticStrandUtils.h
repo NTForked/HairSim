@@ -3,7 +3,7 @@
 
 #include <limits>
 #include <stdexcept>
-#include "Definitions.hh"
+#include "../Utils/Definitions.h"
 
 /**
  * \brief Tests if a matrix is symmetric
@@ -26,7 +26,7 @@ inline bool isSymmetric( const MatrixT& A )
 /**
  * \brief Projects v on the plane normal to n and normalize it
  */
-inline void orthoNormalize( Vec3x& v, const Vec3x& n )
+inline void orthoNormalize( Vec3& v, const Vec3& n )
 {
     assert( isApproxUnit(n) );
     v -= v.dot( n ) * n;
@@ -46,7 +46,7 @@ inline void orthoNormalize( Vec3x& v, const Vec3x& n )
  *
  * \see normalParallelTransport()
  */
-Vec3x parallelTransport( const Vec3x& u, const Vec3x& t0, const Vec3x& t1 );
+Vec3 parallelTransport( const Vec3& u, const Vec3& t0, const Vec3& t1 );
 
 /**
  * \brief Parallel-transports u along the t0->t1 transformation, assuming that u is normal to t0.
@@ -63,7 +63,7 @@ Vec3x parallelTransport( const Vec3x& u, const Vec3x& t0, const Vec3x& t1 );
  * parallel-transporting frame vectors for instance. Then this is cheaper to call
  * than parallelTransport()
  */
-Vec3x normalParallelTransport( const Vec3x& u, const Vec3x& t0, const Vec3x& t1 );
+Vec3 normalParallelTransport( const Vec3& u, const Vec3& t0, const Vec3& t1 );
 
 /**
  * \brief Parallel-transports u along the t0->t1 transformation, assuming that u is normal to t0.
@@ -79,7 +79,7 @@ Vec3x normalParallelTransport( const Vec3x& u, const Vec3x& t0, const Vec3x& t1 
  *
  * \note It is assumed that u.dot( t0 ) = 0 and t0.norm() = t1.norm() = u.norm() = 1
  */
-Vec3x orthonormalParallelTransport( const Vec3x& u, const Vec3x& t0, const Vec3x& t1 );
+Vec3 orthonormalParallelTransport( const Vec3& u, const Vec3& t0, const Vec3& t1 );
 
 /**
  * \brief Finds an arbitrary unit vector orthogonal to u
@@ -125,9 +125,9 @@ inline Eigen::Matrix<Scalar, n, 1> findNormal( const Eigen::Matrix<Scalar, n, 1>
  *
  * The sign of the angle is positive if u.cross(v) is in the same half-space as n.
  */
-inline Scalar signedAngle( const Vec3x& u, const Vec3x& v, const Vec3x& n )
+inline Scalar signedAngle( const Vec3& u, const Vec3& v, const Vec3& n )
 {
-    Vec3x w = u.cross( v );
+    Vec3 w = u.cross( v );
     Scalar angle = atan2( w.norm(), u.dot( v ) );
     if ( n.dot( w ) < 0 )
         return -angle;
@@ -170,7 +170,7 @@ inline Eigen::Matrix<Scalar, n, n> outerProd( const Eigen::Matrix<Scalar, n, 1>&
 /**
  * \brief Matrix representation of the cross product operator.
  */
-inline Mat3x crossMat( const Vec3x& a )
+inline Mat3x crossMat( const Vec3& a )
 {
     Mat3x M;
     M << 0, -a( 2 ), a( 1 ), a( 2 ), 0, -a( 0 ), -a( 1 ), a( 0 ), 0;
@@ -181,7 +181,7 @@ inline Mat3x crossMat( const Vec3x& a )
 /**
  * \brief Computes u^T B v, assuming B is symmetric 2x2 and u, v are 2x1 vectors.
  */
-inline Scalar innerBProduct( const Mat2x& B, const Vec2x& u, const Vec2x& v )
+inline Scalar innerBProduct( const Mat2x& B, const Vec2& u, const Vec2& v )
 {
     assert( isSymmetric( B ) );
 
@@ -202,7 +202,7 @@ inline void symBProduct( Eigen::Matrix<Scalar, n, n>& result, const Mat2x& B,
 
     for ( int i = 0; i < n; ++i )
     {
-        const Vec2x& Qrow_i = Q.row( i );
+        const Vec2& Qrow_i = Q.row( i );
         result( i, i ) = innerBProduct( B, Qrow_i, Qrow_i );
         for ( int j = 0; j < i; ++j )
             result( i, j ) = result( j, i ) = innerBProduct( B, Qrow_i, Q.row( j ) );

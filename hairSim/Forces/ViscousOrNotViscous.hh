@@ -33,7 +33,7 @@ public:
         return strand.m_parameters.bendingMatrix( vtx );
     }
 
-    static const Vec2x kappaBar( const ElasticStrand& strand, int vtx )
+    static const Vec2 kappaBar( const ElasticStrand& strand, int vtx )
     {
         return strand.m_restKappas[vtx];
     }
@@ -87,7 +87,7 @@ public:
         return strand.m_parameters.viscousBendingMatrix( vtx );
     }
 
-    static const Vec2x kappaBar( const ElasticStrand& strand, int vtx )
+    static const Vec2 kappaBar( const ElasticStrand& strand, int vtx )
     {
         return strand.m_currentState->m_kappas[vtx];
     }

@@ -34,9 +34,9 @@ public:
 
 
     // RuntimeCollisionForceBase
-    virtual Vec3x getWorldCollisionPoint( const StaticCollision &collision,
+    virtual Vec3 getWorldCollisionPoint( const StaticCollision &collision,
                                           const ElasticStrand& strand ) const ;
-    virtual Vec3x getWorldCollisionNormal( const StaticCollision &collision,
+    virtual Vec3 getWorldCollisionNormal( const StaticCollision &collision,
                                            const ElasticStrand& strand ) const ;
 
     virtual bool collidesWith( const ElasticStrand& strand ) const
@@ -54,10 +54,10 @@ public:
 
 public:
     Scalar tetraVolume() const;
-    Vec3x gradP0TetraVolume() const;
-    Vec3x gradP1TetraVolume() const;
-    Vec3x gradQ0TetraVolume() const;
-    Vec3x gradQ1TetraVolume() const;
+    Vec3 gradP0TetraVolume() const;
+    Vec3 gradP1TetraVolume() const;
+    Vec3 gradQ0TetraVolume() const;
+    Vec3 gradQ1TetraVolume() const;
     Mat3x hessP0P1TetraVolume() const;
     Mat3x hessQ0Q1TetraVolume() const;
     bool SegmentsProjOnEachOther() const;
@@ -99,7 +99,7 @@ private:
     mutable bool m_strandP_col_initialized ;
     mutable bool m_strandQ_col_initialized ;
 
-    mutable Vec3x m_p0, m_p1, m_q0, m_q1;
+    mutable Vec3 m_p0, m_p1, m_q0, m_q1;
 };
 
 struct StrandStrandForceBaseComparator
@@ -192,12 +192,12 @@ struct StrandStrandForceProximityComparator: public StrandStrandForceBaseCompara
     }
 };
 
-inline bool SegmentsProjOnEachOther( const Vec3x& p0, const Vec3x& p1, const Vec3x& q0,
-        const Vec3x& q1, Scalar &s, Scalar &t )
+inline bool SegmentsProjOnEachOther( const Vec3& p0, const Vec3& p1, const Vec3& q0,
+        const Vec3& q1, Scalar &s, Scalar &t )
 {
-    Vec3x dp = p1 - p0; // Direction vector of segment S1
-    Vec3x dq = q1 - q0; // Direction vector of segment S2
-    Vec3x r = p0 - q0;
+    Vec3 dp = p1 - p0; // Direction vector of segment S1
+    Vec3 dq = q1 - q0; // Direction vector of segment S2
+    Vec3 r = p0 - q0;
 
     double a = dp.dot( dp ); // Squared length of segment S1, always nonnegative
     double e = dq.dot( dq ); // Squared length of segment S2, always nonnegative
@@ -219,12 +219,12 @@ inline bool SegmentsProjOnEachOther( const Vec3x& p0, const Vec3x& p1, const Vec
     return ( s >= -margin && s <= 1 + margin && t >= -margin && t <= 1 + margin );
 }
 
-inline std::pair<int, int> SegmentsSituation( const Vec3x& p0, const Vec3x& p1, const Vec3x& q0,
-        const Vec3x& q1 )
+inline std::pair<int, int> SegmentsSituation( const Vec3& p0, const Vec3& p1, const Vec3& q0,
+        const Vec3& q1 )
 {
-    Vec3x dp = p1 - p0; // Direction vector of segment S1
-    Vec3x dq = q1 - q0; // Direction vector of segment S2
-    Vec3x r = p0 - q0;
+    Vec3 dp = p1 - p0; // Direction vector of segment S1
+    Vec3 dq = q1 - q0; // Direction vector of segment S2
+    Vec3 r = p0 - q0;
 
     double a = dp.dot( dp ); // Squared length of segment S1, always nonnegative
     double e = dq.dot( dq ); // Squared length of segment S2, always nonnegative

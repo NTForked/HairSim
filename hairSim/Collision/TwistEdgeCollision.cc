@@ -5,7 +5,7 @@
 #include "CollisionUtils.hh"
 #include "../Utils/Distances.hh"
 #include "../Utils/TextLog.hh"
-// #include "../Dynamic/StrandDynamicTraits.hh"
+// #include "../Dynamic/StrandDynamics.hh"
 
 // #include "../Render/OpenGLDecl.hh"
 #include "../Dynamic/Config.hh"
@@ -30,7 +30,6 @@ bool pruneCollision( teh )
     { // ignore if a band exists between these edges already
         if( m_firstProxy->children[c].first == m_secondProxy->uniqueID ) return false;
     }
-
 
     /// First check against reasons why we might outright ignore this contact
     if ( m_firstStrand == m_secondStrand && abs( m_firstVertex - m_secondVertex ) <= 1 ){
@@ -83,44 +82,44 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
     }
 
     // post timestep positions
-    Vec3x xA_final, xB_final;
+    Vec3 xA_final, xB_final;
     teh->getEdgeVerts( m_firstProxy, false, xA_final, xB_final );
 
-    Vec3x xE_final, xF_final;
+    Vec3 xE_final, xF_final;
     teh->getEdgeVerts( m_secondProxy, false, xE_final, xF_final );
 
     // displacements (which give start positions)
-    Vec3x dxA, dxB, dxE, dxF;
+    Vec3 dxA, dxB, dxE, dxF;
     if( teh->m_frozenScene ){
         if( m_firstProxy->frozenID == teh->m_frozenCheck ){
-            Vec3x xA, xB; teh->getEdgeVerts( m_firstProxy, true, xA, xB );
+            Vec3 xA, xB; teh->getEdgeVerts( m_firstProxy, true, xA, xB );
             dxA = xA_final - xA;
             dxB = xB_final - xB;
         }
         else{
-            dxA = Vec3x::Zero();
-            dxB = Vec3x::Zero();
+            dxA = Vec3::Zero();
+            dxB = Vec3::Zero();
         }
         if( m_secondProxy->frozenID == teh->m_frozenCheck ){
-            Vec3x xE, xF; teh->getEdgeVerts( m_secondProxy, true, xE, xF );
+            Vec3 xE, xF; teh->getEdgeVerts( m_secondProxy, true, xE, xF );
             dxE = xE_final - xE;
             dxF = xF_final - xF;
         }
         else{
-            dxE = Vec3x::Zero();
-            dxF = Vec3x::Zero();
+            dxE = Vec3::Zero();
+            dxF = Vec3::Zero();
         }
     }
     else{
-        Vec3x xA, xB; teh->getEdgeVerts( m_firstProxy, true, xA, xB );
+        Vec3 xA, xB; teh->getEdgeVerts( m_firstProxy, true, xA, xB );
         dxA = xA_final - xA;
         dxB = xB_final - xB;
-        Vec3x xE, xF; teh->getEdgeVerts( m_secondProxy, true, xE, xF );
+        Vec3 xE, xF; teh->getEdgeVerts( m_secondProxy, true, xE, xF );
         dxE = xE_final - xE;
         dxF = xF_final - xF;       
     }
 
-    Vec3x cp, cq;
+    Vec3 cp, cq;
     double dist_squared = ClosestPtSegmentSegment( xA_final, xB_final, xE_final, xF_final, m_s, m_t, cp, cq );
     
     // Instantaneous Time Collision Detection

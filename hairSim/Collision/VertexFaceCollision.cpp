@@ -4,7 +4,7 @@
 #include "CollisionUtils.hh"
 #include "../Utils/Distances.hh"
 #include "../Utils/TextLog.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "../Dynamic/StrandDynamics.hh"
 
 static const double SQ_TOLERANCE = 1e-12;
 
@@ -24,16 +24,16 @@ bool VertexFaceCollision::analyse()
 {
     static __thread double times[4];
 
-    const Vec3x p_off = m_firstStrand->getVertex( m_firstVertex );
+    const Vec3 p_off = m_firstStrand->getVertex( m_firstVertex );
     // NB after taking off the offset p = 0
-    Vec3x pf0 = m_faceProxy->getVertex( 0 ) - p_off;
-    Vec3x pf1 = m_faceProxy->getVertex( 1 ) - p_off;
-    Vec3x pf2 = m_faceProxy->getVertex( 2 ) - p_off;
+    Vec3 pf0 = m_faceProxy->getVertex( 0 ) - p_off;
+    Vec3 pf1 = m_faceProxy->getVertex( 1 ) - p_off;
+    Vec3 pf2 = m_faceProxy->getVertex( 2 ) - p_off;
 
-    const Vec3x dp = m_firstStrand->dynamics().getDisplacement( m_firstVertex );
-    Vec3x df0 = m_faceProxy->getDisplacement( 0 );
-    Vec3x df1 = m_faceProxy->getDisplacement( 1 );
-    Vec3x df2 = m_faceProxy->getDisplacement( 2 );
+    const Vec3 dp = m_firstStrand->dynamics().getDisplacement( m_firstVertex );
+    Vec3 df0 = m_faceProxy->getDisplacement( 0 );
+    Vec3 df1 = m_faceProxy->getDisplacement( 1 );
+    Vec3 df2 = m_faceProxy->getDisplacement( 2 );
 
     int fnsign = m_faceProxy->knowsNormalSign( true, *m_firstStrand, m_firstVertex ) ;
     m_normal = m_faceProxy->getNormal() ;
@@ -44,7 +44,7 @@ bool VertexFaceCollision::analyse()
     if ( extraRadius < 0. )
         return false;
 
-    const Vec3x& prox = extraRadius * fnsign * m_normal;
+    const Vec3& prox = extraRadius * fnsign * m_normal;
     pf0 += prox;
     pf1 += prox;
     pf2 += prox;
@@ -53,7 +53,7 @@ bool VertexFaceCollision::analyse()
     df2 += prox;
 
     unsigned num_times ;
-    getCoplanarityTimes( -dp, pf0 - df0, pf1 - df1, pf2 - df2, Vec3x(), pf0, pf1, pf2, times,
+    getCoplanarityTimes( -dp, pf0 - df0, pf1 - df1, pf2 - df2, Vec3(), pf0, pf1, pf2, times,
             NULL, num_times );
 
     for ( size_t j = 0; j < num_times; ++j )
@@ -61,12 +61,12 @@ bool VertexFaceCollision::analyse()
         // TODO: Use barycentric coordinates or point-triangle closest point < epsilon here? closest point < epsilon really just extends the triangle a little bit.
         // Determine if the collision actually happens
         const Scalar dtime = times[j] - 1.0;
-        const Vec3x pcol = dtime * ( dp );
-        const Vec3x f0col = pf0 + dtime * df0;
-        const Vec3x f1col = pf1 + dtime * df1;
-        const Vec3x f2col = pf2 + dtime * df2;
+        const Vec3 pcol = dtime * ( dp );
+        const Vec3 f0col = pf0 + dtime * df0;
+        const Vec3 f1col = pf1 + dtime * df1;
+        const Vec3 f2col = pf2 + dtime * df2;
 
-        const Vec3x cp = ClosestPtPointTriangle( pcol, f0col, f1col, f2col );
+        const Vec3 cp = ClosestPtPointTriangle( pcol, f0col, f1col, f2col );
 
         // If, when they are coplanar, the objects are sufficiently close, register a collision
         if ( ( pcol - cp ).squaredNorm() < SQ_TOLERANCE )
@@ -79,7 +79,7 @@ bool VertexFaceCollision::analyse()
             assert( isSmall(m_u + m_v + m_w - 1.0) );
 
             m_meshDisplacement = m_u * df0 + m_v * df1 + m_w * df2;
-            const Vec3x relativeDisplacement = ( 1 - m_time ) * ( dp - m_meshDisplacement );
+            const Vec3 relativeDisplacement = ( 1 - m_time ) * ( dp - m_meshDisplacement );
 
             //            m_offset = relativeDisplacement ;
             m_offset = ( m_u * pf0 + m_v * pf1 + m_w * pf2 ) - m_meshDisplacement // orig point on mesh

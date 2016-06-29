@@ -1,5 +1,5 @@
 #include "BVH.hh"
-#include "ElementProxy.hh"
+#include "../ElementProxy.h"
 
 #include <omp.h>
 #include <boost/thread.hpp>

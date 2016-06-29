@@ -1,15 +1,15 @@
 #ifndef EDGEFACECOLLISION_HH_
 #define EDGEFACECOLLISION_HH_
 
-#include "ContinuousTimeCollision.hh"
-#include "ElementProxy.hh"
-
+#include "Collision.h"
+#include "ElementProxy.h"
+class TwistEdgeHandler;
 class EdgeFaceCollision: public EdgeCollision, public FaceCollision
 {
 public:
-    EdgeFaceCollision( ElasticStrand* firstStrand, int firstVertex, const FaceProxy* face,
+    EdgeFaceCollision( EdgeProxy* firstProxy, const FaceProxy* face,
             int firstIdx, int secondIdx, int firstApex, int secondApex ) :
-            EdgeCollision( firstStrand, firstVertex ), //
+            EdgeCollision( firstProxy ), //
             m_mesh( face->getMesh() ), //
             m_face( face ), //
             m_firstIdx( firstIdx ), //
@@ -26,10 +26,11 @@ public:
     }
 
     virtual bool analyse();
+    virtual bool analyse( TwistEdgeHandler* teh );
 
     friend bool compare( const EdgeFaceCollision* ef1, const EdgeFaceCollision* ef2 );
 
-    Vec3x meshVelocity( Scalar dt ) const
+    Vec3 meshVelocity( Scalar dt ) const
     {
         return m_meshDisplacement / dt;
     }
@@ -47,11 +48,11 @@ public:
 protected:
     void print( std::ostream& os ) const;
 
-    const TriangularMesh* m_mesh;
+    const TriMesh* m_mesh;
     const FaceProxy* m_face;
     int m_firstIdx, m_secondIdx, m_firstApex, m_secondApex;
     bool m_onBoundary ;
-    Vec3x m_meshDisplacement;
+    Vec3 m_meshDisplacement;
 
 };
 

@@ -5,21 +5,21 @@
 #include <list>
 #include <map>
 
-#include "BVH.hh"
+#include "CollisionUtils/BVH.hh"
 
-#include "../Utils/SpatialHashMapFwd.hh"
-#include "TwistEdgeHandler.hh"
+#include "CollisionUtils/SpatialHashMapFwd.hh"
+#include "TwistEdgeHandler.h"
 
 class ElementProxy;
 class EdgeProxy;
 class FaceProxy;
-class CollisionBase;
+class Collision;
 class ElementProxySortedAABBFunctor;
 
 class CollisionDetector
 {
 public:
-    CollisionDetector( std::vector< ElementProxy* >& elements, double& thickness );
+    CollisionDetector( std::vector< ElementProxy* >& elements );
     virtual ~CollisionDetector();
 
     void buildBVH( bool statique = false );
@@ -31,11 +31,8 @@ public:
     bool empty()
     { return m_collisions.empty(); }
 
-    const std::list<CollisionBase*>& getCollisions() const
+    const std::list< Collision* >& getCollisions() const
     { return m_collisions; }
-
-    // std::list<CollisionBase*>& getCollisions()
-    // { return m_collisions; }
 
     static void setMaxSizeForElementBBox( double s )
     { s_maxSizeForElementBBox = s; }

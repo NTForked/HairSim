@@ -1,13 +1,12 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "SimulationParameters.hh"
-#include "ProblemFwd.hh"
+#include "SimulationParameters.h"
 
-#include "../Core/Definitions.hh"
-#include "../Utils/SpatialHashMapFwd.hh"
-#include "../Collision/ProximityCollision.hh"
-#include "../Collision/EdgeEdgeCollision.hh"
+#include "../Utils/Definitions.h"
+#include "../Collision/CollisionUtils/SpatialHashMapFwd.hh"
+#include "../Collision/Collision.h"
+#include "../Collision/EdgeEdgeCollision.h"
 #include "../../bogus/Interfaces/MecheEigenInterface.hpp"
 
 #include <vector>
@@ -21,6 +20,12 @@ class ImplicitStepper;
 class CollisionDetector;
 class CollisionBase;
 class TriMesh;
+class ElementProxy;
+
+//! Map between a index in the simulation to an index in a colliding group
+typedef std::map<unsigned, unsigned> IndicesMap;
+//! Colliding group: set of strands and contacts that should be solved together
+typedef std::pair<IndicesMap, CollidingPairs> CollidingGroup;
 
 class Simulation
 {
@@ -56,7 +61,7 @@ private:
 
     bool isCollisionInvariantCT( const Scalar dt );
 
-    void accumulateProxies( origProxys );
+    void accumulateProxies( std::vector< ElementProxy* > origProxys );
 
     void gatherProximityRodRodCollisions( Scalar dt );
 
@@ -64,7 +69,7 @@ private:
     static bool acceptsCollision( const ElasticStrand& strand, int edgeIdx, Scalar localAbscissa );
 
     //! Transform a mutual collision into an external contact on the (onFirstObject ? first : second) object
-    void makeExternalContact( ProximityCollision& c, bool onFirstObject );
+    void makeExternalContact( CollidingPair& c, bool onFirstObject );
 
     void detectContinuousTimeCollisions();
 
@@ -73,16 +78,16 @@ private:
 
     //! Adds an external contact on strand \p strIdx, edge \p edgeIdx, abscissa \p abscissa
     /*! \return whether this collision has been accepted */
-    bool addExternalContact( const unsigned strIdx, const unsigned edgeIdx, const Scalar abscissa, const ProximityCollision& collision );
+    bool addExternalContact( const unsigned strIdx, const unsigned edgeIdx, const Scalar abscissa, const CollidingPair& collision );
 
     //! Computes the colliding groups using a graph walking algorithm
-    void computeCollidingGroups( const ProximityCollisions &mutualCollisions );
+    void computeCollidingGroups( const CollidingPairs &mutualCollisions );
 
     //! Setup the local frame for one contact and calls computeDeformationGradient() for each object
-    void setupDeformationBasis( ProximityCollision &collision ) const;
+    void setupDeformationBasis( CollidingPair &collision ) const;
 
     //! Computes the deformation gradient of a strand at one contact point, ie dq/dx
-    void computeDeformationGradient( ProximityCollision::Object &object ) const;
+    void computeDeformationGradient( CollidingPair::Object &object ) const;
 
     //! Returns wether a strand needs to be solved using YacFS/bogus.
     /*! Will be true if the strand is subject to at least one contact or hard constraint */
@@ -97,12 +102,12 @@ private:
 //// SimBogusUtils.cpp
 
     bool assembleBogusFrictionProblem( CollidingGroup& collisionGroup, bogus::MecheFrictionProblem& mecheProblem,
-            std::vector<unsigned> &globalIds, std::vector<ProximityCollision*> &colPointers, VecXx& vels, VecXx& impulses,
+            std::vector<unsigned> &globalIds, std::vector<CollidingPair*> &colPointers, VecXx& vels, VecXx& impulses,
             VecXu& startDofs, VecXu& nDofs, int& numSubSys );
     //! Cleanup a friction problem and updates the strands with the new velocities if \p accept is true
     void postProcessBogusFrictionProblem( bool accept, CollidingGroup& collisionGroup,
             const bogus::MecheFrictionProblem& mecheProblem, const std::vector<unsigned> &globalIds,
-            const std::vector<ProximityCollision*> &colPointers, VecXx& vels, VecXx& impulses,
+            const std::vector<CollidingPair*> &colPointers, VecXx& vels, VecXx& impulses,
             VecXu& startDofs, VecXu& nDofs  );
     //! Proper solving of the MecheFrictionProblem
     bool solveBogusFrictionProblem( bogus::MecheFrictionProblem& mecheProblem, const std::vector<unsigned> &globalIds,
@@ -122,13 +127,9 @@ private:
     std::vector< ImplicitStepper* > m_steppers;
     CollisionDetector* m_collisionDetector; //!< BVH-based collision detector
 
-    std::vector< ProximityCollisions > m_externalContacts;  //!< External contacts on each strand
-    ProximityCollisions m_mutualContacts;           //!< List of all rod-rod contacts
+    std::vector< CollidingPairs > m_externalContacts;  //!< External contacts on each strand
+    CollidingPairs m_mutualContacts;           //!< List of all rod-rod contacts
 
-    //! Map between a index in the simulation to an index in a colliding group
-    typedef std::map<unsigned, unsigned> IndicesMap;
-    //! Colliding group: set of strands and contacts that should be solved together
-    typedef std::pair<IndicesMap, ProximityCollisions> CollidingGroup;
     std::vector<CollidingGroup> m_collidingGroups;
     
     std::vector<unsigned> m_globalIds;
@@ -139,14 +140,6 @@ private:
     //!< Spatial Hash Map for hair/hair proximity collision detetection
     typedef SpatialHashMap<ElasticStrand, unsigned, true> SpatialHashMapT;
     SpatialHashMapT * m_hashMap;
-};
-
-struct ProxColPointerCompare
-{
-    bool operator()( const ProximityCollision* lhs, const ProximityCollision* rhs ) const
-    {
-        return *lhs < *rhs;
-    }
 };
 
 #endif

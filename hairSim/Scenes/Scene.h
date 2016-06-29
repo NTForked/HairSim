@@ -1,20 +1,18 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "../../StrandSim/Core/Definitions.hh"
-#include "../../StrandSim/Collision/CollisionUtils.hh"
-#include "../../StrandSim/Dynamic/StrandDynamicTraits.hh"
-#include "../../StrandSim/Dynamic/DynamicStepper.hh"
-#include "../../StrandSim/Dynamic/DOFScriptingController.hh"
-#include "../../StrandSim/Utils/Distances.hh"
-#include "../../StrandSim/Utils/Timer.hh"
+#include "../Utils/Definitions.h"
+#include "../Collision/CollisionUtils/CollisionUtils.h"
+#include "../Strand/StrandDynamics.h"
+#include "../Strand/DOFScriptingController.h"
+#include "../Math/Distances.hh"
+#include "../Simulation/SimulationParameters.h"
+#include "../Simulation/Simulation.h"
 
-#include "Control/SimpleMeshController.hh"
-
-#include "Core/ElasticStrand.h"
-#include "Dynamic/StrandManager.h"
-#include "Render/MeshRenderer.h"
-#include "Scenes/Option.h"
+#include "../Strand/ElasticStrand.h"
+#include "../Render/TriMeshRenderer.h"
+#include "../Render/StrandRenderer.h"
+#include "../Utils/Option.h"
 
 class Scene
 {
@@ -65,6 +63,8 @@ public:
     void checkpointSave( std::string outputdirectory ) const;
     void checkpointRestore( std::string directory );
     void checkpointRestore();
+
+    std::vector< TriMesh* >& getMeshes(){ return m_meshes; }
 
     std::string m_problemName;
     std::string m_problemDesc;    

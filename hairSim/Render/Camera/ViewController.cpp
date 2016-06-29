@@ -10,7 +10,7 @@
 
 #include "ViewController.h"
 
-const scalar ViewController::eps = std::numeric_limits<scalar>::epsilon();
+const Scalar ViewController::eps = std::numeric_limits<Scalar>::epsilon();
 
 ViewController::ViewController()
   : m_centerMode(CENTER_OBJECT)
@@ -78,40 +78,40 @@ void ViewController::setViewDirection(const Vec3& d) {
   m_camera.setUp(Vec3(0, 1, 0));
 }
 
-void ViewController::setBoundingRadius(scalar r) {
+void ViewController::setBoundingRadius(Scalar r) {
   m_boundingRadius = r;
   m_camera.setDefault3D(m_boundingRadius);
   m_translator.setScale(2 * m_boundingRadius);
   m_zoomer.setScale(2 * m_boundingRadius);
 }
 
-scalar ViewController::getBoundingRadius() {
+Scalar ViewController::getBoundingRadius() {
   return m_boundingRadius;
 }
 
-void ViewController::beginRotationDrag(const scalar x, const scalar y) {
+void ViewController::beginRotationDrag(const Scalar x, const Scalar y) {
   m_trackball.start(Vec2(x,y));
 }
 
-void ViewController::endRotationDrag(const scalar x, const scalar y) {
+void ViewController::endRotationDrag(const Scalar x, const Scalar y) {
   m_trackball.update(Vec2(x,y));
   m_trackball.stop();
 }
 
-void ViewController::beginTranslationDrag(const scalar x, const scalar y) {
+void ViewController::beginTranslationDrag(const Scalar x, const Scalar y) {
   m_translator.start(Vec2(x,y));
 }
 
-void ViewController::endTranslationDrag(const scalar x, const scalar y) {
+void ViewController::endTranslationDrag(const Scalar x, const Scalar y) {
   m_translator.update(Vec2(x,y));
   m_translator.stop();
 }
 
-void ViewController::beginZoomDrag(const scalar x, const scalar y) {
+void ViewController::beginZoomDrag(const Scalar x, const Scalar y) {
   m_zoomer.start(Vec2(x,y));
 }
 
-void ViewController::endZoomDrag(const scalar x, const scalar y) {
+void ViewController::endZoomDrag(const Scalar x, const Scalar y) {
   m_zoomer.update(Vec2(x,y));
   m_zoomer.stop();
 }
@@ -120,7 +120,7 @@ void ViewController::endZoomDrag(const scalar x, const scalar y) {
 // endScriptingDrag
 // add to updateDrag
 
-void ViewController::updateDrag(const scalar x, const scalar y) {
+void ViewController::updateDrag(const Scalar x, const Scalar y) {
   const Vec2 v(x,y);
   m_trackball.update(v);
   m_translator.update(v);
@@ -129,7 +129,7 @@ void ViewController::updateDrag(const scalar x, const scalar y) {
 
 void ViewController::calcTranslation(const Vec2& start, const Vec2& stop,
                                      const Vec3& viewCenter, const Vec3& eye,
-                                     const Vec3& up, const scalar scale,
+                                     const Vec3& up, const Scalar scale,
                                      Vec3& translation)
 {
   // Points to the object

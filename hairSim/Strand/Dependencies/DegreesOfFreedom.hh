@@ -29,14 +29,14 @@ public:
         return m_value;
     }
 
-    Vec3x getVertex( IndexType vtx ) const
+    Vec3 getVertex( IndexType vtx ) const
     {
         assert( vtx < (m_numEdges + 1) );
 
         return get().segment<3>( 4 * vtx );
     }
 
-    void setVertex( IndexType vtx, const Vec3x& point )
+    void setVertex( IndexType vtx, const Vec3& point )
     {
         m_value.segment<3>( 4 * vtx ) = point;
         setDependentsDirty();
@@ -90,7 +90,7 @@ public:
 protected:
     virtual void compute() // Not implemented as this is an pure input node
     {
-        ErrorStream( g_log, "" ) << "DegreesOfFreedom::compute() should never be called";
+        std::cerr << "DegreesOfFreedom::compute() should never be called" << std::endl;
     }
 
 private:
@@ -100,11 +100,11 @@ private:
 /**
  * Unit: cm
  */
-class Edges: public DependencyNode<Vec3xArray>
+class Edges: public DependencyNode<Vec3Array>
 {
 public:
     Edges( DOFs& dofs ) :
-            DependencyNode<Vec3xArray>( 0, dofs.getNumEdges() ), 
+            DependencyNode<Vec3Array>( 0, dofs.getNumEdges() ), 
             m_dofs( dofs )
     {
         m_dofs.addDependent( this );
@@ -148,11 +148,11 @@ protected:
 /**
  * Unit: no dimension
  */
-class Tangents: public DependencyNode<Vec3xArray>
+class Tangents: public DependencyNode<Vec3Array>
 {
 public:
     Tangents( Edges& edges, Lengths& lengths ) :
-            DependencyNode<Vec3xArray>( 0, edges.size() ), 
+            DependencyNode<Vec3Array>( 0, edges.size() ), 
             m_edges( edges ), 
             m_lengths( lengths )
     {
@@ -175,11 +175,11 @@ protected:
 /**
  * Unit: no dimension
  */
-class CurvatureBinormals: public DependencyNode<Vec3xArray>
+class CurvatureBinormals: public DependencyNode<Vec3Array>
 {
 public:
     CurvatureBinormals( Tangents& tangents ) :
-            DependencyNode<Vec3xArray>( 1, tangents.size() ), 
+            DependencyNode<Vec3Array>( 1, tangents.size() ), 
             m_tangents( tangents )
     {
         m_tangents.addDependent( this );

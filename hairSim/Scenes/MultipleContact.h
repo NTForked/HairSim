@@ -1,9 +1,9 @@
 #ifndef MULTIPLE_CONTACT
 #define MULTIPLE_CONTACT
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class MultipleContact : public ProblemStepper
+class MultipleContact : public Scene
 {
 // One strand falling orthogonally on
 // another strand fixed at both ends

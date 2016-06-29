@@ -1,10 +1,10 @@
 #ifndef STRANDSTATE_H_
 #define STRANDSTATE_H_
 
-#include "Definitions.hh"
-#include "BandMatrixFwd.hh"
-#include "../Dependencies/Twists.hh"
-#include "../Dependencies/BendingProducts.hh"
+#include "../Utils/Definitions.h"
+#include "../Math/BandMatrixFwd.h"
+#include "Dependencies/Twists.hh"
+#include "Dependencies/BendingProducts.hh"
 
 #include <tr1/memory>
 
@@ -38,16 +38,16 @@ public:
         m_dofs.setThetas( thetas, numberOfFixedThetas );
     }
 
-    const Vec3x getVertex( const IndexType vtx ) const
+    const Vec3 getVertex( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices );
         return m_dofs.getVertex( vtx );
     }
 
     //! Gets a vertex somewhere on an edge
-    const Vec3x getVertex( const IndexType vtx, Scalar localAbscissa ) const
+    const Vec3 getVertex( const IndexType vtx, Scalar localAbscissa ) const
     {
-        const Vec3x v0 = getVertex( vtx );
+        const Vec3 v0 = getVertex( vtx );
         if ( localAbscissa > 0. )
         {
             return ( 1 - localAbscissa ) * v0  +  localAbscissa * getVertex( vtx + 1 );
@@ -55,7 +55,7 @@ public:
         return v0;
     }
 
-    Vec3x getVertex( const IndexType vtx, const Mat4x &transform ) const
+    Vec3 getVertex( const IndexType vtx, const Mat4x &transform ) const
     {
         assert( vtx < m_numVertices );
         Vec4x v;
@@ -65,7 +65,7 @@ public:
     }
 
     //! Gets a vertex somewhere on an edge
-    const Vec3x getVertex( const IndexType vtx, Scalar localAbscissa, const Mat4x &transform ) const
+    const Vec3 getVertex( const IndexType vtx, Scalar localAbscissa, const Mat4x &transform ) const
     {
         assert( vtx < m_numVertices );
 
@@ -87,7 +87,13 @@ public:
         m_dofs.setTheta( vtx, newTheta );
     }
 
-    const Vec3x getEdgeVector( const IndexType vtx ) const
+    const Vec3& getTangent( const IndexType vtx )
+    {
+        assert( vtx < m_numVertices - 1 );
+        return m_tangents[vtx];
+    }
+
+    const Vec3 getEdgeVector( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices - 1 );
         return getVertex( vtx + 1 ) - getVertex( vtx );
@@ -98,69 +104,99 @@ public:
         return m_numVertices;
     }
 
-    void storeInitialFrames( const Vec3x& initRefFrame1 = Vec3x() )
+    void storeInitialFrames( const Vec3& initRefFrame1 = Vec3() )
     {
         m_referenceFrames1.storeInitialFrames( initRefFrame1 );
     }
 
-    void setVertex( const IndexType vtx, const Vec3x& coordinates )
+    void setVertex( const IndexType vtx, const Vec3& coordinates )
     {
         assert( vtx < m_numVertices );
         m_dofs.setVertex( vtx, coordinates );
     }
 
-    const Vec3x getReferenceFrame1( const IndexType vtx ) const
+    const Vec3 getReferenceFrame1( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices - 1 );
         return m_referenceFrames1[vtx];
     }
 
-    void setReferenceFrame1( const IndexType vtx, const Vec3x& vec )
+    const Vec3Array& getReferenceFrames1() const
+    {
+        return m_referenceFrames1.get();
+    }
+
+    void setReferenceFrame1( const IndexType vtx, const Vec3& vec )
     {
         assert( vtx < m_numVertices - 1 );
         m_referenceFrames1.set( vtx, vec );
     }
 
-    const Vec3x getReferenceFrame2( const IndexType vtx ) const
+    const Vec3 getReferenceFrame2( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices - 1 );
         return m_referenceFrames2[vtx];
     }
 
-    void setReferenceFrame2( const IndexType vtx, const Vec3x& vec )
+    const Vec3Array& getReferenceFrames2() const
+    {
+        return m_referenceFrames2.get();
+    }
+
+    void setReferenceFrame2( const IndexType vtx, const Vec3& vec )
     {
         assert( vtx < m_numVertices - 1 );
         m_referenceFrames2.set( vtx, vec );
     }
 
-    const Vec3x getMaterialFrame1( const IndexType vtx ) const
+    const Vec3 getMaterialFrame1( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices - 1 );
         return m_materialFrames1[vtx];
     }
 
-    void setMaterialFrame1( const IndexType vtx, const Vec3x& vec )
+    const Vec3Array& getMaterialFrames1() const
+    {
+        return m_materialFrames1.get();
+    }
+
+    void setMaterialFrame1( const IndexType vtx, const Vec3& vec )
     {
         assert( vtx < m_numVertices - 1 );
         m_materialFrames1.set( vtx, vec );
     }
 
-    const Vec3x getMaterialFrame2( const IndexType vtx ) const
+    const Vec3 getMaterialFrame2( const IndexType vtx ) const
     {
         assert( vtx < m_numVertices - 1 );
         return m_materialFrames2[vtx];
     }
 
-    void setMaterialFrame2( const IndexType vtx, const Vec3x& vec )
+    const Vec3Array& getMaterialFrames2() const
+    {
+        return m_materialFrames2.get();
+    }
+
+    void setMaterialFrame2( const IndexType vtx, const Vec3& vec )
     {
         assert( vtx < m_numVertices - 1 );
         m_materialFrames2.set( vtx, vec );
     }
 
+    const std::vector<Scalar>& getReferenceTwists()
+    {
+        return m_referenceTwists.get();
+    }
+
+    const std::vector<Scalar>& getReferenceTwistsDirty()
+    {
+        return m_referenceTwists.getDirty();
+    }
+
     void resizeSelf();
     void freeCachedQuantities();
     bool hasSmallForces( const Scalar lTwoTol, const Scalar lInfTol ) const;
-    Vec3x closestPoint( const Vec3x& x ) const;
+    Vec3 closestPoint( const Vec3& x ) const;
 
 private:
     // Convenience copy of the original number of vertices (owned by the strand).
@@ -192,6 +228,8 @@ private:
     HessTwists m_hessTwists;
     ThetaHessKappas m_thetaHessKappas;
     BendingProducts m_bendingProducts;
+
+    friend class ElasticStrand;
 
 };
 

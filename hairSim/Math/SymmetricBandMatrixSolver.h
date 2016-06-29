@@ -3,9 +3,9 @@
 
 #include <boost/serialization/split_member.hpp>
 
-#include "../Core/Definitions.hh"
-#include "../Core/BandMatrix.hh"
-#include "../Core/LinearSolver.hh"
+#include "../Utils/Definitions.h"
+#include "BandMatrix.h"
+#include "LinearSolver.hh"
 
 template<typename ScalarT, int kl >
 class SymmetricBandMatrixSolver

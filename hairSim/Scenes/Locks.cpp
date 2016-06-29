@@ -5,7 +5,7 @@
 using namespace std;
 
 Locks::Locks():
-ProblemStepper("Locks", "L Locks of hair forming an N braid")
+Scene("Locks", "L Locks of hair forming an N braid")
 {
     AddOption("lock_radius", "", 1.6 );
 
@@ -39,7 +39,7 @@ ProblemStepper("Locks", "L Locks of hair forming an N braid")
 Locks::~Locks()
 {}
 
-void Locks::layeredLockPacking( std::vector< std::vector< Vec3x > >& rodPos )
+void Locks::layeredLockPacking( std::vector< std::vector< Vec3 > >& rodPos )
 {
     // create packed disk/circle to be repeated for each lock
     const unsigned L = 7; // layers (including center) of rings of strands
@@ -49,8 +49,8 @@ void Locks::layeredLockPacking( std::vector< std::vector< Vec3x > >& rodPos )
 
     std::cout << "collision thickness: " << GetScalarOpt("selfCollisionsRadius") << std::endl;
 
-    std::vector< Vec3x > centroids;
-    centroids.push_back( Vec3x::Zero() );
+    std::vector< Vec3 > centroids;
+    centroids.push_back( Vec3::Zero() );
 
     double deg, degOffset, r;
     for( unsigned l = 1; l < L; ++l )
@@ -64,7 +64,7 @@ void Locks::layeredLockPacking( std::vector< std::vector< Vec3x > >& rodPos )
 
             Scalar x = r * cos( deg * M_PI/180.0 );
             Scalar z = r * sin( deg * M_PI/180.0 );
-            Vec3x potentialCentroid( x, 0.0, z );
+            Vec3 potentialCentroid( x, 0.0, z );
 
             bool noOverlaps = true;
             for( unsigned c = 0; c < centroids.size(); ++c )
@@ -112,7 +112,7 @@ void Locks::layeredLockPacking( std::vector< std::vector< Vec3x > >& rodPos )
 
             for( unsigned strand = 0; strand < rods_per_lock; ++strand )
             {
-                Vec3x vertNext = Vec3x( x, y, z );
+                Vec3 vertNext = Vec3( x, y, z );
                 vertNext += centroids[strand];
                 rodPos[rod * rods_per_lock + strand].push_back( vertNext );                
             }
@@ -139,12 +139,12 @@ void Locks::includeHairTie()
 
     double depth = -7.5;
     double radius = 0.2;
-    vector< Vec3x > vertices;
-    vertices.push_back( Vec3x( radius, depth, 0.0 ) );
-    vertices.push_back( Vec3x( 0.0, depth, radius ) );
-    vertices.push_back( Vec3x( -radius, depth, 0.0 ) );
-    vertices.push_back( Vec3x( 0.0, depth, -radius ) );
-    vertices.push_back( Vec3x( radius, depth, 0.0 ) );
+    vector< Vec3 > vertices;
+    vertices.push_back( Vec3( radius, depth, 0.0 ) );
+    vertices.push_back( Vec3( 0.0, depth, radius ) );
+    vertices.push_back( Vec3( -radius, depth, 0.0 ) );
+    vertices.push_back( Vec3( 0.0, depth, -radius ) );
+    vertices.push_back( Vec3( radius, depth, 0.0 ) );
 
     int num_DoFs = 4 * vertices.size() - 1;
     VecXd dofs( num_DoFs );
@@ -153,7 +153,7 @@ void Locks::includeHairTie()
     }
 
     // CoM += vertices.back();
-    strandsim::Vec3xArray scripted_vertices;
+    Vec3Array scripted_vertices;
     scripted_vertices.push_back( vertices[0] );
     scripted_vertices.push_back( vertices[ vertices.size() - 1] );
     DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -170,19 +170,19 @@ void Locks::includeHairTie()
     RodData* rd = new RodData( *strand, *controller );
     m_rodDatum.push_back( rd );
 
-    Vec3x zero( 0.,0.,0. );
+    Vec3 zero( 0.,0.,0. );
     RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
     Mat3x identity = Mat3x::Identity();
     double push = 0.5;
-    Vec3x translate = Vec3x( push, 0.0, 0.0 );
+    Vec3 translate = Vec3( push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate , 0 );
-    translate = Vec3x( 0.0, 0.0, push );
+    translate = Vec3( 0.0, 0.0, push );
     transformRodRootVtx( *hairband, identity, zero, translate, 1 );
-    translate = Vec3x( -push, 0.0, 0.0 );
+    translate = Vec3( -push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate, 2 );
-    translate = Vec3x( 0.0, 0.0, -push );
+    translate = Vec3( 0.0, 0.0, -push );
     transformRodRootVtx( *hairband, identity, zero, translate, 3 );
-    translate = Vec3x( push, 0.0, 0.0 );
+    translate = Vec3( push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate, 4 );
 }
 
@@ -199,10 +199,10 @@ void Locks::setupStrands()
     Scalar baseRotation = GetScalarOpt("base-rotation");
 
     // sample rod positions
-    vector< vector< Vec3x > >strands;
+    vector< vector< Vec3 > >strands;
     layeredLockPacking( strands );    
 
-    // Vec3x CoM = Vec3x(0.0,0.0,0.0);
+    // Vec3 CoM = Vec3(0.0,0.0,0.0);
     int nVertices;
 
     std::cout << "numStrands : " << strands.size() << std::endl;
@@ -211,7 +211,7 @@ void Locks::setupStrands()
     int rod_id = 0;
     for( unsigned i = 0; i < strands.size(); ++i )
     {
-        vector< Vec3x > vertices = strands[i];
+        vector< Vec3 > vertices = strands[i];
         num_DoFs = 4 * vertices.size() - 1;
         nVertices = vertices.size();
 
@@ -221,7 +221,7 @@ void Locks::setupStrands()
             dofs.segment<3>( i * 4 ) = vertices[i];
         }
 
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( vertices[0] );
         scripted_vertices.push_back( vertices[ nVertices - 1] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -234,7 +234,7 @@ void Locks::setupStrands()
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
 
-        Vec2xArray kappas = strand->alterRestKappas();
+        Vec2Array kappas = strand->alterRestKappas();
         for( unsigned i = 0; i < kappas.size(); ++i )
         {   // make strands straight regardless of starting configuration
             strand->alterRestKappas()[i].setZero();
@@ -261,22 +261,22 @@ bool Locks::executeScript()
         exit(0);
     }
 
-    Vec3x zero( 0.,0.,0. );
+    Vec3 zero( 0.,0.,0. );
     if( getTime() == 0.0 + m_dt && includeLockTie )
     {
         std::cout << "expanding hairtie" << std::endl;
         RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
         Mat3x identity = Mat3x::Identity();
         double push = -0.0;
-        Vec3x translate = Vec3x( push, 0.0, 0.0 );
+        Vec3 translate = Vec3( push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate , 0 );
-        translate = Vec3x( 0.0, 0.0, push );
+        translate = Vec3( 0.0, 0.0, push );
         transformRodRootVtx( *hairband, identity, zero, translate, 1 );
-        translate = Vec3x( -push, 0.0, 0.0 );
+        translate = Vec3( -push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate, 2 );
-        translate = Vec3x( 0.0, 0.0, -push );
+        translate = Vec3( 0.0, 0.0, -push );
         transformRodRootVtx( *hairband, identity, zero, translate, 3 );
-        translate = Vec3x( push, 0.0, 0.0 );
+        translate = Vec3( push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate, 4 );
     }
 
@@ -311,7 +311,7 @@ bool Locks::executeScript()
 
             Mat3x identity = Mat3x::Identity();
             // std::cout << "script cos: " << cos( swayRate * getTime() ) << std::endl;
-            Vec3x translate = Vec3x( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
+            Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
             for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
@@ -326,7 +326,7 @@ bool Locks::executeScript()
 
             Mat3x identity = Mat3x::Identity();
             // std::cout << "script cos: " << cos( swayRate * getTime() ) << std::endl;
-            Vec3x translate = Vec3x( 0.1 * sin( swayRate * getTime() ), 0.001, 0.1 * cos( swayRate * getTime() ) );
+            Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.001, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
             for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)

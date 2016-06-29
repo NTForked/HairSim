@@ -1,7 +1,7 @@
 #ifndef BANDMATRIXFWD_H
 #define BANDMATRIXFWD_H
 
-#include "Utils/Definitions.h"
+#include "../Utils/Definitions.h"
 
 template<typename ScalarT, IndexType kl, IndexType ku>
 class BandMatrix;

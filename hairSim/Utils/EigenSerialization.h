@@ -3,7 +3,7 @@
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/split_free.hpp>
-#include "../Core/Definitions.hh"
+#include "../Utils/Definitions.h"
 
 namespace boost
 {

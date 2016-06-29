@@ -1,9 +1,9 @@
 #ifndef COUSINIT
 #define COUSINIT
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class CousinIt : public ProblemStepper
+class CousinIt : public Scene
 {
 public:
     
@@ -12,7 +12,7 @@ public:
     
 protected:
 
-    void generateNormalSamples( Scalar hair_region, int num_hairs, std::vector<Vec3x>& normals );
+    void generateNormalSamples( Scalar hair_region, int num_hairs, std::vector<Vec3>& normals );
     void loadStrands();
     void setupStrands(); //TODO: virtual
     void setupMeshes(); //TODO: virtual

@@ -4,19 +4,19 @@
 void Kappas::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
-    const Vec3xArray& materialFrames1 = m_materialFrames1.get();
-    const Vec3xArray& materialFrames2 = m_materialFrames2.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& materialFrames1 = m_materialFrames1.get();
+    const Vec3Array& materialFrames2 = m_materialFrames2.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        const Vec3x& kb = curvatureBinormals[vtx];
-        const Vec3x& m1e = materialFrames1[vtx - 1];
-        const Vec3x& m2e = materialFrames2[vtx - 1];
-        const Vec3x& m1f = materialFrames1[vtx];
-        const Vec3x& m2f = materialFrames2[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
+        const Vec3& m1e = materialFrames1[vtx - 1];
+        const Vec3& m2e = materialFrames2[vtx - 1];
+        const Vec3& m1f = materialFrames1[vtx];
+        const Vec3& m2f = materialFrames2[vtx];
 
-        m_value[vtx] = Vec2x( 0.5 * kb.dot( m2e + m2f ), -0.5 * kb.dot( m1e + m1f ) );
+        m_value[vtx] = Vec2( 0.5 * kb.dot( m2e + m2f ), -0.5 * kb.dot( m1e + m1f ) );
     }
 
     setDependentsDirty();
@@ -26,11 +26,11 @@ void GradKappas::compute()
 {
     m_value.resize( m_size );
     const std::vector<Scalar>& lengths = m_lengths.get();
-    const Vec3xArray& tangents = m_tangents.get();
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
-    const Vec3xArray& materialFrames1 = m_materialFrames1.get();
-    const Vec3xArray& materialFrames2 = m_materialFrames2.get();
-    const Vec2xArray& kappas = m_kappas.get();
+    const Vec3Array& tangents = m_tangents.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& materialFrames1 = m_materialFrames1.get();
+    const Vec3Array& materialFrames2 = m_materialFrames2.get();
+    const Vec2Array& kappas = m_kappas.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
@@ -39,34 +39,34 @@ void GradKappas::compute()
         const Scalar norm_e = lengths[vtx - 1];
         const Scalar norm_f = lengths[vtx];
 
-        const Vec3x& te = tangents[vtx - 1];
-        const Vec3x& tf = tangents[vtx];
+        const Vec3& te = tangents[vtx - 1];
+        const Vec3& tf = tangents[vtx];
 
-        const Vec3x& m1e = materialFrames1[vtx - 1];
-        const Vec3x& m2e = materialFrames2[vtx - 1];
-        const Vec3x& m1f = materialFrames1[vtx];
-        const Vec3x& m2f = materialFrames2[vtx];
+        const Vec3& m1e = materialFrames1[vtx - 1];
+        const Vec3& m2e = materialFrames2[vtx - 1];
+        const Vec3& m1f = materialFrames1[vtx];
+        const Vec3& m2f = materialFrames2[vtx];
 
         Scalar chi = 1.0 + te.dot( tf );
 
         //    assert( chi>0 );
         if ( chi <= 0 )
         {
-            WarningStream( g_log, "" ) << "GradKappas::compute(): " << " chi = " << chi << " te = "
-                    << te << " tf = " << tf;
+            std::cerr << "GradKappas::compute(): " << " chi = " << chi << " te = "
+                    << te << " tf = " << tf << std::endl;
             chi = 1e-12;
         }
 
-        const Vec3x& tilde_t = ( te + tf ) / chi;
-        const Vec3x& tilde_d1 = ( m1e + m1f ) / chi;
-        const Vec3x& tilde_d2 = ( m2e + m2f ) / chi;
+        const Vec3& tilde_t = ( te + tf ) / chi;
+        const Vec3& tilde_d1 = ( m1e + m1f ) / chi;
+        const Vec3& tilde_d2 = ( m2e + m2f ) / chi;
 
-        const Vec2x& kappa = kappas[vtx];
+        const Vec2& kappa = kappas[vtx];
 
-        const Vec3x& Dkappa0De = 1.0 / norm_e * ( -kappa[0] * tilde_t + tf.cross( tilde_d2 ) );
-        const Vec3x& Dkappa0Df = 1.0 / norm_f * ( -kappa[0] * tilde_t - te.cross( tilde_d2 ) );
-        const Vec3x& Dkappa1De = 1.0 / norm_e * ( -kappa[1] * tilde_t - tf.cross( tilde_d1 ) );
-        const Vec3x& Dkappa1Df = 1.0 / norm_f * ( -kappa[1] * tilde_t + te.cross( tilde_d1 ) );
+        const Vec3& Dkappa0De = 1.0 / norm_e * ( -kappa[0] * tilde_t + tf.cross( tilde_d2 ) );
+        const Vec3& Dkappa0Df = 1.0 / norm_f * ( -kappa[0] * tilde_t - te.cross( tilde_d2 ) );
+        const Vec3& Dkappa1De = 1.0 / norm_e * ( -kappa[1] * tilde_t - tf.cross( tilde_d1 ) );
+        const Vec3& Dkappa1Df = 1.0 / norm_f * ( -kappa[1] * tilde_t + te.cross( tilde_d1 ) );
 
         gradKappa.block<3, 1>( 0, 0 ) = -Dkappa0De;
         gradKappa.block<3, 1>( 4, 0 ) = Dkappa0De - Dkappa0Df;
@@ -75,7 +75,7 @@ void GradKappas::compute()
         gradKappa.block<3, 1>( 4, 1 ) = Dkappa1De - Dkappa1Df;
         gradKappa.block<3, 1>( 8, 1 ) = Dkappa1Df;
 
-        const Vec3x& kb = curvatureBinormals[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
 
         gradKappa( 3, 0 ) = -0.5 * kb.dot( m1e );
         gradKappa( 7, 0 ) = -0.5 * kb.dot( m1f );
@@ -90,11 +90,11 @@ void HessKappas::compute()
 {
     m_value.resize( m_size );
     const std::vector<Scalar>& lengths = m_lengths.get();
-    const Vec3xArray& tangents = m_tangents.get();
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
-    const Vec3xArray& materialFrames1 = m_materialFrames1.get();
-    const Vec3xArray& materialFrames2 = m_materialFrames2.get();
-    const Vec2xArray& kappas = m_kappas.get();
+    const Vec3Array& tangents = m_tangents.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& materialFrames1 = m_materialFrames1.get();
+    const Vec3Array& materialFrames2 = m_materialFrames2.get();
+    const Vec2Array& kappas = m_kappas.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
@@ -108,31 +108,31 @@ void HessKappas::compute()
         const Scalar norm2_e = square( norm_e ); // That's bloody stupid, taking the square of a square root.
         const Scalar norm2_f = square( norm_f );
 
-        const Vec3x& te = tangents[vtx - 1];
-        const Vec3x& tf = tangents[vtx];
+        const Vec3& te = tangents[vtx - 1];
+        const Vec3& tf = tangents[vtx];
 
-        const Vec3x& m1e = materialFrames1[vtx - 1];
-        const Vec3x& m2e = materialFrames2[vtx - 1];
-        const Vec3x& m1f = materialFrames1[vtx];
-        const Vec3x& m2f = materialFrames2[vtx];
+        const Vec3& m1e = materialFrames1[vtx - 1];
+        const Vec3& m2e = materialFrames2[vtx - 1];
+        const Vec3& m1f = materialFrames1[vtx];
+        const Vec3& m2f = materialFrames2[vtx];
 
         Scalar chi = 1.0 + te.dot( tf );
 
         //    assert( chi>0 );
         if ( chi <= 0 )
         {
-            WarningStream( g_log, "" ) << "HessKappas::compute(): " << " chi = " << chi << " te = "
-                    << te << " tf = " << tf;
+            std::cerr << "HessKappas::compute(): " << " chi = " << chi << " te = "
+                    << te << " tf = " << tf << std::endl;
             chi = 1e-12;
         }
 
-        const Vec3x& tilde_t = ( te + tf ) / chi;
-        const Vec3x& tilde_d1 = ( m1e + m1f ) / chi;
-        const Vec3x& tilde_d2 = ( m2e + m2f ) / chi;
+        const Vec3& tilde_t = ( te + tf ) / chi;
+        const Vec3& tilde_d1 = ( m1e + m1f ) / chi;
+        const Vec3& tilde_d2 = ( m2e + m2f ) / chi;
 
-        const Vec2x& kappa = kappas[vtx];
+        const Vec2& kappa = kappas[vtx];
 
-        const Vec3x& kb = curvatureBinormals[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
 
         const Mat3x& tt_o_tt = outerProd<3>( tilde_t, tilde_t );
         const Mat3x& tf_c_d2t_o_tt = outerProd<3>( tf.cross( tilde_d2 ), tilde_t );
@@ -167,13 +167,13 @@ void HessKappas::compute()
 
             const Scalar D2kappa1Dthetae2 = -0.5 * kb.dot( m2e );
             const Scalar D2kappa1Dthetaf2 = -0.5 * kb.dot( m2f );
-            const Vec3x& D2kappa1DeDthetae = 1.0 / norm_e
+            const Vec3& D2kappa1DeDthetae = 1.0 / norm_e
                     * ( 0.5 * kb.dot( m1e ) * tilde_t - 1.0 / chi * tf.cross( m1e ) );
-            const Vec3x& D2kappa1DeDthetaf = 1.0 / norm_e
+            const Vec3& D2kappa1DeDthetaf = 1.0 / norm_e
                     * ( 0.5 * kb.dot( m1f ) * tilde_t - 1.0 / chi * tf.cross( m1f ) );
-            const Vec3x& D2kappa1DfDthetae = 1.0 / norm_f
+            const Vec3& D2kappa1DfDthetae = 1.0 / norm_f
                     * ( 0.5 * kb.dot( m1e ) * tilde_t + 1.0 / chi * te.cross( m1e ) );
-            const Vec3x& D2kappa1DfDthetaf = 1.0 / norm_f
+            const Vec3& D2kappa1DfDthetaf = 1.0 / norm_f
                     * ( 0.5 * kb.dot( m1f ) * tilde_t + 1.0 / chi * te.cross( m1f ) );
 
             DDkappa1.block<3, 3>( 0, 0 ) = D2kappa1De2;
@@ -235,13 +235,13 @@ void HessKappas::compute()
 
             const Scalar D2kappa2Dthetae2 = 0.5 * kb.dot( m1e );
             const Scalar D2kappa2Dthetaf2 = 0.5 * kb.dot( m1f );
-            const Vec3x& D2kappa2DeDthetae = 1.0 / norm_e
+            const Vec3& D2kappa2DeDthetae = 1.0 / norm_e
                     * ( 0.5 * kb.dot( m2e ) * tilde_t - 1.0 / chi * tf.cross( m2e ) );
-            const Vec3x& D2kappa2DeDthetaf = 1.0 / norm_e
+            const Vec3& D2kappa2DeDthetaf = 1.0 / norm_e
                     * ( 0.5 * kb.dot( m2f ) * tilde_t - 1.0 / chi * tf.cross( m2f ) );
-            const Vec3x& D2kappa2DfDthetae = 1.0 / norm_f
+            const Vec3& D2kappa2DfDthetae = 1.0 / norm_f
                     * ( 0.5 * kb.dot( m2e ) * tilde_t + 1.0 / chi * te.cross( m2e ) );
-            const Vec3x& D2kappa2DfDthetaf = 1.0 / norm_f
+            const Vec3& D2kappa2DfDthetaf = 1.0 / norm_f
                     * ( 0.5 * kb.dot( m2f ) * tilde_t + 1.0 / chi * te.cross( m2f ) );
 
             DDkappa2.block<3, 3>( 0, 0 ) = D2kappa2De2;
@@ -280,9 +280,9 @@ void HessKappas::compute()
 void ThetaHessKappas::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
-    const Vec3xArray& materialFrames1 = m_materialFrames1.get();
-    const Vec3xArray& materialFrames2 = m_materialFrames2.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& materialFrames1 = m_materialFrames1.get();
+    const Vec3Array& materialFrames2 = m_materialFrames2.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
@@ -290,11 +290,11 @@ void ThetaHessKappas::compute()
         Mat2x& DDkappa1 = HessKappa.first;
         Mat2x& DDkappa2 = HessKappa.second;
 
-        const Vec3x& m1e = materialFrames1[vtx - 1];
-        const Vec3x& m2e = materialFrames2[vtx - 1];
-        const Vec3x& m1f = materialFrames1[vtx];
-        const Vec3x& m2f = materialFrames2[vtx];
-        const Vec3x& kb = curvatureBinormals[vtx];
+        const Vec3& m1e = materialFrames1[vtx - 1];
+        const Vec3& m2e = materialFrames2[vtx - 1];
+        const Vec3& m1f = materialFrames1[vtx];
+        const Vec3& m2f = materialFrames2[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
 
         const Scalar D2kappa1Dthetae2 = -0.5 * kb.dot( m2e );
         const Scalar D2kappa1Dthetaf2 = -0.5 * kb.dot( m2f );

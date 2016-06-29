@@ -1,32 +1,32 @@
-#ifndef STRANDSIM_STRANDDYNAMICTRAITS_HH
-#define STRANDSIM_STRANDDYNAMICTRAITS_HH
+#ifndef STRAND_DYNAMICTRAITS_H
+#define STRAND_DYNAMICTRAITS_H
 
-#include "../Core/Definitions.hh"
-#include "../Core/BandMatrixFwd.hh"
+#include "../Utils/Definitions.h"
+#include "../Math/BandMatrixFwd.h"
+#include "ElasticStrand.h"
 
-class ElasticStrand ;
 class DOFScriptingController;
 
-class StrandDynamicTraits
+class StrandDynamics
 {
 
 public:
-    StrandDynamicTraits( ElasticStrand& strand );
-    ~StrandDynamicTraits() ;
+    StrandDynamics( ElasticStrand& strand );
+    ~StrandDynamics() ;
 
     void resizeSelf() ;
 
-    VecXx getDisplacements()
+    const VecXx getDisplacements() const
     {
-        return m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom()
+        return m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom();
     }
 
-    void setDisplacements( const Vec3x& difference )
+    void setDisplacements( const Vec3& difference )
     {
         m_strand.setFutureDegreesOfFreedom( m_strand.getCurrentDegreesOfFreedom() + difference );
     }
 
-    Vec3x getDisplacement( IndexType vtx ) const
+    Vec3 getDisplacement( IndexType vtx ) const
     {
         return m_strand.getFutureVertex( vtx ) - m_strand.getVertex( vtx );
     }
@@ -110,4 +110,4 @@ private:
 
 };
 
-#endif // STRANDSIM_STRANDDYNAMICTRAITS_HH
+#endif 

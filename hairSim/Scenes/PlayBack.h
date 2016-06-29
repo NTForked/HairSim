@@ -1,9 +1,9 @@
 #ifndef PLAYBACK
 #define PLAYBACK
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class PlayBack : public ProblemStepper
+class PlayBack : public Scene
 {
 public:
     

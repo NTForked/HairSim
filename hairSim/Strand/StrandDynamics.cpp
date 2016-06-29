@@ -1,4 +1,4 @@
-#include "StrandDynamicTraits.hh"
+#include "StrandDynamics.hh"
 #include "DOFScriptingController.hh"
 
 #include "../Core/ElasticStrand.hh"
@@ -17,7 +17,7 @@
 #include "../Render/StrandRenderer.hh"
 #include "../Utils/TextLog.hh"
 
-StrandDynamicTraits::StrandDynamicTraits( ElasticStrand &strand ) :
+StrandDynamics::StrandDynamics( ElasticStrand &strand ) :
         m_strand( strand ),
         m_scriptingController( NULL ), //
         m_futureJacobianUpToDate( false ), //
@@ -25,22 +25,22 @@ StrandDynamicTraits::StrandDynamicTraits( ElasticStrand &strand ) :
         m_DOFmassesUpToDate( false ),
 {}
 
-StrandDynamicTraits::~StrandDynamicTraits()
+StrandDynamics::~StrandDynamics()
 {}
 
-void StrandDynamicTraits::resizeSelf()
+void StrandDynamics::resizeSelf()
 {
     const unsigned ndofs = m_strand.getCurrentDegreesOfFreedom().rows();
     m_DOFmasses.resize( ndofs );
 }
 
-void StrandDynamicTraits::computeViscousForceCoefficients(Scalar dt)
+void StrandDynamics::computeViscousForceCoefficients(Scalar dt)
 {
     computeDOFMasses();
     m_strand.getParameters().computeViscousForceCoefficients( dt );
 }
 
-void StrandDynamicTraits::computeDOFMasses()
+void StrandDynamics::computeDOFMasses()
 {
     if( m_DOFmassesUpToDate ) return ;
 
@@ -61,7 +61,7 @@ void StrandDynamicTraits::computeDOFMasses()
 // Dynamic methods, using viscous forces
 ////////////////////////////////////////////////////////////////////////////////
 
-void StrandDynamicTraits::computeFutureJacobian( bool withViscous, bool butOnlyForBendingModes )
+void StrandDynamics::computeFutureJacobian( bool withViscous, bool butOnlyForBendingModes )
 {
     if ( m_futureJacobianUpToDate )
     {
@@ -99,7 +99,7 @@ void StrandDynamicTraits::computeFutureJacobian( bool withViscous, bool butOnlyF
     futureState.m_hessKappas.free();
 }
 
-void StrandDynamicTraits::computeLHS( Scalar dt, bool withViscous )
+void StrandDynamics::computeLHS( Scalar dt, bool withViscous )
 {
     computeFutureJacobian( withViscous );
     JacobianMatrixType& LHS = m_strand.getTotalJacobian();
@@ -109,7 +109,7 @@ void StrandDynamicTraits::computeLHS( Scalar dt, bool withViscous )
 
 }
 
-void StrandDynamicTraits::computeFutureForces( bool withViscous, bool butOnlyForBendingModes )
+void StrandDynamics::computeFutureForces( bool withViscous, bool butOnlyForBendingModes )
 {
     if ( m_futureForcesUpToDate )
     {
@@ -143,7 +143,7 @@ void StrandDynamicTraits::computeFutureForces( bool withViscous, bool butOnlyFor
     m_futureForcesUpToDate = true;
 }
 
-void StrandDynamicTraits::computeFutureConservativeEnergy()
+void StrandDynamics::computeFutureConservativeEnergy()
 {
     StrandState& futureState = *m_strand.m_futureState ;
 
@@ -153,7 +153,7 @@ void StrandDynamicTraits::computeFutureConservativeEnergy()
     m_strand.accumulateE< GravitationForce > ( futureState ) ;
 }
 
-void StrandDynamicTraits::addMassMatrixTo( JacobianMatrixType& J ) const
+void StrandDynamics::addMassMatrixTo( JacobianMatrixType& J ) const
 {
     for ( int i = 0; i < m_DOFmasses.size(); i++ )
     {
@@ -161,17 +161,17 @@ void StrandDynamicTraits::addMassMatrixTo( JacobianMatrixType& J ) const
     }
 }
 
-const VecXx& StrandDynamicTraits::getDOFMasses() const
+const VecXx& StrandDynamics::getDOFMasses() const
 {
     return m_DOFmasses;
 }
 
-void StrandDynamicTraits::multiplyByMassMatrix( VecXx& tmp ) const
+void StrandDynamics::multiplyByMassMatrix( VecXx& tmp ) const
 {
     tmp.array() *= m_DOFmasses.array();
 }
 
-void StrandDynamicTraits::acceptFuture()
+void StrandDynamics::acceptFuture()
 {
     // future will no longer be valid, and current will be set correctly
     m_currentVelocities = m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom();
@@ -180,7 +180,7 @@ void StrandDynamicTraits::acceptFuture()
     // m_strand.getFutureDegreesOfFreedom() = m_strand.getCurrentDegreesOfFreedom();
 }
 
-void StrandDynamicTraits::nanFailSafe()
+void StrandDynamics::nanFailSafe()
 {
 
     std::cerr << "this needs to get changed to operate on future DoFs " << std::endl;

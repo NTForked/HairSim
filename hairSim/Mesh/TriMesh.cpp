@@ -1,4 +1,4 @@
-#include "TriangularMesh.h"
+#include "TriMesh.h"
 
 TriMesh::TriMesh( const MeshScriptingController* controller ) :
         m_associatedController( controller )

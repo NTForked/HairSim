@@ -1,8 +1,8 @@
 #ifndef LINEARSOLVER_HH_
 #define LINEARSOLVER_HH_
 
-#include "Definitions.hh"
-#include "BandMatrix.hh"
+#include "../Utils/Definitions.h"
+#include "BandMatrix.h"
 
 template<typename BandMatrixCompressedStorageT> class DummyPreconditionner;
 template<typename BandMatrixCompressedStorageT> class JacobiPreconditionner;

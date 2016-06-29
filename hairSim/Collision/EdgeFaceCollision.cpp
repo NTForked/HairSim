@@ -4,7 +4,7 @@
 #include "CollisionUtils.hh"
 #include "../Utils/Distances.hh"
 #include "../Utils/TextLog.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "../Dynamic/StrandDynamics.hh"
 
 
 static const double SQ_TOLERANCE = 1e-12;
@@ -36,6 +36,11 @@ void EdgeFaceCollision::print( std::ostream& os ) const
     os << '\n';
 }
 
+bool EdgeFaceCollision::analyse( TwistEdgeHandler* teh )
+{
+    return analyse();
+}
+
 bool EdgeFaceCollision::analyse()
 {
     static __thread double times[4];
@@ -44,27 +49,27 @@ bool EdgeFaceCollision::analyse()
     // Tolerance for the interior edge/edge collisions that point in a direction perpendicular to the face normal
     const Scalar perpEdgeTol = .1 ;
 
-    const Vec3x pp0 = m_firstStrand->getVertex( m_firstVertex );
-    const Vec3x pp1 = m_firstStrand->getVertex( m_firstVertex + 1 );
-    Vec3x pq0 = m_mesh->getVertex( m_firstIdx );
-    Vec3x pq1 = m_mesh->getVertex( m_secondIdx );
+    const Vec3 pp0 = m_firstStrand->getVertex( m_firstVertex );
+    const Vec3 pp1 = m_firstStrand->getVertex( m_firstVertex + 1 );
+    Vec3 pq0 = m_mesh->getVertex( m_firstIdx );
+    Vec3 pq1 = m_mesh->getVertex( m_secondIdx );
 
-    Vec3x dp0 = m_firstStrand->dynamics().getDisplacement( m_firstVertex );
-    Vec3x dp1 = m_firstStrand->dynamics().getDisplacement( m_firstVertex + 1 );
-    Vec3x dq0 = m_mesh->getDisplacement( m_firstIdx );
-    Vec3x dq1 = m_mesh->getDisplacement( m_secondIdx );
+    Vec3 dp0 = m_firstStrand->dynamics().getDisplacement( m_firstVertex );
+    Vec3 dp1 = m_firstStrand->dynamics().getDisplacement( m_firstVertex + 1 );
+    Vec3 dq0 = m_mesh->getDisplacement( m_firstIdx );
+    Vec3 dq1 = m_mesh->getDisplacement( m_secondIdx );
 
     int fnsign = 0 ;
-    Vec3x faceNormal ;
+    Vec3 faceNormal ;
 
     bool shouldAddProx = false ;
 
     if( m_onBoundary )
     {
         const short thirdApex = 3 - m_firstApex - m_secondApex ;
-        const Vec3x pq2 = m_mesh->getVertex(  m_face->getFace().idx[ thirdApex ] );
+        const Vec3 pq2 = m_mesh->getVertex(  m_face->getFace().idx[ thirdApex ] );
 
-        const Vec3x meshEdge = ( pq1 - pq0 ).normalized() ;
+        const Vec3 meshEdge = ( pq1 - pq0 ).normalized() ;
         faceNormal = ( pq0 - pq2 ) - ( pq0 - pq2 ).dot( meshEdge ) * meshEdge ;
 
         const Scalar nnorm = faceNormal.norm();
@@ -104,8 +109,8 @@ bool EdgeFaceCollision::analyse()
                 m_normal /= nnorm ;
 
                 Scalar s = .5, t = .5 ;
-                const Vec3x meshDisplacement = ( 1.0 - t ) * dq0 + t * dq1;
-                const Vec3x relativeDisplacement =
+                const Vec3 meshDisplacement = ( 1.0 - t ) * dq0 + t * dq1;
+                const Vec3 relativeDisplacement =
                         ( ( ( 1.0 - s ) * dp0 + s * dp1 ) - meshDisplacement );
                 if( m_normal.dot( relativeDisplacement ) > 0. )
                 {
@@ -123,7 +128,7 @@ bool EdgeFaceCollision::analyse()
     if ( extraRadius < 0. )
         return false;
 
-    Vec3x prox ;
+    Vec3 prox ;
     if( shouldAddProx )
     {
         prox = extraRadius * m_normal;
@@ -145,12 +150,12 @@ bool EdgeFaceCollision::analyse()
         const Scalar dtime = times[j] - 1.0;
 
         // Determine if the collision actually happens
-        const Vec3x p0col = pp0 + dtime * ( dp0 );
-        const Vec3x p1col = pp1 + dtime * ( dp1 );
-        const Vec3x q0col = pq0 + dtime * dq0;
-        const Vec3x q1col = pq1 + dtime * dq1;
+        const Vec3 p0col = pp0 + dtime * ( dp0 );
+        const Vec3 p1col = pp1 + dtime * ( dp1 );
+        const Vec3 q0col = pq0 + dtime * dq0;
+        const Vec3 q1col = pq1 + dtime * dq1;
 
-        Vec3x cp, cq;
+        Vec3 cp, cq;
         Scalar t;
         const double sqrdist = ClosestPtSegmentSegment( p0col, p1col, q0col, q1col, m_s, t, cp,
                 cq );
@@ -197,7 +202,6 @@ bool EdgeFaceCollision::analyse()
             // If the edges happen to be parallel
             if ( nnorm * nnorm <= SQ_TOLERANCE )
             {
-                TraceStream( g_log, "" ) << "Parallel edges in EdgeFaceCollision";
                 // Use the pre-timestep positions of the collision points to generate a collision normal
                 m_normal = ( ( 1.0 - t ) * pq0 + t * pq1 ).cross( ( 1.0 - m_s ) * pp0 + m_s * pp1 );
                 nnorm = m_normal.norm();
@@ -208,7 +212,7 @@ bool EdgeFaceCollision::analyse()
 
             m_meshDisplacement = ( 1.0 - t ) * dq0 + t * dq1;
 
-            const Vec3x relativeDisplacement = ( 1.0 - m_time )
+            const Vec3 relativeDisplacement = ( 1.0 - m_time )
                     * ( ( ( 1.0 - m_s ) * dp0 + m_s * dp1 ) - m_meshDisplacement );
             postAnalyse( relativeDisplacement );
 

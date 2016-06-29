@@ -1,7 +1,7 @@
 #ifndef DOF_SCRIPTINGCONTROLLER_HH_
 #define DOF_SCRIPTINGCONTROLLER_HH_
 
-#include "../Core/BandMatrixFwd.hh"
+#include "../Math/BandMatrixFwd.h"
 #include <map>
 #include <stack>
 
@@ -28,7 +28,7 @@ public:
         }
     }
     
-    void setVertexDisplacement( int vtx, const Vec3x& del )
+    void setVertexDisplacement( int vtx, const Vec3& del )
     {
         m_scriptedDisplacements[4 * vtx + 0] = del[0];
         m_scriptedDisplacements[4 * vtx + 1] = del[1];

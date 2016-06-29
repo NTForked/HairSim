@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stdint.h>
-#include "../Core/Definitions.hh"
+#include "../../Utils/Definitions.h"
 
 template<typename ScalarT>
 Eigen::Matrix<ScalarT, 3, 1> min( const Eigen::Matrix<ScalarT, 3, 1>& a

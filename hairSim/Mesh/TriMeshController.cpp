@@ -5,13 +5,13 @@
 
 using namespace std;
 
-SimpleMeshController::SimpleMeshController( double i_time, double i_dt ) :
-strandsim::MeshScriptingController( i_time, i_dt ), 
-m_isStaticMesh( true ),
-m_startMeshTime( 0. ), 
-m_endMeshTime( 0. ), 
-m_lastExecutionTime( 0 ), 
-m_defaultFrictionCoefficient( 0. ), 
+SimpleMeshController::SimpleMeshController( double i_time, double i_dt ):
+    MeshScriptingController( i_time, i_dt ), 
+    m_isStaticMesh( true ),
+    m_startMeshTime( 0. ), 
+    m_endMeshTime( 0. ), 
+    m_lastExecutionTime( 0 ), 
+    m_defaultFrictionCoefficient( 0. ), 
 {
     m_startTime = i_time;
     m_mesh = new TriMesh();
@@ -43,11 +43,9 @@ short SimpleMeshController::knowsNormalSign( bool atPreviousStep, unsigned faceI
 bool SimpleMeshController::loadMesh( std::string& obj_file_name )
 {
     // intialize all triangular meshes
-    strandsim::ObjParser objparser;
+    ObjParser objparser;
     objparser.loadTriangularMesh( obj_file_name, *m_mesh);
     
     std::cout<< "# Loaded mesh: " << obj_file_name << std::endl;
     return true; 
 }
-
-

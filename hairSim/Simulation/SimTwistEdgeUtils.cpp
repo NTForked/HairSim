@@ -33,7 +33,7 @@ void Simulation::deleteInvertedProxies()
         if( edge->intersectionTwists() == 0 )
         {
             //check thickness boundary...
-            Vec3x edgeA, edgeB;
+            Vec3 edgeA, edgeB;
             m_collisionDetector->m_proxyHistory->getEdgeVerts( edge, false, edgeA, edgeB );
 
             if( (edgeB - edgeA).norm() >= (2.0 * edge->m_radius) ){

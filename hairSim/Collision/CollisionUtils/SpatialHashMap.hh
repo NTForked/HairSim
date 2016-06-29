@@ -1,8 +1,8 @@
 #ifndef SPATIALHASHMAP_HH_
 #define SPATIALHASHMAP_HH_
 
-#include "../Core/Definitions.hh"
-#include "ThreadUtils.hh"
+#include "../../Utils/Definitions.h"
+#include "../../Utils/ThreadUtils.h"
 
 #include <map>
 #include <list>
@@ -889,10 +889,10 @@ template<typename ContainerT>
 void SpatialHashMap<DataT, IteratorT, GAABB>::generateCellsFromSegment( const DataT &object, const IteratorT &it, const Scalar invCellSize,
             ContainerT &cells )
 {
-    Vec3x start, end ;
+    Vec3 start, end ;
     object.getSegment( it, start, end );
 
-    const Vec3x dP = ( end - start ) * invCellSize;
+    const Vec3 dP = ( end - start ) * invCellSize;
 
     unsigned kMax = 0;
     Scalar dMax = std::fabs( dP[0] );
@@ -916,9 +916,9 @@ void SpatialHashMap<DataT, IteratorT, GAABB>::generateCellsFromSegment( const Da
         return;
     }
 
-    const Vec3x dir = dP / dMax;
+    const Vec3 dir = dP / dMax;
 
-    Vec3x cur = start * invCellSize;
+    Vec3 cur = start * invCellSize;
 
     uint16_t ip = kMax;
     uint16_t jp = ( kMax + 1 ) % 3;
@@ -973,7 +973,7 @@ template<typename ContainerT>
 void SpatialHashMap<DataT, IteratorT, GAABB>::generateCellsFromAABB( DataT &object, const IteratorT &it, const Scalar invCellSize,
             ContainerT &cells )
 {
-    Vec3x min, max ;
+    Vec3 min, max ;
     object.getAABB( it, min, max );
 
     int imin = ( (int) std::ceil( min[0] * invCellSize ) ) - 1;

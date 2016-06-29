@@ -1,14 +1,11 @@
-#include "CollisionDetector.hh"
-#include "ElementProxy.hh"
-#include "ContinuousTimeCollision.hh"
-#include "VertexFaceCollision.hh"
-#include "EdgeFaceCollision.hh"
-#include "EdgeEdgeCollision.hh"
-#include "TwistEdgeCollision.hh"
-#include "../Utils/SpatialHashMap.hh"
-#include "../Utils/TextLog.hh"
-#include "../Utils/TimeUtils.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "CollisionDetector.h"
+#include "ElementProxy.h"
+#include "Collision.h"
+#include "VertexFaceCollision.h"
+#include "EdgeFaceCollision.h"
+#include "EdgeEdgeCollision.h"
+#include "CollisionUtils/SpatialHashMap.hh"
+#include "../Strand/StrandDynamics.h"
 
 Scalar CollisionDetector::s_maxSizeForElementBBox = 1e2;
 CollisionDetector::CollisionDetector( std::vector<ElementProxy*>& elements ):
@@ -403,20 +400,19 @@ bool CollisionDetector::appendCollision( ElementProxy* elem_a, ElementProxy* ele
 
 bool CollisionDetector::appendCollision( EdgeProxy* edge_a, EdgeProxy* edge_b )
 {
-    if ( m_ignoreStrandStrand ) return false;
+    if( m_ignoreStrandStrand ) return false;
 
-    TwistEdge* twist_a = dynamic_cast< TwistEdge* >( edge_a );
-    TwistEdge* twist_b = dynamic_cast< TwistEdge* >( edge_b );
-
-    TwistEdgeCollision* collision = new TwistEdgeCollision( twist_a->getStrandPointer(), twist_a->m_vertexIndex, 
-                    twist_b->getStrandPointer(), twist_b->m_vertexIndex, twist_a->m_implicit, twist_b->m_implicit, twist_a, twist_b );
+    EdgeEdgeCollision* collision = new EdgeEdgeCollision( edge_a, edge_b );
     if ( collision->analyse( m_proxyHistory ) )
     {
 #pragma omp critical (pushCTCollision)
         {    
             if( m_proxyHistory->trackTunneling ){
 
-                TwistEdge* twistBand = new TwistEdge( collision->m_firstProxy, collision->m_secondProxy );
+                TwistEdge* twist_a = dynamic_cast< TwistEdge* >( collision->getFirstEdgeProxy() );
+                TwistEdge* twist_b = dynamic_cast< TwistEdge* >( collision->getSecondEdgeProxy() );
+
+                TwistEdge* twistBand = new TwistEdge( twist_a, twist_b );
 
                 // std::cout << "CollisionDetector new twistBand is " << twistBand->uniqueID << std::endl;
                 m_proxyHistory->tunnelingBands.push_back( twistBand );
@@ -440,11 +436,11 @@ bool CollisionDetector::appendCollision( EdgeProxy* edge_a, const FaceProxy* tri
 
     if ( triangle_b->allApicesEnabled() )
     {
-        VertexFaceCollision vf1( edge_a->getStrandPointer(), edge_a->getVertexIndex() + 1, triangle_b ) ;
+        VertexFaceCollision vf1( edge_a, triangle_b ) ;
         if( vf1.analyse() ){
             potentialCollisions.push_back( new VertexFaceCollision( vf1 ) ) ;
         }
-        VertexFaceCollision vf2( edge_a->getStrandPointer(), edge_a->getVertexIndex(), triangle_b ) ;
+        VertexFaceCollision vf2( edge_a, triangle_b ) ;
         if( vf2.analyse() ){
             potentialCollisions.push_back( new VertexFaceCollision( vf2 ) ) ;
         }
@@ -455,7 +451,7 @@ bool CollisionDetector::appendCollision( EdgeProxy* edge_a, const FaceProxy* tri
         const short side_p = ( side + 1 ) % 3;
         if ( triangle_b->hasEnabledApex( side ) && triangle_b->hasEnabledApex( side_p ) )
         {
-            EdgeFaceCollision ef( edge_a->getStrandPointer(), edge_a->getVertexIndex(),
+            EdgeFaceCollision ef( edge_a,
                                   triangle_b, triangle_b->getVertexIdx( side ),
                                   triangle_b->getVertexIdx( side_p ), side, side_p ) ;
             if( ef.analyse() ){
@@ -489,7 +485,8 @@ void CollisionDetector::computeCollisions( const BVHNodeType& node_a, const BVHN
         {
             const uint32_t leaf_a_begin = node_a.LeafBegin();
             const uint32_t leaf_a_end = node_a.LeafEnd();
-            for ( unsigned int i = leaf_a_begin; i < leaf_a_end; ++i ){
+            for ( unsigned int i = leaf_a_begin; i < leaf_a_end; ++i )
+            {
                 for ( unsigned int j = leaf_a_begin; j < i; ++j )
                 {
                     appendCollision( m_elementProxies[i], m_elementProxies[j] );
@@ -503,6 +500,7 @@ void CollisionDetector::computeCollisions( const BVHNodeType& node_a, const BVHN
             const uint32_t leaf_b_begin = node_b.LeafBegin();
             const uint32_t leaf_b_end = node_b.LeafEnd();
             for ( unsigned int i = leaf_a_begin; i < leaf_a_end; ++i )
+            {
                 for ( unsigned int j = leaf_b_begin; j < leaf_b_end; ++j )
                 {
                     appendCollision( m_elementProxies[i], m_elementProxies[j] );

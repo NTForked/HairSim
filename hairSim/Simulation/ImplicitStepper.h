@@ -1,8 +1,7 @@
-#ifndef STRANDSIM_IMPLICITSTEPPER_HH
-#define STRANDSIM_IMPLICITSTEPPER_HH
+#ifndef IMPLICIT_STEPPER_HH
+#define IMPLICIT_STEPPER_HH
 
-#include "../Core/StepperBase.hh"
-#include "../Utils/SymmetricBandMatrixSolver.hh"
+#include "../Math/SymmetricBandMatrixSolver.h"
 #include "../../bogus/Interfaces/MecheEigenInterface.hpp"
 
 #include <tr1/memory>
@@ -59,10 +58,10 @@ public:
     const ElasticStrand& getStrand() const
     { return m_strand; }
 
-    const JacobianMatrixType& ImplicitStepper::Lhs() const
+    const JacobianMatrixType& Lhs() const
     { return m_strand.getTotalJacobian(); }
 
-    JacobianMatrixType& ImplicitStepper::Lhs()
+    JacobianMatrixType& Lhs()
     { return m_strand.getTotalJacobian(); }
 
     const VecXx& rhs() const
@@ -136,4 +135,4 @@ private:
     friend class NonLinearForce;
 };
 
-#endif // STRANDSIM_IMPLICITSTEPPER_HH
+#endif

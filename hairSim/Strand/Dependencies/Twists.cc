@@ -18,14 +18,14 @@ void Twists::compute()
 void GradTwists::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
     const std::vector<Scalar>& lengths = m_lengths.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
         Vec11x& Dtwist = m_value[vtx];
 
-        const Vec3x& kb = curvatureBinormals[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
 
         Dtwist.segment<3>( 0 ) = -0.5 / lengths[vtx - 1] * kb;
         Dtwist.segment<3>( 8 ) = 0.5 / lengths[vtx] * kb;
@@ -54,31 +54,31 @@ void GradTwistsSquared::compute()
 void HessTwists::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
+    const Vec3Array& tangents = m_tangents.get();
     const std::vector<Scalar>& lengths = m_lengths.get();
-    const Vec3xArray& curvatureBinormals = m_curvatureBinormals.get();
+    const Vec3Array& curvatureBinormals = m_curvatureBinormals.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
         Mat11x& DDtwist = m_value[vtx];
 
-        const Vec3x& te = tangents[vtx - 1];
-        const Vec3x& tf = tangents[vtx];
+        const Vec3& te = tangents[vtx - 1];
+        const Vec3& tf = tangents[vtx];
         const Scalar norm_e = lengths[vtx - 1];
         const Scalar norm_f = lengths[vtx];
-        const Vec3x& kb = curvatureBinormals[vtx];
+        const Vec3& kb = curvatureBinormals[vtx];
 
         Scalar chi = 1 + te.dot( tf );
 
         //    assert( chi>0 );
         if ( chi <= 0 )
         {
-            WarningStream( g_log, "" ) << "StrandState::computeHessTwist for state " << this
-                    << " chi = " << chi << " te = " << te << " tf = " << tf;
+            std::cerr << "StrandState::computeHessTwist for state " << this
+                    << " chi = " << chi << " te = " << te << " tf = " << tf << std::endl;
             chi = 1e-12;
         }
 
-        const Vec3x& tilde_t = 1.0 / chi * ( te + tf );
+        const Vec3& tilde_t = 1.0 / chi * ( te + tf );
 
         const Mat3x& D2mDe2 = -0.25 / square( norm_e )
                 * ( outerProd<3>( kb, te + tilde_t ) + outerProd<3>( te + tilde_t, kb ) );

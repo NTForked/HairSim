@@ -1,10 +1,10 @@
 #include "AirDragForce.hh"
 #include "../Core/ElasticStrand.hh"
 #include "../Core/ElasticStrandUtils.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Dynamic/StrandDynamics.hh"
+#include "../Math/BandMatrix.h"
 
-Vec3x AirDragForce::s_velOrigin = Vec3x::Zero() ;
+Vec3 AirDragForce::s_velOrigin = Vec3::Zero() ;
 Mat3x AirDragForce::s_Omega_Cross = Mat3x::Zero() ;
 
 AirDragForce::AirDragForce()
@@ -19,8 +19,8 @@ void AirDragForce::computeLocal( LocalForceType& localF, const ElasticStrand& st
     const Scalar nu = strand.getParameters().getAirDrag() ;
     const Scalar len = strand.m_VoronoiLengths[ vtx ];
 
-    const Vec3x ve = s_velOrigin + s_Omega_Cross * geometry.getVertex( vtx ) ;
-    const Vec3x vr = strand.dynamics().getDisplacement( vtx ) / strand.getParameters().getDt() ;
+    const Vec3 ve = s_velOrigin + s_Omega_Cross * geometry.getVertex( vtx ) ;
+    const Vec3 vr = strand.dynamics().getDisplacement( vtx ) / strand.getParameters().getDt() ;
 
     localF = - len * nu *  ( ve + vr ) ;
 }
@@ -47,8 +47,8 @@ void AirDragForce::addInPosition( JacobianMatrixType& globalJacobian, const Inde
 }
 
 void AirDragForce::setFrameVelocities(
-            const Vec3x& Omega,
-            const Vec3x& velOrigin )
+            const Vec3& Omega,
+            const Vec3& velOrigin )
 {
     s_velOrigin = velOrigin ;
     s_Omega_Cross = crossMat( Omega ) ;

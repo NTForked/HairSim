@@ -1,6 +1,6 @@
 #include "SceneUtils.h"
 
-void SceneUtils::findOrthogonal( Vec3x& v, const Vec3x& u )
+void SceneUtils::findOrthogonal( Vec3& v, const Vec3& u )
 {
     assert(u.norm() != 0);
     
@@ -22,12 +22,12 @@ void SceneUtils::findOrthogonal( Vec3x& v, const Vec3x& u )
     assert(std::abs(u.dot(v)) < EPSILON );
 }
 
-void SceneUtils::generateCurlyHair( const Vec3x& initnorm, const Vec3x& startpoint, const double& dL, const int& nv, std::vector<Vec3x>& vertices, double curl_radius, double curl_density, double root_length )
+void SceneUtils::generateCurlyHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double curl_radius, double curl_density, double root_length )
 {
     // generate an orthonormal frame
-    Vec3x p1;
+    Vec3 p1;
     findOrthogonal( p1, initnorm );
-    Vec3x p2 = p1.cross( initnorm );
+    Vec3 p2 = p1.cross( initnorm );
     
     Scalar curl_density_eps = GetScalarOpt( "curl_density_perturbation" );
     Scalar curl_radius_eps = GetScalarOpt( "curl_radius_perturbation" );
@@ -52,7 +52,7 @@ void SceneUtils::generateCurlyHair( const Vec3x& initnorm, const Vec3x& startpoi
     }
   
     vertices.push_back( startpoint );
-    Vec3x freepoint( startpoint + root_length * initnorm );
+    Vec3 freepoint( startpoint + root_length * initnorm );
     vertices.push_back( freepoint );
     // for each curve sample vertex
     Scalar xa = M_PI/( curl_density * 4 ); // 0 // start curve parameter
@@ -70,7 +70,7 @@ void SceneUtils::generateCurlyHair( const Vec3x& initnorm, const Vec3x& startpoi
     }
 }
 
-void SceneUtils::generateStraightHair( const Vec3x& initnorm, const Vec3x& startpoint, const double& dL, const int& nv, std::vector<Vec3x>& vertices, double root_length  )
+void SceneUtils::generateStraightHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double root_length  )
 {
     vertices.push_back( startpoint );
     vertices.push_back( startpoint + root_length * initnorm );
@@ -79,45 +79,45 @@ void SceneUtils::generateStraightHair( const Vec3x& initnorm, const Vec3x& start
     }
 }
 
-void SceneUtils::transformTriangleObject( TriangularMesh& triMesh, Mat3x& transformation, Vec3x& center, Vec3x& translate )
+void SceneUtils::transformTriangleObject( TriMesh& triMesh, Mat3x& transformation, Vec3& center, Vec3& translate )
 {
     for( unsigned i = 0; i < triMesh.nv(); ++i )
     {
-        Vec3x vert = triMesh.getVertex(i);
-        Vec3x vertNext = transformation * (vert - center) + center + translate;
+        Vec3 vert = triMesh.getVertex(i);
+        Vec3 vertNext = transformation * (vert - center) + center + translate;
         triMesh.setVertex(i, vertNext);
         triMesh.setDisplacement( i, (vertNext-vert) );
     }
 }
 
-void SceneUtils::freezeTriangleObject( TriangularMesh& triMesh )
+void SceneUtils::freezeTriangleObject( TriMesh& triMesh )
 {
-    Vec3x disp( 0. , 0. , 0. ) ;
+    Vec3 disp( 0. , 0. , 0. ) ;
     for( unsigned i = 0 ; i < triMesh.nv() ; ++i )
     {
         triMesh.setDisplacement( i, disp );
     }
 }
 
-void SceneUtils::transformRodRoot( ElasticStrand* strand, Mat3x& transformation, Vec3x& center, Vec3x& translate )
+void SceneUtils::transformRodRoot( ElasticStrand* strand, Mat3x& transformation, Vec3& center, Vec3& translate )
 {
     for(size_t vtx = 0; vtx < 2; ++vtx )
     {
-        Vec3x vert = strand->getVertex( vtx );
-        Vec3x vertNext = transformation * (vert - center) + center + translate;
+        Vec3 vert = strand->getVertex( vtx );
+        Vec3 vertNext = transformation * (vert - center) + center + translate;
         strand->dynamics()->getDofController().setVertexDisplacement( vtx, (vertNext - vert) / m_subSteps );
     }
 }
 
-void SceneUtils::transformRodRootVtx( ElasticStrand* strand, Mat3x& transformation, Vec3x& center, Vec3x& translate, int vtx )
+void SceneUtils::transformRodRootVtx( ElasticStrand* strand, Mat3x& transformation, Vec3& center, Vec3& translate, int vtx )
 {
-    Vec3x vert = strand->getVertex( vtx );
-    Vec3x vertNext = transformation * (vert - center) + center + translate;
+    Vec3 vert = strand->getVertex( vtx );
+    Vec3 vertNext = transformation * (vert - center) + center + translate;
     strand->dynamics()->getDofController().setVertexDisplacement( vtx, (vertNext - vert) / m_subSteps );
     strand->dynamics()->getDofController().setThetaDisplacement( 0, 0. );
 }
 
-void SceneUtils::translateRodVertex( ElasticStrand* strand, int vtx_id, Vec3x& translate )
+void SceneUtils::translateRodVertex( ElasticStrand* strand, int vtx_id, Vec3& translate )
 {
     strand->dynamics()->getDofController().setVertexDisplacement( vtx_id, translate / m_subSteps );
 }
@@ -132,11 +132,11 @@ void SceneUtils::freezeVertex( ElasticStrand* strand, int vtx )
     strand->dynamics()->getDofController().freezeVertices( vtx );
 }
 
-void SceneUtils::dumpMesh( std::string outputdirectory, int current_frame, int file_width ) const
+void SceneUtils::dumpMesh( std::string outputdirectory, int current_frame, int file_width, const std::vector< TriMesh* >& meshes )
 {
     mkdir(outputdirectory.c_str(), 0755);
     int mesh_num = 0;
-    for(auto m_itr = m_meshScripting_controllers.begin(); m_itr != m_meshScripting_controllers.end(); ++ m_itr, ++ mesh_num)
+    for( auto m_itr = meshes.begin(); m_itr != meshes.end(); ++ m_itr, ++ mesh_num )
     {
         // new obj per mesh
         std::stringstream name;
@@ -144,9 +144,9 @@ void SceneUtils::dumpMesh( std::string outputdirectory, int current_frame, int f
         name << outputdirectory << "/mesh" <<  mesh_num << "_" << std::setw(file_width) << current_frame << ".obj";
         std::ofstream os(name.str().c_str());
         // header
-        os << "# obj created by StrandSim" << std::endl;
+        os << "# obj created by HairSim" << std::endl;
         // vertices
-        strandsim::TriangularMesh* mesh = (*m_itr)->getCurrentMesh();
+        TriMesh* mesh = *m_itr;
         for ( size_t v = 0; v < mesh->nv(); ++v )
         {
             os << "v " << mesh->getVertex(v).x() << " " << mesh->getVertex(v).y() << " " << mesh->getVertex(v).z() << std::endl;

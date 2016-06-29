@@ -17,13 +17,13 @@ const char* MaterialFrames<2>::name() const
 //void MaterialFrames<FrameN>::compute()
 
 template<>
-inline Vec3x MaterialFrames<1>::linearMix( const Vec3x& u, const Vec3x& v, Scalar s, Scalar c )
+inline Vec3 MaterialFrames<1>::linearMix( const Vec3& u, const Vec3& v, Scalar s, Scalar c )
 {
     return c * u + s * v;
 }
 
 template<>
-inline Vec3x MaterialFrames<2>::linearMix( const Vec3x& u, const Vec3x& v, Scalar s, Scalar c )
+inline Vec3 MaterialFrames<2>::linearMix( const Vec3& u, const Vec3& v, Scalar s, Scalar c )
 {
     return -s * u + c * v;
 }
@@ -32,15 +32,15 @@ template<>
 void MaterialFrames<1>::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& referenceFrames1 = m_referenceFrames1.get();
-    const Vec3xArray& referenceFrames2 = m_referenceFrames2.get();
+    const Vec3Array& referenceFrames1 = m_referenceFrames1.get();
+    const Vec3Array& referenceFrames2 = m_referenceFrames2.get();
     const VecXx& sinThetas = m_trigThetas.getSines();
     const VecXx& cosThetas = m_trigThetas.getCosines();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        const Vec3x& u = referenceFrames1[vtx];
-        const Vec3x& v = referenceFrames2[vtx];
+        const Vec3& u = referenceFrames1[vtx];
+        const Vec3& v = referenceFrames2[vtx];
         const Scalar s = sinThetas[vtx];
         const Scalar c = cosThetas[vtx];
 
@@ -54,15 +54,15 @@ template<>
 void MaterialFrames<2>::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& referenceFrames1 = m_referenceFrames1.get();
-    const Vec3xArray& referenceFrames2 = m_referenceFrames2.get();
+    const Vec3Array& referenceFrames1 = m_referenceFrames1.get();
+    const Vec3Array& referenceFrames2 = m_referenceFrames2.get();
     const VecXx& sinThetas = m_trigThetas.getSines();
     const VecXx& cosThetas = m_trigThetas.getCosines();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        const Vec3x& u = referenceFrames1[vtx];
-        const Vec3x& v = referenceFrames2[vtx];
+        const Vec3& u = referenceFrames1[vtx];
+        const Vec3& v = referenceFrames2[vtx];
         const Scalar s = sinThetas[vtx];
         const Scalar c = cosThetas[vtx];
 

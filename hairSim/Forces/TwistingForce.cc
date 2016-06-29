@@ -1,6 +1,6 @@
 #include "TwistingForce.hh"
 #include "ViscousOrNotViscous.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 template<typename ViscousT>
 Scalar TwistingForce<ViscousT>::localEnergy( const ElasticStrand& strand, StrandState& geometry,
@@ -35,7 +35,7 @@ void TwistingForce<ViscousT>::computeLocal( TwistingForce::LocalThetaForceType& 
     const Scalar ilen = strand.m_invVoronoiLengths[vtx];
     const Scalar twist = geometry.m_twists[vtx];
     const Vec11x& gradTwist = geometry.m_gradTwists[vtx];
-    Vec2x thetaGradTwist( gradTwist[3], gradTwist[7] );
+    Vec2 thetaGradTwist( gradTwist[3], gradTwist[7] );
 
     localF = -kt * ilen * ( twist - undefTwist ) * thetaGradTwist;
 }
@@ -66,7 +66,7 @@ void TwistingForce<ViscousT>::computeLocal( TwistingForce::LocalThetaJacobianTyp
     const Scalar undeformedTwist = ViscousT::thetaBar( strand, vtx );
     const Scalar ilen = strand.m_invVoronoiLengths[vtx];
     const Vec11x& gradTwist = geometry.m_gradTwists[vtx];
-    Vec2x thetaGradTwist( gradTwist[3], gradTwist[7] );
+    Vec2 thetaGradTwist( gradTwist[3], gradTwist[7] );
 
     // There is no twist Hessian on the theta coordinate.
     localJ = -kt * ilen * ( thetaGradTwist * thetaGradTwist.transpose() );

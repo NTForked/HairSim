@@ -1,15 +1,15 @@
 #include "Aleka.hh"
 
 Aleka::Aleka() :
-ProblemStepper("Aleka", "Strands dragging across other strands"),
+Scene("Aleka", "Strands dragging across other strands"),
 m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
     
     // Global opts
     GetScalarOpt("dt") = 1e-3;
-    GetVecOpt("gravity") = Vec3x( 0.0, -1000.0, 0.0 );
-    AddOption("translation","how much to move hanging strands by per timestep", Vec3x( -0.05, 0.0, 0.0 ) );
+    GetVecOpt("gravity") = Vec3( 0.0, -1000.0, 0.0 );
+    AddOption("translation","how much to move hanging strands by per timestep", Vec3( -0.05, 0.0, 0.0 ) );
 
     // Rod opts
     GetIntOpt("nv") = 10;
@@ -40,7 +40,7 @@ Aleka::~Aleka()
 std::vector<bool> frozen;
 void Aleka::setupStrands()
 {
-    std::cout << "ProblemStepper:: Aleka" << std::endl;
+    std::cout << "Scene:: Aleka" << std::endl;
 
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
@@ -82,7 +82,7 @@ void Aleka::setupStrands()
     for ( rod_id = 0; rod_id < fixed_rod_count; ++rod_id )
     {
         // Prepare initial rod/strand position
-        strandsim::Vec3xArray i_vertices;
+        Vec3Array i_vertices;
         
         // Store arbitrary vertex coordinates
         for ( int i = 0; i < nVertices; ++i )
@@ -105,7 +105,7 @@ void Aleka::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[ i / 4 ];
         
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( i_vertices[ 0 ] );
         scripted_vertices.push_back( i_vertices[ nVertices - 1 ] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -135,7 +135,7 @@ void Aleka::setupStrands()
     {
 
         // Prepare initial rod/strand position
-        strandsim::Vec3xArray i_vertices;
+        Vec3Array i_vertices;
         
         // Store arbitrary vertex coordinates
         for ( int i = 0; i < nVertices; ++i )
@@ -163,7 +163,7 @@ void Aleka::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[ i / 4 ];
         
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( i_vertices[ 0 ] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
         controller->freezeRootVertices<1>();
@@ -189,7 +189,7 @@ void Aleka::setupStrands()
     std::cout << "num dofs per strand = " << nDOFs << std::endl << std::endl;
     
     // global body forces
-    GravitationForce::setGravity( GetVecOpt("gravity").cast<strandsim::Scalar>() );
+    GravitationForce::setGravity( GetVecOpt("gravity").cast<Scalar>() );
 }
 
 void Aleka::setupMeshes()
@@ -205,7 +205,7 @@ bool Aleka::executeScript()
         std::exit(0);
     }
 
-    Vec3x zero(  0. , 0., 0. );
+    Vec3 zero(  0. , 0., 0. );
     Mat3x id = Mat3x::Identity();
 
     const int fixed_rod_count = GetIntOpt("fixed_rod_count");
@@ -217,7 +217,7 @@ bool Aleka::executeScript()
             // if ( getTime() < GetScalarOpt("time_moving") ){
             if ( getTime() < 0.25 ){
             // if ( (frame / 10 ) % 3 == 0 ){
-                Vec3x translate = GetVecOpt("translation");
+                Vec3 translate = GetVecOpt("translation");
                 transformRodRootVtx( **rd_itr, id, zero, translate, 0 );
             }
             else{

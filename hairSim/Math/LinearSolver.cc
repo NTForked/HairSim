@@ -1,17 +1,7 @@
-/*
- * BandMatrixLinearSolver.cc
- *
- *  Created on: 18/07/2011
- *      Author: jaubry
- */
-
 #include "LinearSolver.hh"
 #include "BandMatrix.hh"
 #include "../Utils/TextLog.hh"
 
-#ifdef WETA
-#include <mkl.h>
-#else // TODO: Move these into their own header
 // LAPACK
 extern "C" void dgbsv_( const int* n, const int* kl, const int* ku, const int* nrhs, double* ab, const int* ldab, int* ipiv, double* b, const int* ldb, int* info );
 extern "C" int dgbtrs_( const char* trans, const int* n, const int* kl, const int* ku, const int* nrhs, const double* ab, const int* ldab, const int* ipiv, double* b, const int* ldb, int* info );
@@ -25,10 +15,6 @@ extern "C" void dpbcon_( const char* uplo, const int* n, const int* kd, const do
 // BLAS
 extern "C" void dsbmv_( const char *uplo, const int *n, const int *k, const double *alpha, const double *a, const int *lda, const double *x, const int *incx, const double *beta, double *y, const int *incy );
 #define dsbmv dsbmv_
-#endif
-
-namespace strandsim
-{
 
 template<typename ScalarT, bool sym, bool pd, int kl, int ku>
 int BandMatrixCompressedStorage<ScalarT, sym, pd, kl, ku>::s_kl = kl;
@@ -39,13 +25,11 @@ static const int s_one = 1;
 template<typename ScalarT, bool sym, bool pd, int kl, int ku>
 BandMatrixCompressedStorage<ScalarT, sym, pd, kl, ku>::BandMatrixCompressedStorage() :
         m_A( NULL ), m_factorized( false )
-{
-}
+{}
 
 template<typename ScalarT, bool sym, bool pd, int kl, int ku>
 BandMatrixCompressedStorage<ScalarT, sym, pd, kl, ku>::~BandMatrixCompressedStorage()
-{
-}
+{}
 
 template<typename ScalarT, bool sym, bool pd, int kl, int ku>
 void BandMatrixCompressedStorage<ScalarT, sym, pd, kl, ku>::store( const BandMatrixT& A,
@@ -1108,5 +1092,3 @@ template class BandMatrixCompressedStorage<Scalar, true, false, 10, 10> ;
 template class BandMatrixCompressedStorage<Scalar, true, true, 10, 10> ;
 template class BandMatrixCompressedStorage<Scalar, true, true, 15, 15> ;
 template class BandMatrixCompressedStorage<Scalar, true, false, 1, 1> ;
-
-}

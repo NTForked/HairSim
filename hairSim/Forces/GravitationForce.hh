@@ -16,7 +16,7 @@ public:
     static const IndexType s_first = 0; // The first index on which this force can apply
     static const IndexType s_last = 0; // The last index (counting from the end)
 
-    typedef Vec3x LocalForceType;
+    typedef Vec3 LocalForceType;
     typedef Mat3x LocalJacobianType;
 
     GravitationForce();
@@ -37,13 +37,13 @@ public:
     template<typename GlobalT, typename LocalT>
     static void addInPosition( GlobalT& global, const IndexType vtx, const LocalT& local );
 
-    static void setGravity( const Vec3x& gravity )
+    static void setGravity( const Vec3& gravity )
     {
         s_gravity = gravity;
     }
 
 private:
-    static Vec3x s_gravity;
+    static Vec3 s_gravity;
 };
 
 #endif /* GRAVITATIONFORCE_HH_ */

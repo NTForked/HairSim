@@ -1,7 +1,7 @@
 #include "PlayBack.hh"
 
 PlayBack::PlayBack() :
-ProblemStepper("Play Back", "play back output files"),
+Scene("Play Back", "play back output files"),
 m_current_frame(0)
 {
 
@@ -13,7 +13,6 @@ AddOption("padded_width", "number of 0s in frame files", 8);
 
 AddOption("realtime" , "skip set number of frames" , true );
 
-// AddOption( "directory" , "file directory with ordered rod (single ply) and mesh (numbered obj) files" , "/Users/henrique/Desktop/LearnHair/build/Apps/StrandSimulator/2016_06_03_14_42_00_simulation_capture" );
 AddOption( "directory" , "file directory with ordered rod (single ply) and mesh (numbered obj) files" , "/Users/henrique/Desktop/tmp/tmp" );
 AddOption( "mesh_saved_elsewhere" , "if mesh is saved elsewhere" , false );
 AddOption( "mesh_directory" , "when mesh_saved_elsewhere = true, file directory with ordered mesh (numbered obj) files" , "assets/TriangulatedSphere.obj" );
@@ -55,10 +54,10 @@ void PlayBack::loadRods(int frame)
             if ( !( rod_id < GetIntOpt("number_of_rods") ) && GetIntOpt("number_of_rods") != -1 )
                 break;
             
-            std::vector<Vec3x> vertices;
+            std::vector<Vec3> vertices;
             if (segment != current_segment)
             {
-                Vec3x pos(x,y,z);
+                Vec3 pos(x,y,z);
                 vertices.push_back(pos);
                 current_segment = segment;
             }
@@ -70,7 +69,7 @@ void PlayBack::loadRods(int frame)
                 vertstream >> x >> y >> z >> segment;
                 if(segment == current_segment && !infile.eof())
                 {
-                    Vec3x pos(x,y,z);
+                    Vec3 pos(x,y,z);
                     vertices.push_back(pos);
                 }
                 else{
@@ -90,7 +89,7 @@ void PlayBack::loadRods(int frame)
                     for ( int i = 0; i < dofs.size(); i += 4 )
                         dofs.segment<3>( i ) = vertices[i / 4];
                     
-                    strandsim::Vec3xArray scripted_vertices;
+                    Vec3Array scripted_vertices;
                     scripted_vertices.push_back( vertices[0] );
                     scripted_vertices.push_back( vertices[1] );
                     DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -125,10 +124,10 @@ void PlayBack::loadRods(int frame)
             if ( !( rod_id < GetIntOpt("number_of_rods") ) && GetIntOpt("number_of_rods") != -1 )
                 break;
             
-            std::vector<Vec3x> vertices;
+            std::vector<Vec3> vertices;
             if (segment != current_segment)
             {
-                Vec3x pos(x,y,z);
+                Vec3 pos(x,y,z);
                 vertices.push_back(pos);
                 current_segment = segment;
             }
@@ -140,7 +139,7 @@ void PlayBack::loadRods(int frame)
                 vertstream >> x >> y >> z >> segment;
                 if(segment == current_segment && !infile.eof())
                 {
-                    Vec3x pos(x,y,z);
+                    Vec3 pos(x,y,z);
                     vertices.push_back(pos);
                 }
                 else{
@@ -195,7 +194,7 @@ void PlayBack::loadMeshes(int frame)
             SimpleMeshController* mesh = new SimpleMeshController( 0., m_dt );
             m_meshScripting_controllers.push_back( mesh );
             mesh->loadMesh( mesh_name );
-            strandsim::TriangleMeshRenderer* mesh_renderer = new strandsim::TriangleMeshRenderer( *(mesh->getCurrentMesh()) );
+            TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh->getCurrentMesh()) );
             m_mesh_renderers.push_back( mesh_renderer );
         }
         else {
@@ -265,7 +264,7 @@ void PlayBack::setupMeshes()
     meshradius = (currentMesh->getVertex(0)).norm();
     std::cout<< "# sphere radius: \n" << meshradius << '\n';
     
-    strandsim::TriangleMeshRenderer* mesh_renderer = new strandsim::TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
+    TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
     m_mesh_renderers.push_back( mesh_renderer );
 
 }

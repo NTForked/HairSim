@@ -1,9 +1,9 @@
 #ifndef ALEKA
 #define ALEKA
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class Aleka : public ProblemStepper
+class Aleka : public Scene
 {
 // M strands passing over
 // N strands fixed at both ends

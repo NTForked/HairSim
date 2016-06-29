@@ -2,7 +2,7 @@
 
 #include "ElementProxy.hh"
 #include "../Core/ElasticStrand.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "../Dynamic/StrandDynamics.hh"
 #include "../Utils/Distances.hh"
 #include "CollisionUtils.hh"
 
@@ -22,14 +22,14 @@ TwistEdgeHandler::TwistEdgeHandler():
 TwistEdgeHandler::~TwistEdgeHandler()
 {}
 
-void TwistEdgeHandler::getEdgeVerts( const TwistEdge* edge, const bool& startOfStep, Vec3x& firstVert, Vec3x& secondVert )
+void TwistEdgeHandler::getEdgeVerts( const TwistEdge* edge, const bool& startOfStep, Vec3& firstVert, Vec3& secondVert )
 {
 	if( edge->isTwistedBand )
 	{
-		Vec3x alphaFirstVert, alphaSecondVert;
+		Vec3 alphaFirstVert, alphaSecondVert;
 		getEdgeVerts( edge->parents.first, startOfStep, alphaFirstVert, alphaSecondVert );
 
-		Vec3x betaFirstVert, betaSecondVert;
+		Vec3 betaFirstVert, betaSecondVert;
 		getEdgeVerts( edge->parents.second, startOfStep, betaFirstVert, betaSecondVert );
 
         double alpha, beta;
@@ -66,13 +66,13 @@ void TwistEdgeHandler::getEdgeAlphas( const TwistEdge* edge, const bool& startOf
 {
     assert( edge->isTwistedBand );
 
-    Vec3x alphaFirstVert, alphaSecondVert;
+    Vec3 alphaFirstVert, alphaSecondVert;
     getEdgeVerts( edge->parents.first, startOfStep, alphaFirstVert, alphaSecondVert );
 
-    Vec3x betaFirstVert, betaSecondVert;
+    Vec3 betaFirstVert, betaSecondVert;
     getEdgeVerts( edge->parents.second, startOfStep, betaFirstVert, betaSecondVert );
 
-    Vec3x firstVert, secondVert;
+    Vec3 firstVert, secondVert;
     ClosestPtSegmentSegment( alphaFirstVert, alphaSecondVert, betaFirstVert, betaSecondVert, alpha, beta, firstVert, secondVert );
 }
 
@@ -83,26 +83,26 @@ bool signPos( double number )
 
 void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, TwistEdge* startPB, TwistEdge* endPA, TwistEdge* endPB, const bool& traversal )
 {
-    Vec3x edgeA, edgeB;
+    Vec3 edgeA, edgeB;
     getEdgeVerts( edge, true, edgeA, edgeB );
-    Vec3x planeNormal = edgeB - edgeA;
+    Vec3 planeNormal = edgeB - edgeA;
     planeNormal.normalize();
 
-    Vec3x aS1, aS2; // alpha start first, second
-    Vec3x bS1, bS2;
+    Vec3 aS1, aS2; // alpha start first, second
+    Vec3 bS1, bS2;
     getEdgeVerts( startPA, true, aS1, aS2 );
     getEdgeVerts( startPB, true, bS1, bS2 );
 
-    Vec3x a = aS2 - aS1; a = a - a.dot(planeNormal) * planeNormal; // project each onto plane
-    Vec3x b = bS2 - bS1; b = b - b.dot(planeNormal) * planeNormal;
+    Vec3 a = aS2 - aS1; a = a - a.dot(planeNormal) * planeNormal; // project each onto plane
+    Vec3 b = bS2 - bS1; b = b - b.dot(planeNormal) * planeNormal;
     double startAngle = atan2( ( a.cross(b) ).dot(planeNormal), a.dot(b) );
 
     getEdgeVerts( edge, false, edgeA, edgeB );
     planeNormal = edgeB - edgeA;
     planeNormal.normalize();
 
-    Vec3x aF1, aF2; // alpha final first, second
-    Vec3x bF1, bF2;
+    Vec3 aF1, aF2; // alpha final first, second
+    Vec3 bF1, bF2;
     getEdgeVerts( endPA, false, aF1, aF2 );
     getEdgeVerts( endPB, false, bF1, bF2 );
 
@@ -119,11 +119,11 @@ void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, Tw
         if( times[0] < 1e-12 ) return;
 
         double alpha, beta;
-        Vec3x colAlpha, colBeta;
-        Vec3x aC1 = aS1 + times[0] * ( aF1 - aS1 );
-        Vec3x aC2 = aS2 + times[0] * ( aF2 - aS2 );
-        Vec3x bC1 = bS1 + times[0] * ( bF1 - bS1 );
-        Vec3x bC2 = bS2 + times[0] * ( bF2 - bS2 );
+        Vec3 colAlpha, colBeta;
+        Vec3 aC1 = aS1 + times[0] * ( aF1 - aS1 );
+        Vec3 aC2 = aS2 + times[0] * ( aF2 - aS2 );
+        Vec3 bC1 = bS1 + times[0] * ( bF1 - bS1 );
+        Vec3 bC2 = bS2 + times[0] * ( bF2 - bS2 );
         double proxsq = ClosestPtSegmentSegment( aC1, aC2, bC1, bC2, alpha, beta, colAlpha, colBeta );
         // cout << "proxsq " << proxsq << " time: " << times[0] << endl;
         intersecting = proxsq < 1e-12; // -16
@@ -242,9 +242,9 @@ void TwistEdgeHandler::applyImpulses( ElasticStrand* strand, ImplicitStepper* st
             continue;
         }
 
-        Vec3x edgeA, edgeB;
+        Vec3 edgeA, edgeB;
         getEdgeVerts( edge, false, edgeA, edgeB );
-        Vec3x planeNormal = edgeA - edgeB;
+        Vec3 planeNormal = edgeA - edgeB;
         double x = planeNormal.norm();
         planeNormal.normalize();
 

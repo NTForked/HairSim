@@ -66,14 +66,14 @@ bool StrandState::hasSmallForces( const Scalar lTwoTol, const Scalar lInfTol ) c
           || ( m_totalForce.lpNorm<Eigen::Infinity>() <= lInfTol ) );
 }
 
-Vec3x StrandState::closestPoint( const Vec3x& x ) const
+Vec3 StrandState::closestPoint( const Vec3& x ) const
 {
     Scalar mindist = std::numeric_limits<Scalar>::max();
-    Vec3x winner;
+    Vec3 winner;
 
     for ( int vtx = 0; vtx < m_numVertices - 1; ++vtx )
     {
-        Vec3x y = ClosestPtPointSegment( x, getVertex( vtx ), getVertex( vtx + 1 ) );
+        Vec3 y = ClosestPtPointSegment( x, getVertex( vtx ), getVertex( vtx + 1 ) );
         Scalar dist = ( y - x ).squaredNorm();
         if ( dist < mindist )
         {

@@ -7,7 +7,7 @@
 
 #include "GravitationForce.hh"
 #include "../Core/ElasticStrand.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 GravitationForce::GravitationForce()
 {
@@ -33,7 +33,7 @@ void GravitationForce::computeLocal<Scalar>( Scalar& localE, const ElasticStrand
 }
 
 template<>
-void GravitationForce::computeLocal<Vec3x>( Vec3x& localF, const ElasticStrand& strand,
+void GravitationForce::computeLocal<Vec3>( Vec3& localF, const ElasticStrand& strand,
         const StrandState& geometry, const IndexType vtx )
 {
     localF = strand.m_vertexMasses[vtx] * s_gravity;
@@ -47,8 +47,8 @@ void GravitationForce::computeLocal<Mat3x>( Mat3x& localJ, const ElasticStrand& 
 }
 
 template<>
-void GravitationForce::addInPosition<VecXx, Vec3x>( VecXx& globalForce, const IndexType vtx,
-        const Vec3x& localForce )
+void GravitationForce::addInPosition<VecXx, Vec3>( VecXx& globalForce, const IndexType vtx,
+        const Vec3& localForce )
 {
     globalForce.segment<3>( 4 * vtx ) += localForce;
 }
@@ -60,4 +60,4 @@ void GravitationForce::addInPosition<JacobianMatrixType, Mat3x>( JacobianMatrixT
     globalJacobian.localStencilAdd<3>( 4 * vtx, localJacobian );
 }
 
-Vec3x GravitationForce::s_gravity( 0.0, -981.0, 0.0 ); // Acceleration vector, in cm/s^2 to match Maya's units. Also, the y-axis is vertical.
+Vec3 GravitationForce::s_gravity( 0.0, -981.0, 0.0 ); // Acceleration vector, in cm/s^2 to match Maya's units. Also, the y-axis is vertical.

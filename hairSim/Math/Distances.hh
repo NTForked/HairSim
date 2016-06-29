@@ -1,33 +1,33 @@
-#ifndef STRANDSIM_GEOMETRY_HH
-#define STRANDSIM_GEOMETRY_HH
+#ifndef DISTANCES_HH
+#define DISTANCES_HH
 
-#include "../Core/Definitions.hh"
+#include "../Utils/Definitions.h"
 
 // Closest point on a segment to a vertex
-Vec3x ClosestPtPointSegment( const Vec3x& point, const Vec3x& first, const Vec3x& last );
+Vec3 ClosestPtPointSegment( const Vec3& point, const Vec3& first, const Vec3& last );
 
-Vec3x ClosestPtPointSegment( bool& extremum, const Vec3x& point, const Vec3x& first,
-        const Vec3x& last );
+Vec3 ClosestPtPointSegment( bool& extremum, const Vec3& point, const Vec3& first,
+        const Vec3& last );
 
 // Closest point on a triangle to a vertex
-Vec3x ClosestPtPointTriangle( const Vec3x& p, const Vec3x& a, const Vec3x& b, const Vec3x& c );
+Vec3 ClosestPtPointTriangle( const Vec3& p, const Vec3& a, const Vec3& b, const Vec3& c );
 
 // Computes the squared distance between and closest points of two edges.
-double ClosestPtSegmentSegment( const Vec3x& p1, const Vec3x& q1, const Vec3x& p2, const Vec3x& q2,
-        double& s, double& t, Vec3x& c1, Vec3x& c2 );
+double ClosestPtSegmentSegment( const Vec3& p1, const Vec3& q1, const Vec3& p2, const Vec3& q2,
+        double& s, double& t, Vec3& c1, Vec3& c2 );
 
 // Computes the barycentric coordiantes of a point wrt a triangle
-void computeBarycentricCoordinates( const Vec3x& a, const Vec3x& b, const Vec3x& c, const Vec3x& p,
+void computeBarycentricCoordinates( const Vec3& a, const Vec3& b, const Vec3& c, const Vec3& p,
         double& u, double& v, double& w );
 
 // Ci: center of rectangle i ; xi and yi : extents on boths axis
 // CPi: closest point on rectangle i
-Scalar SquareDistRectangleToRectangle( const Vec3x& C1, const Vec3x &x1, const Vec3x &y1,
-        const Vec3x& C2, const Vec3x &x2, const Vec3x &y2, Vec3x &CP1, Vec3x &CP2 );
+Scalar SquareDistRectangleToRectangle( const Vec3& C1, const Vec3 &x1, const Vec3 &y1,
+        const Vec3& C2, const Vec3 &x2, const Vec3 &y2, Vec3 &CP1, Vec3 &CP2 );
 
 // /!\ Will return false if segment and rectangle are coplanar
-bool intersectionSegmentRectangle( const Vec3x& s_edge_0, const Vec3x& s_edge_1,
-        const Vec3x& r_center, const Vec3x& r_extent_1, const Vec3x& r_extent_2, Scalar &t );
+bool intersectionSegmentRectangle( const Vec3& s_edge_0, const Vec3& s_edge_1,
+        const Vec3& r_center, const Vec3& r_extent_1, const Vec3& r_extent_2, Scalar &t );
 
 // Templated segment/point and segment/segment distances
 
@@ -81,7 +81,7 @@ ScalarT SquareDistSegmentToSegment( const Eigen::MatrixBase<InVecT>& p0,
 
     const ScalarT denom = a * e - b * b;
 
-    if ( strandsim::isSmall( denom ) ) // parallel
+    if ( isSmall( denom ) ) // parallel
     {
         const ScalarT s0 = -c / a;
         const ScalarT s1 = ( b - c ) / a;
@@ -124,8 +124,8 @@ ScalarT SquareDistSegmentToSegment( const Eigen::MatrixBase<InVecT>& p0,
     const ScalarT s_ = ( b * f - c * e ) / denom;
     const ScalarT t_ = ( b * s_ + f ) / e;
 
-    s = strandsim::clamp<ScalarT>( s_, 0, 1 );
-    t = strandsim::clamp<ScalarT>( t_, 0, 1 );
+    s = clamp<ScalarT>( s_, 0, 1 );
+    t = clamp<ScalarT>( t_, 0, 1 );
 
     return ( p0 + s * dp - q0 - t * dq ).squaredNorm();
 }
@@ -155,11 +155,11 @@ ScalarT HausdorffDistSegmentToSegment( const Eigen::MatrixBase<InVecT>& p0,
     const ScalarT c = dp.dot( r );
     const ScalarT b = dp.dot( dq );
 
-    const ScalarT s0 = strandsim::clamp( -c / a, 0.f, 1.f );
-    const ScalarT s1 = strandsim::clamp( ( b - c ) / a, 0.f, 1.f );
+    const ScalarT s0 = clamp( -c / a, 0.f, 1.f );
+    const ScalarT s1 = clamp( ( b - c ) / a, 0.f, 1.f );
 
-    const ScalarT t0 = strandsim::clamp( f / e, 0.f, 1.f );
-    const ScalarT t1 = strandsim::clamp( ( b + f ) / e, 0.f, 1.f );
+    const ScalarT t0 = clamp( f / e, 0.f, 1.f );
+    const ScalarT t1 = clamp( ( b + f ) / e, 0.f, 1.f );
 
     return std::sqrt(
             std::max(
@@ -170,4 +170,4 @@ ScalarT HausdorffDistSegmentToSegment( const Eigen::MatrixBase<InVecT>& p0,
 
 }
 
-#endif // STRANDSIM_GEOMETRY_HH
+#endif 

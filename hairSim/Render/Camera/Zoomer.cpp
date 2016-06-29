@@ -1,6 +1,6 @@
 #include "Zoomer.h"
 
-Zoomer::Zoomer(Camera* c, const scalar s)
+Zoomer::Zoomer(Camera* c, const Scalar s)
   : m_camera(c)
   , m_translating(false)
   , m_scale(s)
@@ -11,7 +11,7 @@ void Zoomer::setCamera(Camera* c)
   m_camera = c;
 }
 
-void Zoomer::setScale(const scalar s)
+void Zoomer::setScale(const Scalar s)
 {
   m_scale = s;
 }

@@ -1,15 +1,15 @@
 #include "SingleContact.hh"
 
 SingleContact::SingleContact() :
-ProblemStepper("SingleContact", "Single Contact, simple orthogonal setup"),
+Scene("SingleContact", "Single Contact, simple orthogonal setup"),
 m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
     
     // Global opts
     GetScalarOpt("dt") = 1e-3;
-    GetVecOpt("gravity") = Vec3x( 0.0, -100.0, 0.0 );
-    // GetVecOpt("gravity") = Vec3x( 0.0, 0.0, 0.0 );
+    GetVecOpt("gravity") = Vec3( 0.0, -100.0, 0.0 );
+    // GetVecOpt("gravity") = Vec3( 0.0, 0.0, 0.0 );
 
     // Rod opts
     GetIntOpt("nv") = 6; //try 11, 981.0, uneven vertices (shows it better)
@@ -43,7 +43,7 @@ SingleContact::~SingleContact()
 
 void SingleContact::setupStrands()
 {
-    std::cout << "ProblemStepper:: SingleContact" << std::endl;
+    std::cout << "Scene:: SingleContact" << std::endl;
 
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
@@ -65,7 +65,7 @@ void SingleContact::setupStrands()
     for (int rod_id = 0; rod_id < 2; ++rod_id)
     {
         // Prepare initial rod/strand position
-        strandsim::Vec3xArray i_vertices;
+        Vec3Array i_vertices;
         
         // Store arbitrary vertex coordinates
         for ( int i = 0; i < nVertices; i++ )
@@ -95,7 +95,7 @@ void SingleContact::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[i / 4];
         
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( i_vertices[0] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
 
@@ -127,7 +127,7 @@ void SingleContact::setupStrands()
     std::cout << "num strands = " << m_strands.size() <<'\n';
     std::cout << "num dofs per strand = " << nDOFs <<'\n';
     
-    GravitationForce::setGravity( GetVecOpt("gravity").cast<strandsim::Scalar>() );
+    GravitationForce::setGravity( GetVecOpt("gravity").cast<Scalar>() );
 }
 
 void SingleContact::setupMeshes()
@@ -141,14 +141,14 @@ bool SingleContact::executeScript()
 {
 
     // if( getTime() >= 0.5 ){
-    //     GetVecOpt("gravity") = Vec3x( 0.0, 0.0, 0.0 );
+    //     GetVecOpt("gravity") = Vec3( 0.0, 0.0, 0.0 );
     // }
 
 
     // static int count = 1;
     // int vidx = 2;
-    // Vec3x translate(0.0, 0.1, 0.0);
-    // Vec3x zero(0.0, 0.0, 0.0);
+    // Vec3 translate(0.0, 0.1, 0.0);
+    // Vec3 zero(0.0, 0.0, 0.0);
     // for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
     // {
     //     if( (*rd_itr)->getStrand().getGlobalIndex() == 1 ) continue;

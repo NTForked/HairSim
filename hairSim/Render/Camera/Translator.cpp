@@ -1,6 +1,6 @@
 #include "Translator.h"
 
-Translator::Translator(Camera* c, const scalar s)
+Translator::Translator(Camera* c, const Scalar s)
   : m_camera(c)
   , m_translating(false)
   , m_translation(0,0,0)
@@ -12,7 +12,7 @@ void Translator::setCamera(Camera* c)
   m_camera = c;
 }
 
-void Translator::setScale(const scalar s)
+void Translator::setScale(const Scalar s)
 {
   m_scale = s;
 }

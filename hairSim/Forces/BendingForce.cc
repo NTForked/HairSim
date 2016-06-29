@@ -1,18 +1,18 @@
 #include "BendingForce.hh"
 #include "ViscousOrNotViscous.hh"
 #include "../Core/ElasticStrandUtils.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 template<typename ViscousT>
 Scalar BendingForce<ViscousT>::localEnergy( const ElasticStrand& strand, StrandState& geometry,
         const IndexType vtx )
 {
     const Mat2x& B = ViscousT::bendingMatrix( strand, vtx );
-    const Vec2x& kappaBar = ViscousT::kappaBar( strand, vtx );
+    const Vec2& kappaBar = ViscousT::kappaBar( strand, vtx );
     const Scalar ilen = strand.m_invVoronoiLengths[vtx];
-    const Vec2x& kappa = geometry.m_kappas[vtx];
+    const Vec2& kappa = geometry.m_kappas[vtx];
 
-    return 0.5 * ilen * ( kappa - kappaBar ).dot( Vec2x( B * ( kappa - kappaBar ) ) );
+    return 0.5 * ilen * ( kappa - kappaBar ).dot( Vec2( B * ( kappa - kappaBar ) ) );
 }
 
 template<typename ViscousT>
@@ -20,9 +20,9 @@ void BendingForce<ViscousT>::computeLocal( BendingForce::LocalForceType& localF,
         const ElasticStrand& strand, StrandState& geometry, const IndexType vtx )
 {
     const Mat2x& B = ViscousT::bendingMatrix( strand, vtx );
-    const Vec2x& kappaBar = ViscousT::kappaBar( strand, vtx );
+    const Vec2& kappaBar = ViscousT::kappaBar( strand, vtx );
     const Scalar ilen = strand.m_invVoronoiLengths[vtx];
-    const Vec2x& kappa = geometry.m_kappas[vtx];
+    const Vec2& kappa = geometry.m_kappas[vtx];
     const GradKType& gradKappa = geometry.m_gradKappas[vtx];
 
     localF = -ilen * gradKappa * B * ( kappa - kappaBar );
@@ -40,9 +40,9 @@ void BendingForce<ViscousT>::computeLocal( BendingForce::LocalThetaForceType& lo
     thetaGradKappa( 1, 1 ) = gradKappa( 7, 1 );
 
     const Mat2x& B = ViscousT::bendingMatrix( strand, vtx );
-    const Vec2x& kappaBar = ViscousT::kappaBar( strand, vtx );
+    const Vec2& kappaBar = ViscousT::kappaBar( strand, vtx );
     const Scalar ilen = strand.m_invVoronoiLengths[vtx];
-    const Vec2x& kappa = geometry.m_kappas[vtx];
+    const Vec2& kappa = geometry.m_kappas[vtx];
 
     localF = -ilen * thetaGradKappa * B * ( kappa - kappaBar );
 }
@@ -56,11 +56,11 @@ void BendingForce<ViscousT>::computeLocal( BendingForce::LocalJacobianType& loca
     if ( strand.requiresExactJacobian() )
     {
         const Mat2x& bendingMatrixBase = strand.m_parameters.bendingMatrixBase();
-        const Vec2x& kappaBar = ViscousT::kappaBar( strand, vtx );
-        const Vec2x& kappa = geometry.m_kappas[vtx];
+        const Vec2& kappaBar = ViscousT::kappaBar( strand, vtx );
+        const Vec2& kappa = geometry.m_kappas[vtx];
         const std::pair<LocalJacobianType, LocalJacobianType>& hessKappa =
                 geometry.m_hessKappas[vtx];
-        const Vec2x& temp = bendingMatrixBase * ( kappa - kappaBar );
+        const Vec2& temp = bendingMatrixBase * ( kappa - kappaBar );
 
         localJ += temp( 0 ) * hessKappa.first + temp( 1 ) * hessKappa.second;
     }
@@ -85,11 +85,11 @@ void BendingForce<ViscousT>::computeLocal( BendingForce::LocalThetaJacobianType&
 
     if ( strand.requiresExactJacobian() )
     {
-        const Vec2x& kappaBar = ViscousT::kappaBar( strand, vtx );
-        const Vec2x& kappa = geometry.m_kappas[vtx];
+        const Vec2& kappaBar = ViscousT::kappaBar( strand, vtx );
+        const Vec2& kappa = geometry.m_kappas[vtx];
         const std::pair<LocalThetaJacobianType, LocalThetaJacobianType>& hessKappa =
                 geometry.m_thetaHessKappas[vtx];
-        const Vec2x& temp = bendingMatrixBase * ( kappa - kappaBar );
+        const Vec2& temp = bendingMatrixBase * ( kappa - kappaBar );
         localJ += temp( 0 ) * hessKappa.first + temp( 1 ) * hessKappa.second;
     }
 

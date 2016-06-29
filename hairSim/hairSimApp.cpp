@@ -2,24 +2,25 @@
 #include "Render/Camera/ViewController.h"
 #include "Render/Image.h"
 #include "Scenes/Scene.h"
-#include "Utils/Image.h"
-#include "Utils/TypeDefs.h"
+#include "Utils/Definitions.h"
+#include "Scenes/SceneUtils.h"
 
+#include <tclap/CmdLine.h>
 #include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h>
 
 // problems :
+#include "Scenes/Aleka.h"
+#include "Scenes/Braid.h"
 #include "Scenes/CousinIt.h"
+#include "Scenes/Knot.h"
+#include "Scenes/Locks.h"
+#include "Scenes/MultipleContact.h"
 #include "Scenes/PlayBack.h"
 #include "Scenes/SingleContact.h"
-#include "Scenes/Aleka.h"
-#include "Scenes/Knot.h"
-#include "Scenes/MultipleContact.h"
-#include "Scenes/Braid.hh"
-#include "Scenes/Twist.h"
-#include "Scenes/Locks.h"
 //
 
 int g_problem_idx = -1;
@@ -76,9 +77,6 @@ void createProblem()
             g_ps = new Braid();
             break;
         case 8:
-            g_ps = new Twist();
-            break;
-        case 9:
             g_ps = new Locks();
             break;          
         default:
@@ -132,8 +130,9 @@ void drawText( std::string s, int x, int y )
 
 void drawHUD()
 {
+/*
     std::ostringstream oss; 
-    if( nonLinearCallbackBogus) oss << "nonlinearCallback: ON";
+    if( nonLinearCallbackBogus ) oss << "nonlinearCallback: ON";
     else oss << "nonlinearCallback: OFF";
     drawText( oss.str(), 7, 40 ); oss.str(""); oss.clear();
 
@@ -144,6 +143,7 @@ void drawHUD()
     if( trackGeometricRelations ) oss << "trackGeometricRelations: ON";
     else oss << "trackGeometricRelations: OFF";
     drawText( oss.str(), 7, 70 ); oss.str(""); oss.clear();
+*/
 }
 
 void display()
@@ -273,7 +273,7 @@ void screenshot( void )
 
 void output()
 {
-    if( ( g_dumpcoord || g_dump_checkpoint )
+    if( g_dumpcoord || g_dump_checkpoint )
     {
         int steps_per_frame = -1;
         if( g_fps > 0 )
@@ -295,7 +295,7 @@ void output()
             {
                 g_ps->dumpRods( g_outputdirectory, g_current_frame, file_width );
                 if (! g_dont_dumpmesh ){
-                    g_ps->dumpMesh( g_outputdirectory, g_current_frame, file_width );
+                    SceneUtils::dumpMesh( g_outputdirectory, g_current_frame, file_width, g_ps->getMeshes() );
                 }
                 
                 std::cout << "Saved coordinates of frame: " << g_current_frame << " @ time: " 
@@ -387,7 +387,7 @@ void mouse( int button, int state, int x, int y )
     const bool scripting = (button == GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_ALT);
     const bool rotating = (button == GLUT_LEFT_BUTTON) && (glutGetModifiers() == 0);
     
-    scalar xx, yy;
+    Scalar xx, yy;
     scaleMousePos(x, y, xx, yy);
     if( state == GLUT_DOWN ){
         if( translating ) controller.beginTranslationDrag(xx, yy);
@@ -518,7 +518,7 @@ int parseCommandLine( int argc, char** argv )
     try
     {
         TCLAP::CmdLine cmd("hairSim");
-        TCLAP::ValueArg<int> run( "r", "run", "Run a problem", true, -1, cmd );
+        TCLAP::ValueArg<int> run( "r", "run", "Run a problem", true, -1, "int", cmd );
         TCLAP::ValueArg<std::string> file( "f", "file", "Options file for a problem", true, "", "string", cmd );
         TCLAP::ValueArg<bool> dumpcoord ( "d", "dumpcoord", "Dump coordinates of all rods and meshes at each frame", false, false, "boolean", cmd );
         cmd.parse(argc, argv);
@@ -542,23 +542,12 @@ int parseCommandLine( int argc, char** argv )
                 // dump copy of options used for the record
                 mkdir( g_outputdirectory.c_str(), 0755 );
                 std::stringstream name;
-                name << g_outputdirectory << "/" << "config_file";
-                std::ofstream file;
-                file.open(name.str().c_str());
-                if (!file.is_open())
-                {
-                    std::cerr << "Failed to open file " << name.str() << std::endl;
-                    return -1;
-                }
-                
-                file << "# PROBLEM : " << g_ps->m_problemName << std::endl << "# SAVED TO : " << g_outputdirectory.c_str() <<  std::endl;
-                createOptionsFile( file );
-                file.close();
-                
+                name << g_outputdirectory << "/" << "config_file.txt";
+                createOptionsFile( name.str() );                
                 std::cout << "Dumped options for problem" << g_ps->m_problemName << " to file " << name.str() << std::endl;
             }
             
-            return idx;
+            return g_problem_idx;
         }
 
         std::cerr << cmd.getProgramName() << ": missing operand" << std::endl 

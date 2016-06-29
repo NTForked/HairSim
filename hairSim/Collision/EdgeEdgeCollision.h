@@ -1,9 +1,9 @@
-#ifndef EDGEEDGECOLLISION_HH_
-#define EDGEEDGECOLLISION_HH_
+#ifndef EDGE_EDGE_COLLISION_H_
+#define EDGE_EDGE_COLLISION_H_
 
-#include "ContinuousTimeCollision.hh"
-#include "CTCD.h"
-#include "../Dynamic/ImplicitStepper.hh"
+#include "Collision.h"
+
+class TwistEdgeHandler;
 
 class EdgeEdgeCollision: public EdgeCollision
 {
@@ -18,13 +18,16 @@ public:
         }
     }
 
-    virtual bool analyse();
+    virtual bool analyse( TwistEdgeHandler* teh );
 
     bool operator <( EdgeEdgeCollision* other ) const
     { return compare( this, other); }
 
     friend bool compare( const EdgeEdgeCollision* ee1, const EdgeEdgeCollision* ee2 );
     
+    EdgeProxy* getSecondEdgeProxy() const
+    { return m_secondEdgeProxy; }
+
     Scalar getFirstAbscissa() const
     { return m_s; }
     
@@ -32,6 +35,8 @@ public:
     { return m_t; }
 
 protected:
+
+    void validCollision( TwistEdgeHandler* teh );
     void print( std::ostream& os ) const;
     void printShort( std::ostream& os ) const;
 

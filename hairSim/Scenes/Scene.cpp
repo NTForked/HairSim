@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <iterator>
 
-#include "../../StrandSim/Collision/ElementProxy.hh"
-#include "../../StrandSim/Collision/CollisionDetector.hh"
+#include "../Collision/ElementProxy.h"
+#include "../Collision/CollisionDetector.h"
 
-Scene::ProblemStepper( const std::string& name, const std::string& desc )
+Scene::Scene( const std::string& name, const std::string& desc )
 : m_problemName( name )
 , m_problemDesc( desc )
 , m_t( 0. ) // start time
@@ -24,7 +24,7 @@ Scene::ProblemStepper( const std::string& name, const std::string& desc )
     m_renderer = new StrandRenderer();
 }
 
-Scene::~ProblemStepper()
+Scene::~Scene()
 {
   if( m_strandsManager != NULL )
   {
@@ -222,14 +222,14 @@ void Scene::getRadius( Scalar& radius, const Vec3d& simCenter )
 {
     for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        const Vec3x center = m_renderer->calculateObjectCenter( sptr );
+        const Vec3 center = m_renderer->calculateObjectCenter( sptr );
         const Scalar r = m_renderer->calculateObjectBoundingRadius( sptr );
         radius = std::max( radius, r + ( center - simCenter ).norm() );
     }
     
     for(auto m_itr = m_mesh_renderers.begin(); m_itr != m_mesh_renderers.end(); ++ m_itr)
     {
-        const Vec3x center = (*m_itr)->calculateObjectCenter();
+        const Vec3 center = (*m_itr)->calculateObjectCenter();
         const Scalar r = (*m_itr)->calculateObjectBoundingRadius( center );
         radius = std::max( radius, r + ( center - simCenter ).norm() );
     }
@@ -466,7 +466,7 @@ void Scene::checkpointSave( std::string outputdirectory ) const
             }
         }
 
-        Vec3xArray& prevTangCurr =  sptr->getCurrentState().m_referenceFrames1.getPreviousTangents();
+        Vec3Array& prevTangCurr =  sptr->getCurrentState().m_referenceFrames1.getPreviousTangents();
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             serializeVarHex( prevTangCurr[v].x(), os );
@@ -474,7 +474,7 @@ void Scene::checkpointSave( std::string outputdirectory ) const
             serializeVarHex( prevTangCurr[v].z(), os );
         }
 
-        Vec3xArray& prevTangFut =  sptr->getFutureState().m_referenceFrames1.getPreviousTangents();
+        Vec3Array& prevTangFut =  sptr->getFutureState().m_referenceFrames1.getPreviousTangents();
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             serializeVarHex( prevTangFut[v].x(), os );
@@ -494,7 +494,7 @@ void Scene::checkpointSave( std::string outputdirectory ) const
             serializeVarHex( FutureReftwists[v], os );
         }
 
-        const Vec3xArray& currRefFrame1 = sptr->getCurrentState().m_referenceFrames1.getDirty();
+        const Vec3Array& currRefFrame1 = sptr->getCurrentState().m_referenceFrames1.getDirty();
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             serializeVarHex( currRefFrame1[v].x(), os );
@@ -502,7 +502,7 @@ void Scene::checkpointSave( std::string outputdirectory ) const
             serializeVarHex( currRefFrame1[v].z(), os );
         }
 
-        const Vec3xArray& futureRefFrame1 = sptr->getFutureState().m_referenceFrames1.getDirty();
+        const Vec3Array& futureRefFrame1 = sptr->getFutureState().m_referenceFrames1.getDirty();
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             serializeVarHex( futureRefFrame1[v].x(), os );
@@ -571,7 +571,7 @@ void Scene::checkpointRestore()
     std::ifstream in( name.str().c_str(), std::ios::in | std::ios::binary );
     if( !in.is_open() )
     {
-        std::cerr << "ProblemStepper could not find/open checkpoint file: " << name << std::endl;
+        std::cerr << "Scene could not find/open checkpoint file: " << name << std::endl;
         exit(1);
     }
     in.precision( std::numeric_limits<double>::digits10 + 2);
@@ -619,7 +619,7 @@ void Scene::checkpointRestore()
             }
         }
 
-        Vec3xArray prevTangCurr( sptr->getNumVertices() - 1 );
+        Vec3Array prevTangCurr( sptr->getNumVertices() - 1 );
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             deserializeVarHex( prevTangCurr[v].x(), in );
@@ -627,7 +627,7 @@ void Scene::checkpointRestore()
             deserializeVarHex( prevTangCurr[v].z(), in );
         }
 
-        Vec3xArray prevTangFut ( sptr->getNumVertices() - 1 );
+        Vec3Array prevTangFut ( sptr->getNumVertices() - 1 );
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             deserializeVarHex( prevTangFut[v].x(), in );
@@ -647,7 +647,7 @@ void Scene::checkpointRestore()
             deserializeVarHex( FutureReftwists[v], in );
         }
 
-        Vec3xArray currRefFrame1( sptr->getNumVertices() - 1 );
+        Vec3Array currRefFrame1( sptr->getNumVertices() - 1 );
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             deserializeVarHex( currRefFrame1[v].x(), in );
@@ -655,7 +655,7 @@ void Scene::checkpointRestore()
             deserializeVarHex( currRefFrame1[v].z(), in );
         }
 
-        Vec3xArray futureRefFrame1( sptr->getNumVertices() - 1 );
+        Vec3Array futureRefFrame1( sptr->getNumVertices() - 1 );
         for( int v = 0; v < sptr->getNumVertices() - 1; ++v )
         {
             deserializeVarHex( futureRefFrame1[v].x(), in );

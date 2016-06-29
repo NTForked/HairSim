@@ -32,7 +32,7 @@ public:
         // So we'll just issue a warning if someone tries to save a dirty value.
         if ( isDirty() )
         {
-            WarningStream( g_log, "" ) << "Saving dirty value for " << name();
+            std::cerr << "Saving dirty value for " << name() << std::endl;
         }
         ar & m_value;
     }

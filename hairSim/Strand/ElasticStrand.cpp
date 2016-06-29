@@ -9,7 +9,7 @@
 #include "../Forces/GravitationForce.hh"
 #include "../Forces/StrandStrandForce.hh"
 
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "../Dynamic/StrandDynamics.hh"
 
 #include "../Utils/TextLog.hh"
 #include "../Utils/EigenSerialization.hh"
@@ -32,7 +32,7 @@ ElasticStrand::ElasticStrand(
     const ElasticStrandParameters& parameters,
     DOFScriptingController* controller = NULL, 
     int globalIndex, 
-    const Vec3x& initRefFrame1 ) :
+    const Vec3& initRefFrame1 ) :
         m_globalIndex( globalIndex ),
         m_parameters( parameters ),
         m_numVertices( m_parameters.getNumVertices() ),
@@ -66,7 +66,7 @@ void ElasticStrand::createDynamics()
 {
     if ( !m_dynamics )
     {
-        m_dynamics = new StrandDynamicTraits( *this );
+        m_dynamics = new StrandDynamics( *this );
     }
 }
 
@@ -128,7 +128,7 @@ void ElasticStrand::setRestShape( const VecXx &dofs, unsigned begin, unsigned en
     VecXx backup = getCurrentDegreesOfFreedom();
     m_currentState->setDegreesOfFreedom( dofs );
 
-    const Vec3x &initRefFrame = m_currentState->getReferenceFrame1( 0 );
+    const Vec3 &initRefFrame = m_currentState->getReferenceFrame1( 0 );
     m_currentState->m_referenceFrames1.storeInitialFrames( initRefFrame );
 
     freezeRestShape( begin, end, damping );
@@ -256,26 +256,26 @@ void ElasticStrand::setCurrentDegreesOfFreedom( const VecXx& dof )
     invalidateCurrentGeometry();
 }
 
-Scalar ElasticStrand::getUnsignedAngleToMajorRadius( int vtx, const Vec3x& vec ) const
+Scalar ElasticStrand::getUnsignedAngleToMajorRadius( int vtx, const Vec3& vec ) const
 {
    if ( vtx + 1 == m_numVertices )
         --vtx;
 
-    const Vec3x& edge = getEdgeVector( vtx ).normalized();
-    const Vec3x& orth = ( vec - vec.dot( edge ) * edge );
+    const Vec3& edge = getEdgeVector( vtx ).normalized();
+    const Vec3& orth = ( vec - vec.dot( edge ) * edge );
     const Scalar north = orth.norm();
     if ( isSmall( north ) )
         return 0.;
     return std::acos( clamp( getMaterialFrame2( vtx ).dot( orth / north ), -1., 1. ) );
 }
 
-Scalar ElasticStrand::getSignedAngleToMajorRadius( int vtx, const Vec3x& vec ) const
+Scalar ElasticStrand::getSignedAngleToMajorRadius( int vtx, const Vec3& vec ) const
 {
     if ( vtx + 1 == m_numVertices )
         --vtx;
 
-    const Vec3x& edge = getEdgeVector( vtx ).normalized();
-    const Vec3x& orth = ( vec - vec.dot( edge ) * edge );
+    const Vec3& edge = getEdgeVector( vtx ).normalized();
+    const Vec3& orth = ( vec - vec.dot( edge ) * edge );
 
     const Scalar cosa = getMaterialFrame2( vtx ).dot( orth );
     const Scalar sina = -getMaterialFrame1( vtx ).dot( orth );
@@ -386,12 +386,12 @@ void ElasticStrand::applyPlasticDeformation( Scalar stretchElasticLimit, Scalar 
 void ElasticStrand::filterFutureGeometryByRestLength( const double epsilon, bool allowCompression )
 {
 
-    Vec3x xaN = m_futureState->getVertex( 0 );
-    Vec3x xaP = xaN;
+    Vec3 xaN = m_futureState->getVertex( 0 );
+    Vec3 xaP = xaN;
 
     for ( int i = 1; i < m_numVertices; ++i )
     {
-        const Vec3x& xbN = m_futureState->getVertex( i );
+        const Vec3& xbN = m_futureState->getVertex( i );
 
         const Scalar lP = getEdgeRestLength( i - 1 );
 
@@ -411,7 +411,7 @@ void ElasticStrand::filterFutureGeometryByRestLength( const double epsilon, bool
         }
 
         // compute and store revised delta
-        const Vec3x xbNrev = xaN + ( xbN - xaP ) * ratio;
+        const Vec3 xbNrev = xaN + ( xbN - xaP ) * ratio;
 
         m_futureState->setVertex( i, xbNrev );
 
@@ -456,7 +456,7 @@ void ElasticStrand::getLocalAbscissa( const Scalar curvilinearAbscissa, int &vtx
     }
 }
 
-void ElasticStrand::getSegment( unsigned elementID, Vec3x &start, Vec3x &end ) const
+void ElasticStrand::getSegment( unsigned elementID, Vec3 &start, Vec3 &end ) const
 {
     assert( elementID + 1 < getNumVertices() );
     start = getVertex( elementID );
@@ -501,7 +501,7 @@ bool ElasticStrand::deserializeFrom( std::istream & is )
 }
 
 using namespace std;
-void printVec3xArray( Vec3xArray vec )
+void printVec3Array( Vec3Array vec )
 {
     cout.precision( std::numeric_limits<double>::digits10 + 2);
     for (unsigned i = 0; i < vec.size(); ++i ){

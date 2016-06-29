@@ -1,7 +1,6 @@
 #ifndef STRAND_RENDERER_H
 #define STRAND_RENDERER_H
 
-#include "RenderBase.h"
 #include "Color.h"
 #include "OpenGLDecl.h"
 #include "../Utils/ThreadUtils.h"
@@ -43,10 +42,10 @@ public:
     StrandRenderer();
 
     void render( ElasticStrand* strand, const int& w, const int& h, const int& label, const bool& ct );
-    void addVert( Vec3x& vert );
-    void addArrow( Vec3x& start, Vec3x& end );
-    static Vec3x calculateObjectCenter( ElasticStrand* strand );
-    static Scalar calculateObjectBoundingRadius( ElasticStrand* strand, const Vec3x& center );
+    void addVert( Vec3& vert );
+    void addArrow( Vec3& start, Vec3& end );
+    static Vec3 calculateObjectCenter( ElasticStrand* strand );
+    static Scalar calculateObjectBoundingRadius( ElasticStrand* strand, const Vec3& center );
 
     const Eigen::Matrix4f &transformationMatrix() const
     {
@@ -68,12 +67,12 @@ public:
     void renderProxies();
 
     VecXx displaceVec;
-    std::vector<Vec3x> verts;
-    std::vector< std::pair<Vec3x, Vec3x> > arrows;
-    std::vector< std::pair<Vec3x, Vec3x> > startProxies;
-    std::vector< std::pair<Vec3x, Vec3x> > endProxies;
-    std::vector< std::pair<Vec3x, int> > vertLabels;
-    std::vector< std::pair<Vec3x, double> > twistLabels;
+    std::vector<Vec3> verts;
+    std::vector< std::pair<Vec3, Vec3> > arrows;
+    std::vector< std::pair<Vec3, Vec3> > startProxies;
+    std::vector< std::pair<Vec3, Vec3> > endProxies;
+    std::vector< std::pair<Vec3, int> > vertLabels;
+    std::vector< std::pair<Vec3, double> > twistLabels;
     int m_wWidth;
     int m_wHeight;
     int m_label;

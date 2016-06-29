@@ -2,7 +2,7 @@
 #define EXTERNALFORCE_HH
 
 
-#include "../../StrandSim/Core/Definitions.hh"
+#include "../../hairSim/Utils/Definitions.h"
 
 namespace bogus
 {

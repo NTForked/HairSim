@@ -1,11 +1,10 @@
-#include "CollisionUtils.hh"
-#include "OrientedBoundingBox.hh"
-
-#include "../Core/ElasticStrand.hh"
-#include "../Utils/Distances.hh"
-
-#include "../Dynamic/StrandDynamicTraits.hh"
-#include "../Dynamic/Config.hh"
+#include "CollisionUtils.h"
+#include "../VertexFaceCollision.h"
+#include "../EdgeFaceCollision.h"
+#include "../EdgeEdgeCollision.h"
+#include "../../Strand/ElasticStrand.h"
+#include "../../Math/Distances.hh"
+#include "../../Strand/StrandDynamics.h"
 
 #define COS_PARALLEL_ENOUGH 0.86602540378      // cos( Pi/6 )
 
@@ -58,13 +57,13 @@ void sort( double *a, unsigned a_size )
     }
 }
 
-double triple( const Vec3x& a, const Vec3x& b, const Vec3x& c )
+double triple( const Vec3& a, const Vec3& b, const Vec3& c )
 {
     return a[0] * ( b[1] * c[2] - b[2] * c[1] ) + a[1] * ( b[2] * c[0] - b[0] * c[2] )
             + a[2] * ( b[0] * c[1] - b[1] * c[0] );
 }
 
-double signed_volume( const Vec3x& x0, const Vec3x& x1, const Vec3x& x2, const Vec3x& x3 )
+double signed_volume( const Vec3& x0, const Vec3& x1, const Vec3& x2, const Vec3& x3 )
 {
     // Equivalent to triple(x1-x0, x2-x0, x3-x0), six times the signed volume of the tetrahedron.
     // But, for robustness, we want the result (up to sign) to be independent of the ordering.
@@ -87,25 +86,20 @@ double signed_volume( const Vec3x& x0, const Vec3x& x1, const Vec3x& x2, const V
 
 // All roots returned in interval [0,1]. Assumed geometry followed a linear
 // trajectory between x and xnew. 
-void getCoplanarityTimes( const Vec3x& x0, const Vec3x& x1, const Vec3x& x2, const Vec3x& x3,
-        const Vec3x& xnew0, const Vec3x& xnew1, const Vec3x& xnew2, const Vec3x& xnew3,
+void getCoplanarityTimes( const Vec3& x0, const Vec3& x1, const Vec3& x2, const Vec3& x3,
+        const Vec3& xnew0, const Vec3& xnew1, const Vec3& xnew2, const Vec3& xnew3,
         double* times, double* errors, unsigned &num_times )
 {
     const double tol = 1e-8;
     num_times = 0;
 
-    if( thickness ){ 
-        times[num_times++] = 0.; // TODO: unclear if these should be here still if thickness is off.
-        times[num_times++] = 1.; // are there still boundary conditions to check?
-    }
-
     // cubic coefficients, A*t^3+B*t^2+C*t+D (for t in [0,1])
-    const Vec3x x03 = x0 - x3;
-    const Vec3x x13 = x1 - x3;
-    const Vec3x x23 = x2 - x3;
-    const Vec3x v03 = ( xnew0 - xnew3 ) - x03;
-    const Vec3x v13 = ( xnew1 - xnew3 ) - x13;
-    const Vec3x v23 = ( xnew2 - xnew3 ) - x23;
+    const Vec3 x03 = x0 - x3;
+    const Vec3 x13 = x1 - x3;
+    const Vec3 x23 = x2 - x3;
+    const Vec3 v03 = ( xnew0 - xnew3 ) - x03;
+    const Vec3 v13 = ( xnew1 - xnew3 ) - x13;
+    const Vec3 v23 = ( xnew2 - xnew3 ) - x23;
 
     double A = triple( v03, v13, v23 );
     double B = triple( x03, v13, v23 ) + triple( v03, x13, v23 ) + triple( v03, v13, x23 );
@@ -282,17 +276,17 @@ void getCoplanarityTimes( const Vec3x& x0, const Vec3x& x1, const Vec3x& x2, con
     }
 }
 
-void getIntersectionPoint( const Vec3x& x_edge_0, const Vec3x& x_edge_1, const Vec3x& x_face_0,
-        const Vec3x& x_face_1, const Vec3x& x_face_2, double* times, double* errors,
+void getIntersectionPoint( const Vec3& x_edge_0, const Vec3& x_edge_1, const Vec3& x_face_0,
+        const Vec3& x_face_1, const Vec3& x_face_2, double* times, double* errors,
         unsigned &num_times )
 {
     const double tol = 1e-12;
     num_times = 0;
 
-    Vec3x x03 = x_edge_0 - x_face_2;
-    Vec3x x13 = x_face_0 - x_face_2;
-    Vec3x x23 = x_face_1 - x_face_2;
-    Vec3x v03 = x_edge_1 - x_face_2 - x03;
+    Vec3 x03 = x_edge_0 - x_face_2;
+    Vec3 x13 = x_face_0 - x_face_2;
+    Vec3 x23 = x_face_1 - x_face_2;
+    Vec3 v03 = x_edge_1 - x_face_2 - x03;
 
     double C = triple( v03, x13, x23 );
     double D = triple( x03, x13, x23 );
@@ -385,41 +379,20 @@ void getIntersectionPoint( const Vec3x& x_edge_0, const Vec3x& x_edge_1, const V
     }
 }
 
-void buildFrame( const Vec3x& n_hat, Vec3x& t1, Vec3x& t2 )
-{
-    // build collision frame basis (n_hat, t1, t2)
-    Vec3x tmp( n_hat( 0 ), -n_hat( 2 ), n_hat( 1 ) );
-    if ( n_hat( 2 ) * n_hat( 2 ) < 1e-12 && n_hat( 1 ) * n_hat( 1 ) < 1e-12 )
-        tmp << -n_hat( 1 ), n_hat( 0 ), n_hat( 2 );
-    t1 = tmp.cross( n_hat );
-
-    if ( t1.norm() < 1e-8 )
-    {
-        ErrorStream( g_log, "" ) << "tangent degenerate: tmp =" << tmp << ", n = " << n_hat
-                << ", t1 =" << t1;
-        return;
-    }
-
-    t1.normalize();
-    t2 = t1.cross( n_hat );
-//    t2 = t2 / t2.norm();
-    assert( isApproxUnit( t2 ) );
-}
-
 bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* sQ, const int iP,
-        const int iQ, Vec3x &depl, Scalar &s, Scalar &t, Scalar &d )
+        const int iQ, Vec3 &depl, Scalar &s, Scalar &t, Scalar &d )
 {
     const CollisionParameters &cpP = sP->collisionParameters();
     const CollisionParameters &cpQ = sQ->collisionParameters();
 
-    const Vec3x &P0 = sP->getVertex( iP );
-    const Vec3x &P1 = sP->getVertex( iP + 1 );
-    const Vec3x &Q0 = sQ->getVertex( iQ );
-    const Vec3x &Q1 = sQ->getVertex( iQ + 1 );
+    const Vec3 &P0 = sP->getVertex( iP );
+    const Vec3 &P1 = sP->getVertex( iP + 1 );
+    const Vec3 &Q0 = sQ->getVertex( iQ );
+    const Vec3 &Q1 = sQ->getVertex( iQ + 1 );
 
     const Scalar BCRad = cpP.collisionRadius( iP ) + cpQ.collisionRadius( iQ );
 
-    Scalar sqDist = SquareDistSegmentToSegment<Vec3x, Scalar, Vec3x>( P0, P1, Q0, Q1, s, t );
+    Scalar sqDist = SquareDistSegmentToSegment<Vec3, Scalar, Vec3>( P0, P1, Q0, Q1, s, t );
     // Required to determnisticity -- are x87 registers sometimes used ?
     s = ( float ) s;
     t = ( float ) t;
@@ -427,8 +400,8 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     if ( sqDist > BCRad * BCRad )
         return false; // see FIXME in DistSegmentToSegment
 
-    Vec3x PC = ( ( 1. - s ) * P0 + s * P1 );
-    Vec3x QC = ( ( 1. - t ) * Q0 + t * Q1 );
+    Vec3 PC = ( ( 1. - s ) * P0 + s * P1 );
+    Vec3 QC = ( ( 1. - t ) * Q0 + t * Q1 );
     depl = ( PC - QC );
 
     const Scalar n2depl = depl.squaredNorm();
@@ -446,7 +419,7 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     return true;
 }
 
-bool compareCT( const CollisionBase* ct1, const CollisionBase* ct2 )
+bool compareCT( const Collision* ct1, const Collision* ct2 )
 {
     {
         const VertexFaceCollision* vf1 = dynamic_cast<const VertexFaceCollision*>( ct1 );

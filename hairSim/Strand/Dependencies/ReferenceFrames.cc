@@ -1,18 +1,18 @@
 #include "ReferenceFrames.hh"
 #include "../Core/ElasticStrandUtils.hh"
 
-void ReferenceFrames1::storeInitialFrames( const Vec3x& initRefFrame1 )
+void ReferenceFrames1::storeInitialFrames( const Vec3& initRefFrame1 )
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
-    const Vec3x& tan0 = tangents[0];
+    const Vec3Array& tangents = m_tangents.get();
+    const Vec3& tan0 = tangents[0];
     assert( isApproxUnit(tan0) );
 
     // Do we have an even approximately valid initial reference frame?
     if ( initRefFrame1.squaredNorm() > 0.5 && fabs( initRefFrame1.dot( tan0 ) ) < 0.25 )
     {
         // If so, just project it on the plane normal to the tangent vector
-        const Vec3x projectedInitRefFrame1 =
+        const Vec3 projectedInitRefFrame1 =
                 ( initRefFrame1 - initRefFrame1.dot( tan0 ) * tan0 ).normalized();
         m_value[0] = projectedInitRefFrame1;
     }
@@ -39,12 +39,12 @@ void ReferenceFrames1::storeInitialFrames( const Vec3x& initRefFrame1 )
 void ReferenceFrames1::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
+    const Vec3Array& tangents = m_tangents.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        Vec3x& previousTangent = m_previousTangents[vtx];
-        const Vec3x& currentTangent = tangents[vtx];
+        Vec3& previousTangent = m_previousTangents[vtx];
+        const Vec3& currentTangent = tangents[vtx];
 
         m_value[vtx] = orthonormalParallelTransport( m_value[vtx], previousTangent, currentTangent );
         orthoNormalize( m_value[vtx], currentTangent );
@@ -60,14 +60,14 @@ bool ReferenceFrames1::checkNormality()
 {
     bool normal = true;
 
-    const Vec3xArray& tangents = m_previousTangents;
+    const Vec3Array& tangents = m_previousTangents;
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
         if ( !isSmall( m_value[vtx].dot( tangents[vtx] ) ) )
         {
             normal = false;
-            ErrorStream( g_log, "" ) << "ReferenceFrames1::checkNormality() fails at vtx = " << vtx;
+            std::cerr << "ReferenceFrames1::checkNormality() fails at vtx = " << vtx << std::endl;
             break;
         }
     }    
@@ -77,8 +77,8 @@ bool ReferenceFrames1::checkNormality()
 void ReferenceFrames2::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
-    const Vec3xArray& referenceFrames1 = m_referenceFrames1.get();
+    const Vec3Array& tangents = m_tangents.get();
+    const Vec3Array& referenceFrames1 = m_referenceFrames1.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
@@ -91,17 +91,17 @@ void ReferenceFrames2::compute()
 void ReferenceTwists::compute()
 {
     m_value.resize( m_size );
-    const Vec3xArray& tangents = m_tangents.get();
-    const Vec3xArray& referenceFrames1 = m_referenceFrames1.get();
+    const Vec3Array& tangents = m_tangents.get();
+    const Vec3Array& referenceFrames1 = m_referenceFrames1.get();
 
     for ( IndexType vtx = m_firstValidIndex; vtx < size(); ++vtx )
     {
-        const Vec3x& u0 = referenceFrames1[vtx - 1];
-        const Vec3x& u1 = referenceFrames1[vtx];
-        const Vec3x& tangent = tangents[vtx];
+        const Vec3& u0 = referenceFrames1[vtx - 1];
+        const Vec3& u1 = referenceFrames1[vtx];
+        const Vec3& tangent = tangents[vtx];
 
         // transport reference frame to next edge
-        Vec3x ut = orthonormalParallelTransport( u0, tangents[vtx - 1], tangent );
+        Vec3 ut = orthonormalParallelTransport( u0, tangents[vtx - 1], tangent );
 
         // rotate by current value of reference twist
         const Scalar beforeTwist = m_value[vtx];

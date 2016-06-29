@@ -1,7 +1,7 @@
 #ifndef TRIANGULARMESH_HH_
 #define TRIANGULARMESH_HH_
 
-#include "../Core/Definitions.hh"
+#include "../Utils/Definitions.h"
 class TriMeshController;
 
 struct TriangularFace
@@ -34,28 +34,28 @@ public:
     TriMesh( const TriMeshController* controller = NULL );
     virtual ~TriMesh();
 
-    void addVertex( const Vec3x& point )
+    void addVertex( const Vec3& point )
     {
         m_vertices.push_back( point );
-        m_displacements.push_back( Vec3x() );
+        m_displacements.push_back( Vec3() );
     }
 
-    Vec3x getVertex( size_t vtx ) const
+    Vec3 getVertex( size_t vtx ) const
     {
         return m_vertices[vtx];
     }
 
-    void setVertex( size_t vtx, const Vec3x& point )
+    void setVertex( size_t vtx, const Vec3& point )
     {
         m_vertices[vtx] = point;
     }
 
-    Vec3x getDisplacement( size_t vtx ) const
+    Vec3 getDisplacement( size_t vtx ) const
     {
         return m_displacements[vtx];
     }
 
-    void setDisplacement( size_t vtx, const Vec3x& disp )
+    void setDisplacement( size_t vtx, const Vec3& disp )
     {
         m_displacements[vtx] = disp;
     }
@@ -97,7 +97,7 @@ public:
         return m_faces.size();
     }
 
-    Vec3xArray &vertices()
+    Vec3Array &vertices()
     {
         return m_vertices;
     }
@@ -105,8 +105,8 @@ public:
     void clear();
 
 private:
-    Vec3xArray m_vertices;
-    Vec3xArray m_displacements;
+    Vec3Array m_vertices;
+    Vec3Array m_displacements;
     std::vector<TriangularFace> m_faces;
     const TriMeshController* m_controller;
 };

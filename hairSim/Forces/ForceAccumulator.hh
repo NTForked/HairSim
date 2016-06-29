@@ -1,8 +1,8 @@
 #ifndef FORCEACCUMULATOR_HH_
 #define FORCEACCUMULATOR_HH_
 
-#include "../Core/Definitions.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Utils/Definitions.h"
+#include "../Math/BandMatrix.h"
 
 class ElasticStrand;
 class StrandState;

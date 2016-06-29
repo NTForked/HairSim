@@ -1,13 +1,13 @@
 #ifndef ELEMENTPROXY_HH_
 #define ELEMENTPROXY_HH_
 
-#include "TriangularMesh.hh"
-#include "../Dynamic/MeshScriptingController.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
-#include "../Core/ElasticStrand.hh"
-#include "../Dynamic/ImplicitStepper.hh"
-#include "BoundingBox.hh"
-#include "TwistEdgeHandler.hh"
+#include "../Mesh/TriMesh.h"
+#include "../Mesh/TriMeshController.h"
+#include "../Strand/StrandDynamics.h"
+#include "../Strand/ElasticStrand.h"
+#include "../Simulation/ImplicitStepper.h"
+#include "CollisionUtils/BoundingBox.hh"
+#include "TwistEdgeHandler.h"
 #include <stack>
 
 typedef BoundingBox<float> BBoxType;
@@ -82,7 +82,7 @@ public:
     bool operator <( EdgeProxy* other ) const
     {
         if( m_strand.getGlobalIndex() == other->getStrandPointer()->getGlobalIndex() ){
-            return m_firstVertex < other->getVertexIndex();
+            return m_vertexIndex < other->getVertexIndex();
         }
         else{
             return m_strand.getGlobalIndex() < other->getStrandPointer()->getGlobalIndex();        
@@ -117,13 +117,13 @@ public:
     CylinderProxy( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ) :
         EdgeProxy( strand, vertexIndex, stepper )
     {
-        m_radius = m_strand.m_collisionParameters.getLargerCollisionRadius( m_vertexIndex );
+        m_radius = m_strand.collisionParameters().getLargerCollisionsRadius( m_vertexIndex );
     }
 
     void computeBoundingBox( BBoxType& boundingBox, bool statique, TwistEdgeHandler* teh = NULL ) const
     {
-        Vec3x min, max;
-        static const Vec3x unit = Vec3x::Ones();
+        Vec3f min, max;
+        static const Vec3f unit = Vec3f::Ones();
         EdgeProxy::computeBoundingBox( boundingBox, statique );
 
         min = boundingBox.min - m_radius * unit;
@@ -198,10 +198,10 @@ public:
 class FaceProxy: public ElementProxy
 {
 public:
-    FaceProxy( const unsigned faceIndex, MeshScriptingController* controller ):
-        m_face[Index( faceIndex ),
-        m_face( controller->getCurrentMesh()->getFace( faceIndex ) ),
-        m_cont]roller( controller )
+    FaceProxy( const unsigned faceIndex, SimpleMeshController* controller ):
+        m_faceIndex( faceIndex ),
+        m_face( controller->getMesh()->getFace( faceIndex ) ),
+        m_controller( controller )
     {}
 
     void computeBoundingBox( BBoxType& boundingBox, bool statique, TwistEdgeHandler* teh = NULL ) const
@@ -224,14 +224,14 @@ public:
         }
     }
 
-    Vec3x getVertex( short apex ) const
+    Vec3 getVertex( short apex ) const
     {
-        return m_controller->getCurrentMesh()->getVertex( m_face.idx[apex] );
+        return m_controller->getMesh()->getVertex( m_face.idx[apex] );
     }
 
-    Vec3x getDisplacement( short apex ) const
+    Vec3 getDisplacement( short apex ) const
     {
-        return m_controller->getCurrentMesh()->getDisplacement( m_face.idx[apex] );
+        return m_controller->getMesh()->getDisplacement( m_face.idx[apex] );
     }
 
     int getVertexIdx( short apex ) const
@@ -280,16 +280,16 @@ public:
         }
     }
 
-    const TriangularMesh* getMesh() const
+    const TriMesh* getMesh() const
     {
-        return m_controller->getCurrentMesh();
+        return m_controller->getMesh();
     }
 
-    Vec3x getNormal() const
+    Vec3 getNormal() const
     {
-        const Vec3x &q0 = getVertex( 0 );
-        const Vec3x &q1 = getVertex( 1 );
-        const Vec3x &q2 = getVertex( 2 );
+        const Vec3 &q0 = getVertex( 0 );
+        const Vec3 &q1 = getVertex( 1 );
+        const Vec3 &q2 = getVertex( 2 );
 
         return ( q1 - q0 ).cross( q2 - q0 ).normalized();
     }
@@ -330,7 +330,7 @@ protected:
 
     const unsigned m_faceIndex ;
     const TriangularFace& m_face;
-    MeshScriptingController* m_controller;
+    SimpleMeshController* m_controller;
 };
 
 class ElementProxyBBoxFunctor
@@ -397,7 +397,7 @@ public:
                : m_otherProxies[ elementID - n ] ;
    }
 
-   void getAABB( unsigned elementID, Vec3x &min, Vec3x &max ) const
+   void getAABB( unsigned elementID, Vec3 &min, Vec3 &max ) const
    {
        const BBoxType& bbox = elementProxy( elementID )->getBoundingBox() ;
        min = bbox.min.cast< Scalar >() ;

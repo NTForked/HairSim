@@ -29,7 +29,7 @@
 #include "../Core/Utils/Signal.hpp"
 #include "../Core/ExternalForce.hh"
 
-#include "../../StrandSim/Core/Definitions.hh"
+#include "../../hairSim/Utils/Definitions.h"
 
 
 namespace bogus

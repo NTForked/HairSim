@@ -3,15 +3,15 @@
 #define PI 3.14159265358979323846
 
 Knot::Knot() :
-ProblemStepper("Knot", "TrefoilKnot, overhand knot pulled tight"),
+Scene("Knot", "TrefoilKnot, overhand knot pulled tight"),
 m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
 
     // Global opts
     GetScalarOpt("dt") = 1e-4;
-    GetVecOpt("gravity") = Vec3x( 0.0, 0.0, 0.0 );
-    AddOption("translation","how much to move the nonfixed end per timestep", Vec3x( 0.0, -0.0001, 0.0 ) ); //   0.25, 0, 0.5
+    GetVecOpt("gravity") = Vec3( 0.0, 0.0, 0.0 );
+    AddOption("translation","how much to move the nonfixed end per timestep", Vec3( 0.0, -0.0001, 0.0 ) ); //   0.25, 0, 0.5
     
     // Rod opts
     GetIntOpt("nv") = 84;//35 + 20; //try 11, 981.0, uneven vertices (shows it better)
@@ -39,14 +39,14 @@ Knot::~Knot()
 
 void Knot::setupStrands()
 {
-    std::cout << "ProblemStepper:: SingleContact" << std::endl;
+    std::cout << "Scene:: SingleContact" << std::endl;
 
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
     const int subdivision = 5;
 
     // Prepare initial rod/strand position
-    strandsim::Vec3xArray i_vertices;
+    Vec3Array i_vertices;
 
 
     const int nDOFs = 4 * nVertices - 1;
@@ -178,7 +178,7 @@ void Knot::setupStrands()
     for ( int i = 0; i < dofs.size(); i += 4 )
         dofs.segment<3>( i ) = i_vertices[i / 4];
     
-    strandsim::Vec3xArray scripted_vertices;
+    Vec3Array scripted_vertices;
      scripted_vertices.push_back( i_vertices[0] );
      scripted_vertices.push_back( i_vertices[nVertices - 1] );
     DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -198,7 +198,7 @@ void Knot::setupStrands()
     ElasticStrand* strand = new ElasticStrand( dofs, *params, controller );
     strand->setGlobalIndex( 0 );
     setRodCollisionParameters( *strand );
-    Vec2xArray kappas = strand->alterRestKappas();
+    Vec2Array kappas = strand->alterRestKappas();
     std::cout << "K_size " << kappas.size() <<std::endl;
     for( unsigned i = 0; i < kappas.size(); ++i ){
         strand->alterRestKappas()[i].setZero();
@@ -213,7 +213,7 @@ void Knot::setupStrands()
     std::cout << "num strands = " << m_strands.size() <<'\n';
     std::cout << "num dofs per strand = " << nDOFs <<'\n';
     
-    GravitationForce::setGravity( GetVecOpt("gravity").cast<strandsim::Scalar>() );
+    GravitationForce::setGravity( GetVecOpt("gravity").cast<Scalar>() );
 }
 
 void Knot::setupMeshes()
@@ -226,8 +226,8 @@ void Knot::setupMeshes()
 bool Knot::executeScript()
 {
 
-     Vec3x zero(  0. , 0., 0. );
-     Vec3x translate = GetVecOpt("translation");
+     Vec3 zero(  0. , 0., 0. );
+     Vec3 translate = GetVecOpt("translation");
      Mat3x id;
      id << 1,0,0,
            0,1,0,

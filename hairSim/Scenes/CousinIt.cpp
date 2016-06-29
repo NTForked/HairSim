@@ -1,7 +1,7 @@
 #include "CousinIt.hh"
 
 CousinIt::CousinIt() :
-ProblemStepper("Cousin It", "spinning sphere")
+Scene("Cousin It", "spinning sphere")
 {
     GetIntOpt("nv") = 25;
     AddOption("curl_radius", "", 0.2 );
@@ -55,7 +55,7 @@ CousinIt::~CousinIt()
     
 }
 
-void CousinIt::generateNormalSamples( Scalar hair_region, int num_hairs, std::vector<Vec3x>& normals )
+void CousinIt::generateNormalSamples( Scalar hair_region, int num_hairs, std::vector<Vec3>& normals )
 {
     typedef boost::minstd_rand rng_type;
     typedef boost::uniform_real<double> dist_type;
@@ -117,10 +117,10 @@ void CousinIt::loadStrands()
         if ( !( rod_id < GetIntOpt("num_hairs") ) )
             break;
         
-        std::vector<Vec3x> vertices;
+        std::vector<Vec3> vertices;
         if (segment != current_segment)
         {
-            Vec3x pos(x,y,z);
+            Vec3 pos(x,y,z);
             vertices.push_back(pos);
             current_segment = segment;
         }
@@ -132,7 +132,7 @@ void CousinIt::loadStrands()
             vertstream >> x >> y >> z >> segment;
             if(segment == current_segment && !infile.eof())
             {
-                Vec3x pos(x,y,z);
+                Vec3 pos(x,y,z);
                 vertices.push_back(pos);
             }
             else{
@@ -160,7 +160,7 @@ void CousinIt::loadStrands()
 //                    if( i+3 < dofs.size() ) dofs( i + 3 ) = 0.;
 //                }
                 
-                strandsim::Vec3xArray scripted_vertices;
+                Vec3Array scripted_vertices;
                 scripted_vertices.push_back( vertices[0] );
                 scripted_vertices.push_back( vertices[1] );
                 DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -209,7 +209,7 @@ void CousinIt::setupStrands()
         //  Scalar stiffness = GetScalarOpt("stiffness");
         
         // sample rod positions
-        std::vector<Vec3x> initialnormals;
+        std::vector<Vec3> initialnormals;
         generateNormalSamples( GetScalarOpt("hair_region"), GetIntOpt("num_hairs"), initialnormals );
         
         // sphere geometry
@@ -225,7 +225,7 @@ void CousinIt::setupStrands()
         int rod_id = 0;
         for( int i = 0; i < (int) initialnormals.size(); ++i )
         {
-            std::vector<Vec3x> vertices;
+            std::vector<Vec3> vertices;
             
             Scalar curl_radius = GetScalarOpt("curl_radius");
             Scalar curl_density = GetScalarOpt("curl_density");
@@ -241,7 +241,7 @@ void CousinIt::setupStrands()
             for ( int i = 0; i < dofs.size(); i += 4 )
                 dofs.segment<3>( i ) = vertices[i / 4];
             
-            strandsim::Vec3xArray scripted_vertices;
+            Vec3Array scripted_vertices;
             scripted_vertices.push_back( vertices[0] );
             scripted_vertices.push_back( vertices[1] );
             DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -290,13 +290,13 @@ void CousinIt::setupMeshes()
     meshradius = (currentMesh->getVertex(0)).norm();
     std::cout<< "# sphere radius: \n" << meshradius << '\n';
     
-    strandsim::TriangleMeshRenderer* mesh_renderer = new strandsim::TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
+    TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
     m_mesh_renderers.push_back( mesh_renderer );
 }
 
 bool CousinIt::executeScript()
 {
-    Vec3x zero(0.,0.,0.);
+    Vec3 zero(0.,0.,0.);
     
     double thetaxrate = GetScalarOpt("rotatescale") * 2. * M_PI;
     double thetayrate = GetScalarOpt("rotatescale") * 2. * M_PI;

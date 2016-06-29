@@ -141,7 +141,7 @@ void Simulation::gatherProximityRodRodCollisions( Scalar dt )
                     ++nRough;
 
                     // [H] Narrow detection phase:
-                    Vec3x normal;
+                    Vec3 normal;
                     Scalar s, t, d;
                     if( !analyseRoughRodRodCollision( sP, sQ, iP, iQ, normal, s, t, d ) ){
                         continue;
@@ -154,7 +154,7 @@ void Simulation::gatherProximityRodRodCollisions( Scalar dt )
                         continue;
                     }
 
-                    ProximityCollision mutualContact;
+                    CollidingPair mutualContact;
                     mutualContact.normal = normal;
                     mutualContact.mu = sqrt( cpP.frictionCoefficient( iP ) * cpQ.frictionCoefficient( iQ ) );
 
@@ -209,7 +209,7 @@ bool Simulation::acceptsCollision( const ElasticStrand& strand, int edgeIdx, Sca
     return true;
 }
 
-void Simulation::makeExternalContact( ProximityCollision& externalContact, bool onFirstObject )
+void Simulation::makeExternalContact( CollidingPair& externalContact, bool onFirstObject )
 {
     int extObjId;
     if( onFirstObject )
@@ -268,14 +268,13 @@ void Simulation::preProcessContinuousTimeCollisions( Scalar dt )
         }
         previous = *collIt;
 
-        ContinuousTimeCollision* const ctCollision = dynamic_cast<ContinuousTimeCollision*>( *collIt );
+        ContinuousTimeCollision* const ctCollision = dynamic_cast< Collision* >( *collIt );
         if( !ctCollision ) continue;
 
-        ProximityCollision collision;
+        CollidingPair collision;
         ElasticStrand* const strand1 = ctCollision->getFirstStrand();
         const unsigned edgeIdx1 = ctCollision->getFirstVertex();
 
-        collision.m_originalCTCollision = ctCollision;
         collision.normal = ctCollision->normal();
 
         collision.objects.first.globalIndex = strand1->getGlobalIndex();
@@ -307,7 +306,7 @@ void Simulation::preProcessContinuousTimeCollisions( Scalar dt )
         collision.objects.second.globalIndex = -1;
         if( VertexFaceCollision* vfCollision = dynamic_cast<VertexFaceCollision*>( ctCollision ) )
         {
-            const Vec3x offset = vfCollision->offset() / dt;            
+            const Vec3 offset = vfCollision->offset() / dt;            
             collision.mu = sqrt( vfCollision->faceFrictionCoefficient() * strand->collisionParameters().frictionCoefficient( edgeIdx ) );            
             collision.objects.second.vertex = vfCollision->face()->uniqueId();
             collision.objects.second.freeVel = vfCollision->meshVelocity( dt ) + offset;
@@ -317,7 +316,7 @@ void Simulation::preProcessContinuousTimeCollisions( Scalar dt )
         }
         else if( EdgeFaceCollision* efCollision = dynamic_cast<EdgeFaceCollision*>( ctCollision ) )
         {
-            const Vec3x offset = efCollision->offset() / dt;
+            const Vec3 offset = efCollision->offset() / dt;
             collision.mu = sqrt( efCollision->faceFrictionCoefficient() * strand->collisionParameters().frictionCoefficient( edgeIdx ) );
             collision.objects.second.vertex = efCollision->faceEdgeId();
             collision.objects.second.freeVel = efCollision->meshVelocity( dt ) + offset;
@@ -330,7 +329,7 @@ void Simulation::preProcessContinuousTimeCollisions( Scalar dt )
     std::cout << "CTCD " << nCTCD << std::endl;
 }
 
-bool Simulation::addExternalContact( const unsigned strIdx, const unsigned edgeIdx, const Scalar abscissa, ProximityCollision& externalContact )
+bool Simulation::addExternalContact( const unsigned strIdx, const unsigned edgeIdx, const Scalar abscissa, CollidingPair& externalContact )
 {
     if( !acceptsCollision( *m_strands[strIdx], edgeIdx, abscissa ) ){
         return false;
@@ -338,7 +337,7 @@ bool Simulation::addExternalContact( const unsigned strIdx, const unsigned edgeI
 
     // Discard collisions if their normal is almost parallel to the strand edge and would cause stretching
     const int prevEdge = abscissa == 0. ? edgeIdx - 1 : edgeIdx;
-    const Vec3x edge = m_strands[strIdx]->getCurrentTangent( prevEdge );
+    const Vec3 edge = m_strands[strIdx]->getCurrentTangent( prevEdge );
     if( edge.dot( externalContact.normal ) > ALMOST_PARALLEL_COS ){
         return false;
     }
@@ -351,24 +350,24 @@ bool Simulation::addExternalContact( const unsigned strIdx, const unsigned edgeI
     return true;
 }
 
-void Simulation::computeCollidingGroups( const ProximityCollisions &origMutualCollisions )
+void Simulation::computeCollidingGroups( const CollidingPairs &origMutualCollisions )
 {
     if( origMutualCollisions.empty() ){
         return;
     }
 
-    ProximityCollisions mutualCollisions;
+    CollidingPairs mutualCollisions;
     mutualCollisions.reserve( origMutualCollisions.size() );
 
     for( unsigned i = 0; i < origMutualCollisions.size(); ++i )
     {
-        const ProximityCollision &proxyCol = origMutualCollisions[i];
+        const CollidingPair &proxyCol = origMutualCollisions[i];
         const unsigned s1 = proxyCol.objects.first.globalIndex;
         const unsigned s2 = proxyCol.objects.second.globalIndex;
 
         if( m_steppers[s1]->refusesMutualContacts() || m_steppers[s2]->refusesMutualContacts() )
         {
-            ProximityCollision copy( proxyCol );
+            CollidingPair copy( proxyCol );
             makeExternalContact( copy, m_steppers[s2]->refusesMutualContacts() );
         }
         else
@@ -382,7 +381,7 @@ void Simulation::computeCollidingGroups( const ProximityCollisions &origMutualCo
     std::vector< std::deque<unsigned> > objsGroups( m_strands.size() );
     for( unsigned i = 0; i < mutualCollisions.size(); ++i )
     {
-        const ProximityCollision &proxyCol = mutualCollisions[i];
+        const CollidingPair &proxyCol = mutualCollisions[i];
         const unsigned s1 = proxyCol.objects.first.globalIndex;
         const unsigned s2 = proxyCol.objects.second.globalIndex;
 
@@ -426,7 +425,7 @@ void Simulation::computeCollidingGroups( const ProximityCollisions &origMutualCo
 
     for( unsigned i = 0; i < mutualCollisions.size(); ++i )
     { // assign the collisions to the groups they belong in
-        const ProximityCollision &mutualCollision = mutualCollisions[i];
+        const CollidingPair &mutualCollision = mutualCollisions[i];
         const unsigned s1 = mutualCollision.objects.first.globalIndex;
 
         m_collidingGroups[ m_collidingGroupsIdx[s1] ].second.push_back( mutualCollision );
@@ -445,7 +444,7 @@ void Simulation::computeCollidingGroups( const ProximityCollisions &origMutualCo
     }
 }
 
-void Simulation::setupDeformationBasis( ProximityCollision &collision ) const
+void Simulation::setupDeformationBasis( CollidingPair &collision ) const
 {
     collision.generateTransformationMatrix();
     computeDeformationGradient( collision.objects.first );
@@ -454,7 +453,7 @@ void Simulation::setupDeformationBasis( ProximityCollision &collision ) const
     }
 }
 
-void Simulation::computeDeformationGradient( ProximityCollision::Object &object ) const
+void Simulation::computeDeformationGradient( CollidingPair::Object &object ) const
 {
     object.defGrad = new SparseRowMatx( 3, getDegreesOfFreedom().rows() );
     SparseRowMatx& H = *(object.defGrad);
@@ -484,7 +483,7 @@ void Simulation::solveCollidingGroup( CollidingGroup& collisionGroup, bool asFai
     if ( collisionGroup.first.empty() ) return;
 
     std::vector<unsigned> globalIds;
-    std::vector< ProximityCollision* > colPointers;
+    std::vector< CollidingPair* > colPointers;
 
     bool accept = false;
     {
@@ -540,7 +539,7 @@ void Simulation::solveCollidingGroup( CollidingGroup& collisionGroup, bool asFai
 #pragma omp parallel for
         for ( unsigned i = 0; i < colPointers.size(); ++i )
         {
-            ProximityCollision& col = *colPointers[i];
+            CollidingPair& col = *colPointers[i];
             delete col.objects.first.defGrad;
             col.objects.first.defGrad = NULL;
             if ( col.objects.second.globalIndex != -1 )

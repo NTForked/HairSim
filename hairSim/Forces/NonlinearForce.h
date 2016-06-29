@@ -30,7 +30,7 @@ public:
         bool needsUpdate = m_stepper.updateLinearSystem( solverForces );
         if( needsUpdate )
         { // if update occured, need to inform Bogus/problem solver of new system
-            strandsim::JacobianSolver *M = &m_stepper.linearSolver();
+            JacobianSolver *M = &m_stepper.linearSolver();
 
             std::cout << "updating linear system " << m_stepper.m_strand.getGlobalIndex() <<  std::endl;
 

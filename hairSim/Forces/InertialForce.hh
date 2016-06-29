@@ -1,10 +1,8 @@
-#ifndef STRANDSIM_INERTIALFORCE_HH
-#define STRANDSIM_INERTIALFORCE_HH
+#ifndef INERTIALFORCE_HH
+#define INERTIALFORCE_HH
 
 #include "ForceBase.hh"
-#include "../Core/BandMatrixFwd.hh"
-
-namespace strandsim {
+#include "../Math/BandMatrixFwd.h"
 
 class InertialForce : public ForceBase
 {
@@ -12,7 +10,7 @@ public:
     static const IndexType s_first = 0; // The first index on which this force can apply
     static const IndexType s_last = 0; // The last index (counting from the end)
 
-    typedef Vec3x LocalForceType;
+    typedef Vec3 LocalForceType;
     typedef Mat3x LocalJacobianType;
     typedef VecXx ForceVectorType;
 
@@ -34,8 +32,8 @@ public:
             const LocalJacobianType& localJacobian );
 
     static void setFrameAccelerations(
-            const Vec3x& Omega, const Vec3x& dOmega_dt,
-            const Vec3x& accOrigin ) ;
+            const Vec3& Omega, const Vec3& dOmega_dt,
+            const Vec3& accOrigin ) ;
 
 protected:
     InertialForce();
@@ -44,9 +42,7 @@ protected:
     static Mat3x s_Omega_Cross ;
     static Mat3x s_Omega_Cross_Cross ;
     static Mat3x s_dOmega_dt_Cross ;
-    static Vec3x s_accOrigin ;
+    static Vec3 s_accOrigin ;
 };
 
-} // namespace strandsim
-
-#endif // STRANDSIM_INERTIALFORCE_HH
+#endif 

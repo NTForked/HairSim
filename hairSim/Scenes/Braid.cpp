@@ -1,11 +1,11 @@
-#include "Braid.hh"
+#include "Braid.h"
 #include <random>
 
 #define PI 3.14159265
 using namespace std;
 
 Braid::Braid() :
-ProblemStepper("Braid", "N Locks of hair forming a braid ")
+Scene("Braid", "N Locks of hair forming a braid ")
 {
 
     AddOption("num_nurbs", "", 1500 );
@@ -60,7 +60,7 @@ Braid::~Braid()
 {    
 }
 
-void Braid::generateSinusoidalBraidVertices( vector< vector< Vec3x > >& rodPos )
+void Braid::generateSinusoidalBraidVertices( vector< vector< Vec3 > >& rodPos )
 {
     // This formula for odd-locked braids 
     // from [Capturing Braided Hairstyles - Hu et al. 2014]
@@ -81,14 +81,14 @@ void Braid::generateSinusoidalBraidVertices( vector< vector< Vec3x > >& rodPos )
             Scalar x = A * sin( y + rod * 2 * PI / N );
             Scalar z = B * sin( M * ( y + rod * 2 * PI / N ) );
             // std::cout << "rod: " << rod << " x: " << x << " y: " << y << " z: " << z << std::endl;
-            Vec3x vertNext = Vec3x( x, y, z );
+            Vec3 vertNext = Vec3( x, y, z );
             rodPos[rod].push_back( vertNext );
         }
         y -= t;
     }
 }
 
-void Braid::generateBraidVertices( vector< vector< Vec3x > >& rodPos )
+void Braid::generateBraidVertices( vector< vector< Vec3 > >& rodPos )
 {
     //// Currently always has 3 locks generated on the XZ plane, aligned with X and hanging down in Y
 
@@ -105,7 +105,7 @@ void Braid::generateBraidVertices( vector< vector< Vec3x > >& rodPos )
 
 
     unsigned numRodsPerLock = GetIntOpt("rods_per_lock");
-    // vector< vector <Vec3x> > 
+    // vector< vector <Vec3> > 
     rodPos.resize( 3 * numRodsPerLock );
     for( unsigned lock = 0; lock < 3; ++lock ){
         for( unsigned rodInLock = 0; rodInLock < numRodsPerLock; ++rodInLock ){
@@ -119,16 +119,16 @@ void Braid::generateBraidVertices( vector< vector< Vec3x > >& rodPos )
             x += (-2.0 * lockRadius) + lock * (2*lockRadius); // shifting to center of lock
 
             // Add to Rods list, grouped by lock
-            rodPos[ lock * numRodsPerLock + rodInLock ].push_back( Vec3x( x, y, z ) );
+            rodPos[ lock * numRodsPerLock + rodInLock ].push_back( Vec3( x, y, z ) );
         }
     }
 
     Scalar dY =  - GetScalarOpt("swap_proximity") / GetIntOpt("swap_partitions");
 
     for( unsigned rod = 0; rod < rodPos.size(); ++rod ){
-        Vec3x vertNext = rodPos[rod].back();
+        Vec3 vertNext = rodPos[rod].back();
 
-        vertNext += Vec3x( 0.0, dY, 0.0 );
+        vertNext += Vec3( 0.0, dY, 0.0 );
         rodPos[rod].push_back( vertNext );
     }
 
@@ -142,7 +142,7 @@ void Braid::generateBraidVertices( vector< vector< Vec3x > >& rodPos )
 
     bool swapLeft = true; // Alternate between swapping left and right with middle
     Scalar tangentShift;
-    Vec3x pivot;
+    Vec3 pivot;
     unsigned startIndex;
     unsigned endIndex;
     // Number of times an outside lock is swapped with the middle lock
@@ -162,15 +162,15 @@ void Braid::generateBraidVertices( vector< vector< Vec3x > >& rodPos )
         // divide this swap into an appropriate number of swap partitions for smoothness
         for( int rotationCount = 0; rotationCount < GetIntOpt("swap_partitions"); ++rotationCount ){
 
-            pivot = Vec3x( tangentShift, y, 0.0 ); // rotate about previous level
+            pivot = Vec3( tangentShift, y, 0.0 ); // rotate about previous level
             // rotate locks of interest (and their rod points) about tangent point of lock circles
             for( unsigned rod = 0; rod < rodPos.size(); ++rod ){
-                Vec3x vertNext = rodPos[rod].back();
+                Vec3 vertNext = rodPos[rod].back();
 
                 if( startIndex <= rod && rod < endIndex ){
                     vertNext = rotY * (vertNext - pivot) + pivot;
                 }
-                vertNext += Vec3x( 0.0, dY, 0.0 );
+                vertNext += Vec3( 0.0, dY, 0.0 );
                 rodPos[rod].push_back( vertNext );
             }
             y += dY; // but keep strands moving down
@@ -209,13 +209,13 @@ void Braid::includeHairTie()
     double depth = -7.5;
     double radius = 1.1;
     double dOffset = 0.0; // 0.25
-    vector< Vec3x > vertices;
-    vertices.push_back( Vec3x( radius, depth, 0.0 ) );
-    vertices.push_back( Vec3x( 0.0, depth, radius ) );
-    vertices.push_back( Vec3x( -radius, depth, 0.0 ) );
-    vertices.push_back( Vec3x( 0.0, depth, -radius ) );
-    vertices.push_back( Vec3x( radius, depth + dOffset, 0.0 ) );
-    // vertices.push_back( Vec3x( 0.0, depth + dOffset, radius ) );
+    vector< Vec3 > vertices;
+    vertices.push_back( Vec3( radius, depth, 0.0 ) );
+    vertices.push_back( Vec3( 0.0, depth, radius ) );
+    vertices.push_back( Vec3( -radius, depth, 0.0 ) );
+    vertices.push_back( Vec3( 0.0, depth, -radius ) );
+    vertices.push_back( Vec3( radius, depth + dOffset, 0.0 ) );
+    // vertices.push_back( Vec3( 0.0, depth + dOffset, radius ) );
 
     int num_DoFs = 4 * vertices.size() - 1;
     VecXd dofs( num_DoFs );
@@ -224,7 +224,7 @@ void Braid::includeHairTie()
     }
 
     // CoM += vertices.back();
-    strandsim::Vec3xArray scripted_vertices;
+    Vec3Array scripted_vertices;
     scripted_vertices.push_back( vertices[0] );
     scripted_vertices.push_back( vertices[ vertices.size() - 1] );
     DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -241,21 +241,21 @@ void Braid::includeHairTie()
     RodData* rd = new RodData( *strand, *controller );
     m_rodDatum.push_back( rd );
 
-    Vec3x zero( 0.,0.,0. );
+    Vec3 zero( 0.,0.,0. );
     RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
     Mat3x identity = Mat3x::Identity();
     double push = 0.8;
-    Vec3x translate = Vec3x( push, 0.0, 0.0 );
+    Vec3 translate = Vec3( push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate , 0 );
-    translate = Vec3x( 0.0, 0.0, push );
+    translate = Vec3( 0.0, 0.0, push );
     transformRodRootVtx( *hairband, identity, zero, translate, 1 );
-    translate = Vec3x( -push, 0.0, 0.0 );
+    translate = Vec3( -push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate, 2 );
-    translate = Vec3x( 0.0, 0.0, -push );
+    translate = Vec3( 0.0, 0.0, -push );
     transformRodRootVtx( *hairband, identity, zero, translate, 3 );
-    translate = Vec3x( push, 0.0, 0.0 );
+    translate = Vec3( push, 0.0, 0.0 );
     transformRodRootVtx( *hairband, identity, zero, translate, 4 );
-    // translate = Vec3x( 0.0, 0.0, push );
+    // translate = Vec3( 0.0, 0.0, push );
     // transformRodRootVtx( *hairband, identity, zero, translate, 5 );
 }
 
@@ -284,18 +284,18 @@ void Braid::setupStrands()
     const Scalar totalLength = GetScalarOpt("totalLength");
 
     // sample rod positions
-    vector< vector< Vec3x > >strands;
+    vector< vector< Vec3 > >strands;
     // generateBraidVertices( strands ); 
     generateSinusoidalBraidVertices( strands );    
 
-    // Vec3x CoM = Vec3x(0.0,0.0,0.0);
+    // Vec3 CoM = Vec3(0.0,0.0,0.0);
 
     // more rod params
     int num_DoFs;
     int rod_id = 0;
     for( unsigned i = 0; i < strands.size(); ++i )
     {
-        vector< Vec3x > vertices = strands[i];
+        vector< Vec3 > vertices = strands[i];
         num_DoFs = 4 * vertices.size() - 1;
 
         nVertices = vertices.size();
@@ -315,7 +315,7 @@ void Braid::setupStrands()
         }
 
         // CoM += vertices.back();
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( vertices[0] );
         scripted_vertices.push_back( vertices[ nVertices - 1] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -328,7 +328,7 @@ void Braid::setupStrands()
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
 
-        Vec2xArray kappas = strand->alterRestKappas();
+        Vec2Array kappas = strand->alterRestKappas();
         for( unsigned i = 0; i < kappas.size(); ++i ){
             strand->alterRestKappas()[i].setZero();
         }
@@ -394,7 +394,7 @@ void Braid::loadNurbs()
 
         int delayedStart = numVerts / 2;
 
-        std::vector<Vec3x> vertices;
+        std::vector<Vec3> vertices;
         for( int v = 0; v < numVerts; ++v )
         {
             std::string vert_string;
@@ -406,7 +406,7 @@ void Braid::loadNurbs()
 
             std::istringstream vertstream( vert_string );
             vertstream >> x >> y >> z;
-            Vec3x pos( x, -y, z );
+            Vec3 pos( x, -y, z );
             vertices.push_back( pos );
         }
 
@@ -431,7 +431,7 @@ void Braid::loadNurbs()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = vertices[i / 4];
         
-        strandsim::Vec3xArray scripted_vertices;
+        Vec3Array scripted_vertices;
         scripted_vertices.push_back( vertices[0] );
         // scripted_vertices.push_back( vertices[1] );
         DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
@@ -442,7 +442,7 @@ void Braid::loadNurbs()
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
 
-        Vec2xArray kappas = strand->alterRestKappas();
+        Vec2Array kappas = strand->alterRestKappas();
         std::cout << "K_size " << kappas.size() <<std::endl;
         for( unsigned i = 0; i < kappas.size(); ++i ){
             strand->alterRestKappas()[i].setZero();
@@ -471,7 +471,7 @@ bool Braid::executeScript()
         exit(0);
     }
 
-    Vec3x zero( 0.,0.,0. );
+    Vec3 zero( 0.,0.,0. );
 
     if( getTime() == 0.0 && includeTie )
     {
@@ -482,17 +482,17 @@ bool Braid::executeScript()
         RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
         Mat3x identity = Mat3x::Identity();
         double push = -0.5;
-        Vec3x translate = Vec3x( push, 0.0, 0.0 );
+        Vec3 translate = Vec3( push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate , 0 );
-        translate = Vec3x( 0.0, 0.0, push );
+        translate = Vec3( 0.0, 0.0, push );
         transformRodRootVtx( *hairband, identity, zero, translate, 1 );
-        translate = Vec3x( -push, 0.0, 0.0 );
+        translate = Vec3( -push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate, 2 );
-        translate = Vec3x( 0.0, 0.0, -push );
+        translate = Vec3( 0.0, 0.0, -push );
         transformRodRootVtx( *hairband, identity, zero, translate, 3 );
-        translate = Vec3x( push, 0.0, 0.0 );
+        translate = Vec3( push, 0.0, 0.0 );
         transformRodRootVtx( *hairband, identity, zero, translate, 4 );
-        // translate = Vec3x( 0.0, 0.0, push );
+        // translate = Vec3( 0.0, 0.0, push );
         // transformRodRootVtx( *hairband, identity, zero, translate, 5 );
     }
     if( getTime() == 0.0 + 2 * m_dt && includeTie )
@@ -545,7 +545,7 @@ bool Braid::executeScript()
 
             Mat3x identity = Mat3x::Identity();
             // std::cout << "script cos: " << cos( swayRate * getTime() ) << std::endl;
-            Vec3x translate = Vec3x( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
+            Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
             for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
@@ -561,7 +561,7 @@ bool Braid::executeScript()
 
             Mat3x identity = Mat3x::Identity();
             // std::cout << "script cos: " << cos( swayRate * getTime() ) << std::endl;
-            Vec3x translate = Vec3x( scale * sin( swayRate * getTime() ), 0.0, scale * cos( swayRate * getTime() ) );
+            Vec3 translate = Vec3( scale * sin( swayRate * getTime() ), 0.0, scale * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
             for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)

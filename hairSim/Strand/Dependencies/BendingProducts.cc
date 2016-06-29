@@ -1,15 +1,5 @@
-/*
- * \file BendingProducts.cc
- *
- *  Created on: 22/10/2012
- *     \author Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #include "BendingProducts.hh"
 #include "../Core/ElasticStrandUtils.hh"
-
-namespace strandsim
-{
 
 void BendingProducts::compute()
 {
@@ -23,7 +13,5 @@ void BendingProducts::compute()
     }
 
     setDependentsDirty();
-}
-
 }
 

@@ -1,8 +1,7 @@
 #ifndef DEPENDENCYNODE_HH_
 #define DEPENDENCYNODE_HH_
 
-#include "../Core/Definitions.hh"
-#include "../Utils/TextLog.hh"
+#include "../../Utils/Definitions.h"
 #include <list>
 
 #include <boost/serialization/vector.hpp>
@@ -292,9 +291,7 @@ protected    :
 
     virtual ElemValueT elemCompute( IndexType )
     {
-        ErrorStream( g_log, "" )
-        << "Either compute() or elemCompute() method must be implemented for class "
-        << name();
+        std::cerr << "Either compute() or elemCompute() method must be implemented for class " << name() << std::endl;
 
         return ElemValueT();
     }

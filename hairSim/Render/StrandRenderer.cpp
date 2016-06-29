@@ -85,13 +85,13 @@ void StrandRenderer::render( ElasticStrand* strand, const int& w, const int& h, 
     glPopAttrib();
 }
 
-void StrandRenderer::addVert( Vec3x& vert )
+void StrandRenderer::addVert( Vec3& vert )
 {
     verts.push_back( vert );
 }
 
-void StrandRenderer::addArrow( Vec3x& start, Vec3x& end ){
-    arrows.push_back( std::pair< Vec3x, Vec3x>( start, end ) );
+void StrandRenderer::addArrow( Vec3& start, Vec3& end ){
+    arrows.push_back( std::pair< Vec3, Vec3>( start, end ) );
 }
 
 void StrandRenderer::drawContacts() const
@@ -177,8 +177,8 @@ void StrandRenderer::drawArrows() const
 {
     for (int i = 0; i < arrows.size(); ++i)
     {
-        Vec3x start = arrows[i].first;
-        Vec3x end = arrows[i].second;
+        Vec3 start = arrows[i].first;
+        Vec3 end = arrows[i].second;
         Arrow( start[0], start[1], start[2], end[0], end[1], end[2], 0.02 );
     }
 }
@@ -196,7 +196,7 @@ void StrandRenderer::computeQuads( QuadData &quads ) const
     quads.m_quadColors.resize( 4 * numVertices * slices );
     quads.m_quadNormals.resize( quads.m_quadVertices.size() );
     quads.m_quadIndices.resize( 4 * ( numVertices - 1 ) * slices );
-    const Vec3xArray& materialFrames1 = m_strand->getCurrentMaterialFrames1();
+    const Vec3Array& materialFrames1 = m_strand->getCurrentMaterialFrames1();
 
     Vec4fArray slicesColors( slices );
     for( int k = 0; k < slices; ++k )
@@ -435,7 +435,7 @@ void StrandRenderer::labelScene( int windowWidth, int windowHeight, int label )
     glGetDoublev( GL_PROJECTION_MATRIX, projection );
     glGetIntegerv( GL_VIEWPORT, viewport );
 
-    Vec3x x1;
+    Vec3 x1;
     
     if( label < 2 )
     {
@@ -541,32 +541,32 @@ void StrandRenderer::drawProxies( std::vector<ElementProxy* >* proxies, TwistEdg
     {
         TwistEdge* edge = dynamic_cast<TwistEdge*>( (*proxies)[e] );
         if( edge && edge->intersectionTwists() > 0 ){
-            Vec3x x0, x1;
+            Vec3 x0, x1;
             teh->getEdgeVerts( edge, false, x0, x1 );
-            endProxies.push_back( std::pair< Vec3x, Vec3x>( x0, x1 ) );
+            endProxies.push_back( std::pair< Vec3, Vec3>( x0, x1 ) );
 
-            Vec3x midpoint = 0.5 *( x0 + x1 );
-            vertLabels.push_back( std::pair< Vec3x, int >( midpoint, edge->uniqueID ) );
+            Vec3 midpoint = 0.5 *( x0 + x1 );
+            vertLabels.push_back( std::pair< Vec3, int >( midpoint, edge->uniqueID ) );
 
             if( edge->isTwistedBand ){
-                twistLabels.push_back( std::pair< Vec3x, double >(midpoint, edge->coplanarTwists() ) );
-                twistLabels.push_back( std::pair< Vec3x, double >(midpoint, edge->intersectionTwists() ) );
-                twistLabels.push_back( std::pair< Vec3x, double >(midpoint, edge->currAngle() ) );
+                twistLabels.push_back( std::pair< Vec3, double >(midpoint, edge->coplanarTwists() ) );
+                twistLabels.push_back( std::pair< Vec3, double >(midpoint, edge->intersectionTwists() ) );
+                twistLabels.push_back( std::pair< Vec3, double >(midpoint, edge->currAngle() ) );
             }
 
-            // if( edge->endpoints.second->incidentEdges.second == NULL ) vertLabels.push_back( std::pair< Vec3x, int >(x0, -1 * (edge->endpoints.second->uniqueId) ) );
+            // if( edge->endpoints.second->incidentEdges.second == NULL ) vertLabels.push_back( std::pair< Vec3, int >(x0, -1 * (edge->endpoints.second->uniqueId) ) );
         }
     }
 }
 
-Vec3x StrandRenderer::calculateObjectCenter( ElasticStrand* strand )
+Vec3 StrandRenderer::calculateObjectCenter( ElasticStrand* strand )
 {
-    Vec3x center = Vec3x::Zero();
+    Vec3 center = Vec3::Zero();
 
     const unsigned numVertices = strand->getNumVertices();
     for ( int vtx = 0; vtx < numVertices; ++vtx )
     {
-        const Vec3x& vertex = strand->getVertex( vtx );
+        const Vec3& vertex = strand->getVertex( vtx );
         center += vertex;
     }
 
@@ -574,14 +574,14 @@ Vec3x StrandRenderer::calculateObjectCenter( ElasticStrand* strand )
     return center;
 }
 
-Scalar StrandRenderer::calculateObjectBoundingRadius( ElasticStrand* strand, const Vec3x& center )
+Scalar StrandRenderer::calculateObjectBoundingRadius( ElasticStrand* strand, const Vec3& center )
 {
     Scalar radius = 0.0;
 
     const unsigned numVertices = strand->getNumVertices();
     for ( unsigned vtx = 0; vtx < numVertices; ++vtx )
     {
-        const Vec3x& vertex = strand->getVertex( vtx );
+        const Vec3& vertex = strand->getVertex( vtx );
         radius = std::max( radius, ( vertex - center ).norm() );
     }
     return radius;

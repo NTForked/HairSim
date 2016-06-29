@@ -3,7 +3,7 @@
 #include "../Static/CollisionSet.hh"
 #include "../Static/StrandStaticTraits.hh"
 #include "../Core/ElasticStrand.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 //#define USE_DISTANCE_FOR_PENALTY_FORCES
 
@@ -116,10 +116,10 @@ std::string StrandStrandForce::getName() const
 
 Scalar StrandStrandForce::tetraVolume() const
 {
-//    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-//    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-//    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-//    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+//    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+//    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+//    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+//    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
 
     Mat3x tetra;
     tetra.block < 3, 1 > ( 0, 0 ) = m_p1 - m_p0;
@@ -131,15 +131,15 @@ Scalar StrandStrandForce::tetraVolume() const
     return tetra.determinant(); // That's actually 6 x the tetrahedron volume.
 }
 
-Vec3x StrandStrandForce::gradP0TetraVolume() const
+Vec3 StrandStrandForce::gradP0TetraVolume() const
 {
-//    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-//    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-//    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
-    const Vec3x& v0 = m_p1 - m_q0;
-    const Vec3x& v1 = m_q1 - m_p1;
+//    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+//    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+//    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+    const Vec3& v0 = m_p1 - m_q0;
+    const Vec3& v1 = m_q1 - m_p1;
 
-    Vec3x grad;
+    Vec3 grad;
     grad[0] = v0[1] * v1[2] - v0[2] * v1[1];
     grad[1] = v0[2] * v1[0] - v0[0] * v1[2];
     grad[2] = v0[0] * v1[1] - v0[1] * v1[0];
@@ -147,15 +147,15 @@ Vec3x StrandStrandForce::gradP0TetraVolume() const
     return grad;
 }
 
-Vec3x StrandStrandForce::gradP1TetraVolume() const
+Vec3 StrandStrandForce::gradP1TetraVolume() const
 {
-//    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-//    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-//    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
-    const Vec3x& v0 = m_p0 - m_q0;
-    const Vec3x& v1 = m_q1 - m_p0;
+//    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+//    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+//    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+    const Vec3& v0 = m_p0 - m_q0;
+    const Vec3& v1 = m_q1 - m_p0;
 
-    Vec3x grad;
+    Vec3 grad;
     grad[0] = v0[2] * v1[1] - v0[1] * v1[2];
     grad[1] = v0[0] * v1[2] - v0[2] * v1[0];
     grad[2] = v0[1] * v1[0] - v0[0] * v1[1];
@@ -163,15 +163,15 @@ Vec3x StrandStrandForce::gradP1TetraVolume() const
     return grad;
 }
 
-Vec3x StrandStrandForce::gradQ1TetraVolume() const
+Vec3 StrandStrandForce::gradQ1TetraVolume() const
 {
-//    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-//    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-//    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-    const Vec3x& v0 = m_q0 - m_p0;
-    const Vec3x& v1 = m_p1 - m_q0;
+//    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+//    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+//    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+    const Vec3& v0 = m_q0 - m_p0;
+    const Vec3& v1 = m_p1 - m_q0;
 
-    Vec3x grad;
+    Vec3 grad;
     grad[0] = v0[2] * v1[1] - v0[1] * v1[2];
     grad[1] = v0[0] * v1[2] - v0[2] * v1[0];
     grad[2] = v0[1] * v1[0] - v0[0] * v1[1];
@@ -181,8 +181,8 @@ Vec3x StrandStrandForce::gradQ1TetraVolume() const
 
 Mat3x StrandStrandForce::hessP0P1TetraVolume() const
 {
-//    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-//    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+//    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+//    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
 
     Mat3x hess;
     hess( 0, 0 ) = hess( 1, 1 ) = hess( 2, 2 ) = 0;
@@ -198,8 +198,8 @@ Mat3x StrandStrandForce::hessP0P1TetraVolume() const
 
 Mat3x StrandStrandForce::hessQ0Q1TetraVolume() const
 {
-//    const Vec3x& p0 = m_strandQ->getVertex( m_edgeP );
-//    const Vec3x& p1 = m_strandQ->getVertex( m_edgeP + 1 );
+//    const Vec3& p0 = m_strandQ->getVertex( m_edgeP );
+//    const Vec3& p1 = m_strandQ->getVertex( m_edgeP + 1 );
 
     Mat3x hess;
     hess( 0, 0 ) = hess( 1, 1 ) = hess( 2, 2 ) = 0;
@@ -239,15 +239,15 @@ void StrandStrandForce::findTheVertices( const StrandState& geometry ) const
     }
 }
 
-Vec3x StrandStrandForce::gradQ0TetraVolume() const
+Vec3 StrandStrandForce::gradQ0TetraVolume() const
 {
-//    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-//    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-//    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
-    const Vec3x& v0 = m_q1 - m_p0;
-    const Vec3x& v1 = m_p1 - m_q1;
+//    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+//    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+//    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+    const Vec3& v0 = m_q1 - m_p0;
+    const Vec3& v1 = m_p1 - m_q1;
 
-    Vec3x grad;
+    Vec3 grad;
     grad[0] = v0[1] * v1[2] - v0[2] * v1[1];
     grad[1] = v0[2] * v1[0] - v0[0] * v1[2];
     grad[2] = v0[0] * v1[1] - v0[1] * v1[0];
@@ -301,10 +301,10 @@ void StrandStrandForce::accumulateJ( StrandState& geometry, const ElasticStrand&
     if ( s == 0. || s == 1. || t == 0. || t == 1. )
         return;
 
-    const Vec3x &ps = ( 1. - s ) * m_p0 + s * m_p1;
-    const Vec3x &qt = ( 1. - t ) * m_q0 + t * m_q1;
+    const Vec3 &ps = ( 1. - s ) * m_p0 + s * m_p1;
+    const Vec3 &qt = ( 1. - t ) * m_q0 + t * m_q1;
 
-    Vec3x edge, otherEdge;
+    Vec3 edge, otherEdge;
     if ( clientStrand == P )
     {
         edge = ( m_p1 - m_p0 );
@@ -323,7 +323,7 @@ void StrandStrandForce::accumulateJ( StrandState& geometry, const ElasticStrand&
         cross *= -1;
     }
 
-    const Vec3x grad = ( cross * edge ).normalized();
+    const Vec3 grad = ( cross * edge ).normalized();
     const double rad = ( ps - qt ).dot( grad );
     const double depl = m_thickness - rad;
 
@@ -360,9 +360,9 @@ void StrandStrandForce::accumulateJ( StrandState& geometry, const ElasticStrand&
         Scalar dPQ_dX0 = clientStrand == P ? ( 1 - s) : ( t - 1);
         Scalar dPQ_dX1 = clientStrand == P ? s : -t;
 
-        const Vec3x PQ = ( ps - qt);
-        const Vec3x dDepl_dX0 = -( dPQ_dX0 * grad + dGrad_dX0.transpose() * PQ );
-        const Vec3x dDepl_dX1 = -( dPQ_dX1 * grad + dGrad_dX1.transpose() * PQ );
+        const Vec3 PQ = ( ps - qt);
+        const Vec3 dDepl_dX0 = -( dPQ_dX0 * grad + dGrad_dX0.transpose() * PQ );
+        const Vec3 dDepl_dX1 = -( dPQ_dX1 * grad + dGrad_dX1.transpose() * PQ );
 
         Mat3x dd_gradPQ_dX_dX;
         dd_gradPQ_dX_dX.setZero();
@@ -487,10 +487,10 @@ void StrandStrandForce::accumulateE( ClientNumber clientStrand, Scalar& globalE 
     if ( s == 0. || s == 1. || t == 0. || t == 1. )
         return;
 
-    const Vec3x &ps = ( 1. - s ) * m_p0 + s * m_p1;
-    const Vec3x &qt = ( 1. - t ) * m_q0 + t * m_q1;
+    const Vec3 &ps = ( 1. - s ) * m_p0 + s * m_p1;
+    const Vec3 &qt = ( 1. - t ) * m_q0 + t * m_q1;
 
-    Vec3x edge, otherEdge;
+    Vec3 edge, otherEdge;
     if ( clientStrand == P )
     {
         edge = ( m_p1 - m_p0 );
@@ -509,7 +509,7 @@ void StrandStrandForce::accumulateE( ClientNumber clientStrand, Scalar& globalE 
         cross *= -1;
     }
 
-    const Vec3x grad = ( cross * edge ).normalized();
+    const Vec3 grad = ( cross * edge ).normalized();
     const double rad = ( ps - qt ).dot( grad );
     const double depl = m_thickness - rad;
 
@@ -545,10 +545,10 @@ void StrandStrandForce::accumulateEF( ClientNumber clientStrand, VecXx& globalF,
     if ( s == 0. || s == 1. || t == 0. || t == 1. )
         return;
 
-    const Vec3x &ps = ( 1. - s ) * m_p0 + s * m_p1;
-    const Vec3x &qt = ( 1. - t ) * m_q0 + t * m_q1;
+    const Vec3 &ps = ( 1. - s ) * m_p0 + s * m_p1;
+    const Vec3 &qt = ( 1. - t ) * m_q0 + t * m_q1;
 
-    Vec3x edge, otherEdge;
+    Vec3 edge, otherEdge;
     if ( clientStrand == P )
     {
         edge = ( m_p1 - m_p0 );
@@ -567,7 +567,7 @@ void StrandStrandForce::accumulateEF( ClientNumber clientStrand, VecXx& globalF,
         cross *= -1;
     }
 
-    const Vec3x grad = ( cross * edge ).normalized();
+    const Vec3 grad = ( cross * edge ).normalized();
     const double rad = ( ps - qt ).dot( grad );
     const double depl = m_thickness - rad;
 
@@ -585,8 +585,8 @@ void StrandStrandForce::accumulateEF( ClientNumber clientStrand, VecXx& globalF,
         Scalar dPQ_dX0 = clientStrand == P ? ( 1 - s) : ( t - 1);
         Scalar dPQ_dX1 = clientStrand == P ? s : -t;
 
-        const Vec3x dDepl_dX0 = -( dPQ_dX0 * grad + dGrad_dX0.transpose() * ( ps - qt ) );
-        const Vec3x dDepl_dX1 = -( dPQ_dX1 * grad + dGrad_dX1.transpose() * ( ps - qt ) );
+        const Vec3 dDepl_dX0 = -( dPQ_dX0 * grad + dGrad_dX0.transpose() * ( ps - qt ) );
+        const Vec3 dDepl_dX1 = -( dPQ_dX1 * grad + dGrad_dX1.transpose() * ( ps - qt ) );
 
         const unsigned vertexId = ( clientStrand == P ) ? m_edgeP : m_edgeQ;
         globalF.segment < 3 > ( ( vertexId + 0 ) * 4 ) -= m_stiffness * depl * dDepl_dX0;
@@ -639,8 +639,8 @@ bool StrandStrandForce::isActive() const
 
      Scalar s, t ;
      GetClosestPoints( s, t );
-     const Vec3x &ps = ( 1. - s ) * m_p0 + s * m_p1;
-     const Vec3x &qt = ( 1. - t ) * m_q0 + t * m_q1;
+     const Vec3 &ps = ( 1. - s ) * m_p0 + s * m_p1;
+     const Vec3 &qt = ( 1. - t ) * m_q0 + t * m_q1;
 
      return  ( ps - qt ).norm() < 4 * m_thickness  ;*/
 
@@ -653,7 +653,7 @@ void StrandStrandForce::updateCollisionData()
     VecXx globalF = VecXx::Zero( m_strandP->getNumVertices() * 4 );
     accumulateCurrentF( globalF, *m_strandP );
 
-    Vec3x contactForce;
+    Vec3 contactForce;
     contactForce = globalF.segment < 3 > ( ( m_edgeP + 0 ) * 4 ) + globalF.segment < 3
             > ( ( m_edgeP + 1 ) * 4 );
 
@@ -662,8 +662,8 @@ void StrandStrandForce::updateCollisionData()
 
         Scalar s, t;
         GetClosestPoints( s, t );
-        const Vec3x &ps = ( 1. - s ) * m_p0 + s * m_p1;
-        const Vec3x &qt = ( 1. - t ) * m_q0 + t * m_q1;
+        const Vec3 &ps = ( 1. - s ) * m_p0 + s * m_p1;
+        const Vec3 &qt = ( 1. - t ) * m_q0 + t * m_q1;
         const Scalar rad = ( ps - qt ).norm();
 
         StaticCollision &col = m_collision;
@@ -680,7 +680,7 @@ void StrandStrandForce::updateCollisionData()
         col.adhProps[StaticCollision::NORMAL].perpThickness = m_thickness;
 
         col.collisionPointData.resize( 15 );
-        col.collisionPointData.segment < 3 > ( 0 ) = Vec3x( s, t, rad );
+        col.collisionPointData.segment < 3 > ( 0 ) = Vec3( s, t, rad );
 
         col.collisionPointData.segment < 3 > ( 3 ) = m_p0;
         col.collisionPointData.segment < 3 > ( 6 ) = m_p1;
@@ -759,7 +759,7 @@ void StrandStrandForce::registerCollision( const ElasticStrand& strand,
     geometry.staticCollisions().registerCollision( col );
 }
 
-Vec3x StrandStrandForce::getWorldCollisionNormal( const StaticCollision &collision,
+Vec3 StrandStrandForce::getWorldCollisionNormal( const StaticCollision &collision,
         const ElasticStrand& strand ) const
 {
     //findTheVertices( strand.getCurrentState() );
@@ -767,7 +767,7 @@ Vec3x StrandStrandForce::getWorldCollisionNormal( const StaticCollision &collisi
     return RuntimeCollisionForceBase::getWorldCollisionNormal( collision, strand );
 }
 
-Vec3x StrandStrandForce::getWorldCollisionPoint( const StaticCollision &collision,
+Vec3 StrandStrandForce::getWorldCollisionPoint( const StaticCollision &collision,
         const ElasticStrand& strand ) const
 {
     //findTheVertices( strand.getCurrentState() );
@@ -775,14 +775,14 @@ Vec3x StrandStrandForce::getWorldCollisionPoint( const StaticCollision &collisio
     Scalar s = collision.collisionPointData( 0 );
     Scalar t = collision.collisionPointData( 1 );
 
-//    const Vec3x &p0 = m_collision.collisionPointData.segment< 3 >(3) ;
-//    const Vec3x &p1 = m_collision.collisionPointData.segment< 3 >(6) ;
-//    const Vec3x &q0 = m_collision.collisionPointData.segment< 3 >(9) ;
-//    const Vec3x &q1 = m_collision.collisionPointData.segment< 3 >(12) ;
-    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+//    const Vec3 &p0 = m_collision.collisionPointData.segment< 3 >(3) ;
+//    const Vec3 &p1 = m_collision.collisionPointData.segment< 3 >(6) ;
+//    const Vec3 &q0 = m_collision.collisionPointData.segment< 3 >(9) ;
+//    const Vec3 &q1 = m_collision.collisionPointData.segment< 3 >(12) ;
+    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
 
     Scalar rad = 0.;
     if ( collision.subspace == StaticCollision::NORMAL )
@@ -792,8 +792,8 @@ Vec3x StrandStrandForce::getWorldCollisionPoint( const StaticCollision &collisio
         rad = m_collisionAtCreation.collisionPointData( 2 );
     }
 
-    const Vec3x &ps = ( 1. - s ) * p0 + s * p1;
-    const Vec3x &qt = ( 1. - t ) * q0 + t * q1;
+    const Vec3 &ps = ( 1. - s ) * p0 + s * p1;
+    const Vec3 &qt = ( 1. - t ) * q0 + t * q1;
 
     return ( ( &strand == m_strandP ) ? qt : ps ) + rad * collision.force.normalized();
 
@@ -801,18 +801,18 @@ Vec3x StrandStrandForce::getWorldCollisionPoint( const StaticCollision &collisio
 
 bool StrandStrandForce::SegmentsProjOnEachOther() const
 {
-    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
 
     Scalar s, t; //dummy
-    return strandsim::SegmentsProjOnEachOther( p0, p1, q0, q1, s, t );
+    return SegmentsProjOnEachOther( p0, p1, q0, q1, s, t );
 }
 
 void StrandStrandForce::GetClosestPoints( Scalar &s, Scalar &t ) const
 {
-    strandsim::SegmentsProjOnEachOther( m_p0, m_p1, m_q0, m_q1, s, t );
+    SegmentsProjOnEachOther( m_p0, m_p1, m_q0, m_q1, s, t );
 
     s = std::min( ( Scalar ) 1., std::max( s, ( Scalar ) 0. ) );
     t = std::min( ( Scalar ) 1., std::max( t, ( Scalar ) 0. ) );
@@ -820,12 +820,12 @@ void StrandStrandForce::GetClosestPoints( Scalar &s, Scalar &t ) const
 
 std::pair<int, int> StrandStrandForce::SegmentsSituation() const
 {
-    const Vec3x& p0 = m_strandP->getVertex( m_edgeP );
-    const Vec3x& p1 = m_strandP->getVertex( m_edgeP + 1 );
-    const Vec3x& q0 = m_strandQ->getVertex( m_edgeQ );
-    const Vec3x& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
+    const Vec3& p0 = m_strandP->getVertex( m_edgeP );
+    const Vec3& p1 = m_strandP->getVertex( m_edgeP + 1 );
+    const Vec3& q0 = m_strandQ->getVertex( m_edgeQ );
+    const Vec3& q1 = m_strandQ->getVertex( m_edgeQ + 1 );
 
-    return strandsim::SegmentsSituation( p0, p1, q0, q1 );
+    return SegmentsSituation( p0, p1, q0, q1 );
 }
 
 Scalar StrandStrandForce::getInitialSign() const

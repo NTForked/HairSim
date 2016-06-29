@@ -2,7 +2,7 @@
 
 #include "ImplicitStepper.hh"
 #include "DOFScriptingController.hh"
-#include "StrandDynamicTraits.hh"
+#include "StrandDynamics.hh"
 #include "SimulationParameters.hh"
 
 #include "../Core/ElasticStrand.hh"
@@ -115,7 +115,7 @@ void ImplicitStepper::prepareDynamics()
 
 void ImplicitStepper::solveNonLinear()
 {
-    StrandDynamicTraits& dynamics = m_strand.dynamics() ;
+    StrandDynamics& dynamics = m_strand.dynamics() ;
 
     Scalar minErr = 1.e99, prevErr = 1.e99;
     m_newtonIter = 0;
@@ -208,7 +208,7 @@ void ImplicitStepper::solveLinear()
 
 void ImplicitStepper::computeRHS()
 {
-    StrandDynamicTraits& dynamics = m_strand.dynamics();
+    StrandDynamics& dynamics = m_strand.dynamics();
 
     // start of step and unconstrained
     m_rhs = dynamics.getCurrentVelocities() - m_futureVelocities;
@@ -227,7 +227,7 @@ void ImplicitStepper::computeRHS()
 void ImplicitStepper::computeLHS()
 {
     std::cerr << "why is there no minus sign here, looking at LHS equation" << std::endl;    
-    StrandDynamicTraits& dynamics = m_strand.dynamics() ;
+    StrandDynamics& dynamics = m_strand.dynamics() ;
 
     const Scalar origKs = m_strand.getParameters().getKs();
     m_strand.getParameters().setKs( m_stretchDamping * origKs );
@@ -242,7 +242,7 @@ void ImplicitStepper::computeLHS()
     
 VecXx& ImplicitStepper::impulse_rhs()
 {
-    StrandDynamicTraits& dynamics = m_strand.dynamics();
+    StrandDynamics& dynamics = m_strand.dynamics();
     m_impulseRhs = m_futureVelocities;
     dynamics.multiplyByMassMatrix( m_impulseRhs );
   
@@ -383,7 +383,7 @@ void ImplicitStepper::addNonLinearCallback( bogus::MecheFrictionProblem& mechePr
 // Updates the current Lhs and rhs based of the m_newVelocities guess
 bool ImplicitStepper::updateLinearSystem( const VecXx solverForces )
 { //DK: this is where the lineic stretch gets checked and a possible update is applied
-    StrandDynamicTraits& dynamics = m_strand.dynamics();
+    StrandDynamics& dynamics = m_strand.dynamics();
     m_strand.requireExactJacobian( false );
     dynamics.setDisplacements( m_dt * m_futureVelocities );
     

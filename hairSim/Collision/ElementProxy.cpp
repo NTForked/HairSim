@@ -21,7 +21,7 @@ void EdgeProxy::print( std::ostream& os ) const
 
 void FaceProxy::print( std::ostream& os ) const
 {
-    const TriangularMesh* const mesh = getMesh();
+    const TriMesh* const mesh = getMesh();
 
     os << "triangle: " << mesh << '\n';
 
@@ -61,15 +61,15 @@ void TwistEdge::computeBoundingBox( BBoxType& boundingBox, bool statique, TwistE
     std::cerr << "this stuff below is definitely wrong, do not need ortho" << std::endl;
 
     boundingBox.reset();
-    Vec3x min, max;
-    Vec3x vA, vB;
+    Vec3 min, max;
+    Vec3 vA, vB;
     teh->getEdgeVerts( this, true, vA, vB );
     min = vA.cwiseMin(vB);
     max = vA.cwiseMax(vB);
 
-    static const Vec3x unit = Vec3x::Ones();
-    Vec3x ortho = (vB-vA).cross(unit); ortho.normalize();
-    Vec3x ortho2 = unit.cross(vB-vA); ortho2.normalize();
+    static const Vec3 unit = Vec3::Ones();
+    Vec3 ortho = (vB-vA).cross(unit); ortho.normalize();
+    Vec3 ortho2 = unit.cross(vB-vA); ortho2.normalize();
     min += SQRT_2 * radius * ortho.cwiseMin(ortho2);
     max += SQRT_2 * radius * ortho.cwiseMax(ortho2);
     boundingBox.insert( min );

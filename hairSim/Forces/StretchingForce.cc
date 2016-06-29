@@ -1,16 +1,6 @@
-/*
- * StretchingForce.cc
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #include "StretchingForce.hh"
 #include "ViscousOrNotViscous.hh"
-#include "../Core/BandMatrix.hh"
-
-namespace strandsim
-{
+#include "../Math/BandMatrix.h"
 
 template<typename ViscousT>
 Scalar StretchingForce<ViscousT>::localEnergy( const ElasticStrand& strand, StrandState& geometry,
@@ -32,9 +22,9 @@ void StretchingForce<ViscousT>::computeLocal( StretchingForce::LocalForceType& l
     const Scalar restLength = ViscousT::ellBar( strand, vtx );
 
     const Scalar length = geometry.m_lengths[vtx];
-    const Vec3x& edge = geometry.m_tangents[ vtx ];
+    const Vec3& edge = geometry.m_tangents[ vtx ];
 
-    Vec3x f = ks * ( length / restLength - 1.0 ) * edge ;
+    Vec3 f = ks * ( length / restLength - 1.0 ) * edge ;
 
     // if( strand.getGlobalIndex() == 1 ) std::cout << "{"<< strand.getGlobalIndex() <<"}{"<< vtx <<"} l: " << length << " rl: " << restLength << " f: " << f.norm() << std::endl;
 
@@ -50,7 +40,7 @@ void StretchingForce<ViscousT>::computeLocal( StretchingForce::LocalJacobianType
     const Scalar restLength = ViscousT::ellBar( strand, vtx );
 
     const Scalar length = geometry.m_lengths[vtx];
-    const Vec3x& edge = geometry.m_tangents[ vtx ];
+    const Vec3& edge = geometry.m_tangents[ vtx ];
 
     bool useApprox = !strand.requiresExactJacobian() && length < restLength ;
 
@@ -118,5 +108,3 @@ void StretchingForce<ViscousT>::accumulateCurrentJ( JacobianMatrixType& Jacobian
 
 template class StretchingForce<NonViscous> ;
 template class StretchingForce<Viscous> ;
-
-}

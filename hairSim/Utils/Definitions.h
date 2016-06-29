@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#ifndef STRANDSIM_INCLUDE_VANILLA_EIGEN
+#ifndef INCLUDE_VANILLA_EIGEN
 #define EIGEN_VECTOR_IO_FORMAT Eigen::IOFormat(8, Eigen::DontAlignCols, ", ", ", ", "", "", "{ ", " }")
 #define EIGEN_MATRIX_IO_FORMAT Eigen::IOFormat(8, 0, ", ", "\n", "{ ", " }", "{ ", " }")
 #undef EIGEN_DEFAULT_IO_FORMAT // < To silence some warnings about redefining
@@ -11,7 +11,7 @@
 #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #undef EIGEN_INITIALIZE_MATRICES_BY_ZERO // < To silence some warnings about redefining
 #define EIGEN_INITIALIZE_MATRICES_BY_ZERO
-#endif // STRANDSIM_INCLUDE_VANILLA_EIGEN
+#endif // INCLUDE_VANILLA_EIGEN
 
 #undef Success // Conflicts with Eigen
 #include <Eigen/Core>
@@ -29,16 +29,15 @@ namespace Eigen
 typedef double Scalar; ///< the scalar type
 typedef uint16_t IndexType; ///< large unsigned int for IDs
 
-typedef Eigen::Matrix<Scalar, 2, 1> Vec2x; ///< 2d scalar vector
-typedef Eigen::Matrix<Scalar, 3, 1> Vec3x; ///< 3d scalar vector
+typedef Eigen::Matrix<Scalar, 2, 1> Vec2; ///< 2d scalar vector
 typedef Eigen::Matrix<Scalar, 3, 1> Vec3; ///< 3d scalar vector
 typedef Eigen::Matrix<Scalar, 4, 1> Vec4x; ///< 4d scalar vector
 typedef Eigen::Matrix<Scalar, 11, 1> Vec11x; ///< 11d scalar vector (stencil for local forces)
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VecXx; ///< arbitrary dimension scalar vector
 typedef Eigen::Matrix<unsigned, Eigen::Dynamic, 1> VecXu; ///< arbitrary dimension unsigned vector
 
-typedef std::vector<Vec2x, Eigen::aligned_allocator<Vec2x> > Vec2xArray; ///< an array of 2d scalar vectors
-typedef std::vector<Vec3x> Vec3xArray;
+typedef std::vector<Vec2, Eigen::aligned_allocator<Vec2> > Vec2Array; ///< an array of 2d scalar vectors
+typedef std::vector<Vec3> Vec3Array;
 typedef std::vector<Vec11x, Eigen::aligned_allocator<Vec11x> > Vec11xArray; ///< an array of 11d scalar vectors
 
 typedef Eigen::Matrix<float, 3, 1> Vec3f;

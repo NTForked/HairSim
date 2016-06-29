@@ -1,8 +1,8 @@
 #ifndef SIMPLEMESHCONTROLLER_HH_
 #define SIMPLESHCONTROLLER_HH_
 
-#include "../../../StrandSim/Core/Definitions.hh"
-#include "ObjParser.hh"
+#include "../Utils/Definitions.h"
+#include "ObjParser.h"
 
 #include <map>
 
@@ -16,7 +16,7 @@
     (scripting positions etc)
 */
 
-class TriangularMesh;
+class TriMesh;
 
 class SimpleMeshController
 {
@@ -29,9 +29,9 @@ public:
 
     virtual bool execute( bool updateLevelSet );
 
-    const strandsim::TriangularMesh* getCurrentMesh() const
+    const TriMesh* getMesh() const
     {
-        return m_currentMesh;
+        return m_mesh;
     }
 
     double getDefaultFrictionCoefficient() const
@@ -53,28 +53,12 @@ public:
     {
         return m_frictionCoefficients;
     }
-
-    virtual short knowsNormalSign( bool atPreviousStep, unsigned faceIndex, unsigned rodIndex,
-            unsigned vertex );
     
     bool loadMesh( std::string& obj_file_name );
 
     bool hasLevelSet() const
     {
         return false;
-    }
-    
-    void createInitialLevelSet()
-    {
-        std::cout << "Level sets not supported by SimpleMeshController\n";
-        exit(1);
-    }
-    
-    
-    strandsim::LevelSet* currentLevelSet()
-    {
-        std::cout << "Level sets not supported by SimpleMeshController\n";
-        exit(1);
     }
     
     const std::vector<bool>& getEnabledVertices() const
@@ -99,7 +83,7 @@ public:
         exit(1);
     }
     
-    strandsim::TriangularMesh* getMesh()
+    TriMesh* getMesh()
     {
         return m_mesh;
     }
@@ -115,21 +99,20 @@ public:
     //  1 : normal is known and correspond to counter-clockwise vector product of vertices
     //  0 : normal is unknown
     // -1 : normal is known and correspond to clockwise vector product of vertices
-    virtual short knowsNormalSign( bool , unsigned , unsigned ,
-            unsigned  )
+    virtual short knowsNormalSign( bool atPreviousStep, unsigned faceIndex, unsigned rodIndex,
+            unsigned vertex )
     {
         return 1;
     }
     virtual void setNormalSign( short , float , unsigned , unsigned ,
             unsigned  )
-    {
-    }
+    {}
 
 
 private:
 
     bool m_isStaticMesh;
-    TriangularMesh* m_mesh;
+    TriMesh* m_mesh;
 
     double m_startMeshTime;
     double m_endMeshTime;

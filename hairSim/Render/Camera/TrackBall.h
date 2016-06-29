@@ -74,7 +74,7 @@ public:
   void stop();
 
   /// Get the current rotation as a quaternion.
-  void getRotation( scalar r[4]) const;
+  void getRotation( Scalar r[4]) const;
 
   /// Get the current rotation mode.
   TrackBallMode getTrackBallMode() const;
@@ -87,7 +87,7 @@ protected:
   Camera* m_camera;                           ///< The current camera to obey.
   bool m_rotating;                            ///< Whether we are rotating.
   Vec2 m_startPos;                           ///< Start of a rotational drag.
-  scalar m_rotation[4];                       ///< Current user rotation.
+  Scalar m_rotation[4];                       ///< Current user rotation.
   TrackBallMode m_mode;                       ///< Current rotation type.
 };
 

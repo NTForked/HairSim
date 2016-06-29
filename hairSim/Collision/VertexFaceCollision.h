@@ -1,14 +1,14 @@
 #ifndef VERTEXFACECOLLISION_HH_
 #define VERTEXFACECOLLISION_HH_
 
-#include "ContinuousTimeCollision.hh"
-#include "ElementProxy.hh"
+#include "Collision.h"
+#include "ElementProxy.h"
 
-class VertexFaceCollision: public ContinuousTimeCollision, public FaceCollision
+class VertexFaceCollision: public Collision, public FaceCollision
 {
 public:
-    VertexFaceCollision( ElasticStrand* firstStrand, int firstVertex, const FaceProxy* faceProxy ) :
-            ContinuousTimeCollision( firstStrand, firstVertex ), 
+    VertexFaceCollision( EdgeProxy* firstProxy, const FaceProxy* faceProxy ) :
+            Collision( firstProxy ), 
             m_faceProxy( faceProxy )
     {}
 
@@ -19,7 +19,7 @@ public:
 
     friend bool compare( const VertexFaceCollision* vf1, const VertexFaceCollision* vf2 );
 
-    Vec3x meshVelocity( Scalar dt ) const
+    Vec3 meshVelocity( Scalar dt ) const
     { return m_meshDisplacement / dt; }
 
     const FaceProxy* face() const
@@ -29,8 +29,8 @@ protected:
     void print( std::ostream& os ) const;
 
     const FaceProxy* const m_faceProxy;
-    Vec3x m_meshDisplacement;
-    Vec3x m_collisionOffset;
+    Vec3 m_meshDisplacement;
+    Vec3 m_collisionOffset;
 };
 
 #endif

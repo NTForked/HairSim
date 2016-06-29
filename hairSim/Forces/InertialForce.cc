@@ -1,32 +1,28 @@
 #include "InertialForce.hh"
 #include "../Core/ElasticStrand.hh"
-#include "../Dynamic/StrandDynamicTraits.hh"
+#include "../Dynamic/StrandDynamics.hh"
 #include "../Core/ElasticStrandUtils.hh"
-#include "../Core/BandMatrix.hh"
-
-namespace strandsim {
+#include "../Math/BandMatrix.h"
 
 Mat3x InertialForce::s_Omega_Cross = Mat3x::Zero() ;
 Mat3x InertialForce::s_Omega_Cross_Cross = Mat3x::Zero() ;
 Mat3x InertialForce::s_dOmega_dt_Cross = Mat3x::Zero() ;
-Vec3x InertialForce::s_accOrigin = Vec3x::Zero() ;
+Vec3 InertialForce::s_accOrigin = Vec3::Zero() ;
 
 InertialForce::InertialForce()
-{
-}
+{}
 
 InertialForce::~InertialForce()
-{
-}
+{}
 
 void InertialForce::computeLocal( LocalForceType& localF, const ElasticStrand& strand,
         const StrandState& geometry, const IndexType vtx )
 {
     const Scalar m = strand.getVertexMass( vtx );
-    const Vec3x& P = geometry.getVertex( vtx ) ;
-    const Vec3x vr = strand.dynamics().getDisplacement( vtx ) / strand.getParameters().getDt() ;
+    const Vec3& P = geometry.getVertex( vtx ) ;
+    const Vec3 vr = strand.dynamics().getDisplacement( vtx ) / strand.getParameters().getDt() ;
 
-    const Vec3x& ae = s_accOrigin + s_dOmega_dt_Cross * P
+    const Vec3& ae = s_accOrigin + s_dOmega_dt_Cross * P
             + s_Omega_Cross_Cross * P ;
             + 2. * s_Omega_Cross * vr ;
 
@@ -57,13 +53,11 @@ void InertialForce::addInPosition( JacobianMatrixType& globalJacobian, const Ind
 }
 
 void InertialForce::setFrameAccelerations(
-            const Vec3x& Omega, const Vec3x& dOmega_dt,
-            const Vec3x& accOrigin )
+            const Vec3& Omega, const Vec3& dOmega_dt,
+            const Vec3& accOrigin )
 {
     s_Omega_Cross = crossMat( Omega ) ;
     s_Omega_Cross_Cross = s_Omega_Cross * s_Omega_Cross ;
     s_dOmega_dt_Cross = crossMat( dOmega_dt ) ;
     s_accOrigin = accOrigin ;
 }
-
-} // namespace strandsim

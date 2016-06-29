@@ -9,13 +9,13 @@ class Translator {
 public:
 
   /// Default constructor
-  explicit Translator(Camera* c, const scalar scale = 1.0);
+  explicit Translator(Camera* c, const Scalar scale = 1.0);
 
   /// Set a particular camera to use.
   void setCamera(Camera* c);
 
   /// Set the scaling for mouse motions.
-  void setScale(const scalar s);
+  void setScale(const Scalar s);
 
   /// Start a translation mouse motion.
   /// Position in [-1,1] x [-1,1].
@@ -36,7 +36,7 @@ private:
   bool m_translating;           ///< Whether we are translating.
   Vec2 m_startPos;             ///< Start of a translation drag.
   Vec3 m_translation;          ///< Current user translation.
-  scalar m_scale;               ///< Scaling of mouse motions to translations.
+  Scalar m_scale;               ///< Scaling of mouse motions to translations.
 };
 
 

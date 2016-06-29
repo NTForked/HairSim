@@ -9,12 +9,11 @@
 
 #include "../Forces/ForceBase.hh"
 
-#include "StrandBase.h"
 #include "StrandState.h"
-#include "BandMatrixFwd.h"
-#include "CollisionParameters.hh"
-#include "../Utils/ThreadUtils.hh"
-#include "../../Apps/StrandSimulator/ProblemStepper.hh"
+#include "../Math/BandMatrix.h"
+#include "../Math/BandMatrixFwd.h"
+#include "../Collision/CollisionParameters.h"
+#include "../Utils/ThreadUtils.h"
 
 template<typename ViscousT> class StretchingForce;
 template<typename ViscousT> class BendingForce;
@@ -24,7 +23,7 @@ template<typename ForceT> class ForceAccumulator;
 class GravitationForce;
 class AirDragForce;
 class CollisionSet;
-class StrandDynamicTraits;
+class StrandDynamics;
 class DOFScriptingController;
 
 class ElasticStrand
@@ -32,7 +31,7 @@ class ElasticStrand
 public:
 
     ElasticStrand( const VecXx& dofs, const ElasticStrandParameters& parameters,
-            DOFScriptingController* controller, int globalIndex = -1, const Vec3x& initRefFrame1 = Vec3x() );
+            DOFScriptingController* controller, int globalIndex = -1, const Vec3& initRefFrame1 = Vec3() );
 
     virtual ~ElasticStrand();
 
@@ -68,15 +67,15 @@ public:
 
     const VecXx& getCurrentDegreesOfFreedom() const
     {
-        return m_currentState->m_dofs.get();
+        return m_currentState->getDegreesOfFreedom();
     }
     void setCurrentDegreesOfFreedom( const VecXx& dof );
 
-    Vec3x getVertex( IndexType vtx ) const
+    Vec3 getVertex( IndexType vtx ) const
     {
         return m_currentState->getVertex( vtx );
     }
-    void setVertex( IndexType vtx, const Vec3x& point )
+    void setVertex( IndexType vtx, const Vec3& point )
     {
         m_currentState->setVertex( vtx, point );
     }
@@ -92,45 +91,45 @@ public:
         invalidatePhysics();
     }
 
-    const Vec3x& getCurrentTangent( int vtx ) const
+    const Vec3& getCurrentTangent( int vtx ) const
     {
-        return m_currentState->m_tangents[vtx];
+        return m_currentState->getTangent(vtx);
     }
-    const Vec3xArray& getCurrentReferenceFrames1()
+    const Vec3Array& getCurrentReferenceFrames1()
     {
-        return m_currentState->m_referenceFrames1.get();
+        return m_currentState->getReferenceFrames1();
     }
-    const Vec3xArray& getCurrentReferenceFrames2()
+    const Vec3Array& getCurrentReferenceFrames2()
     {
-        return m_currentState->m_referenceFrames2.get();
+        return m_currentState->getReferenceFrames2();
     }
-    const Vec3xArray& getCurrentMaterialFrames1()
+    const Vec3Array& getCurrentMaterialFrames1()
     {
-        return m_currentState->m_materialFrames1.get();
+        return m_currentState->getMaterialFrames1();
     }
-    const Vec3xArray& getCurrentMaterialFrames2()
+    const Vec3Array& getCurrentMaterialFrames2()
     {
-        return m_currentState->m_materialFrames2.get();
+        return m_currentState->getMaterialFrames2();
     }
     const std::vector<Scalar>& getCurrentReferenceTwists() const
     {
-        return m_currentState->m_referenceTwists.get();
+        return m_currentState->getReferenceTwists();
     }
 
     const std::vector<Scalar>& getCurrentReferenceTwistsDirty() const
     {
-        return m_currentState->m_referenceTwists.getDirty();
+        return m_currentState->getReferenceTwistsDirty();
     }
     const std::vector<Scalar>& getFutureReferenceTwistsDirty() const
     {
-        return m_futureState->m_referenceTwists.getDirty();
+        return m_futureState->getReferenceTwistsDirty();
     }
 
-    void setCurrentReferenceFrames1( const Vec3xArray& reff1 )
+    void setCurrentReferenceFrames1( const Vec3Array& reff1 )
     {
         m_currentState->m_referenceFrames1.set( reff1 );
     }
-    void setCurrentReferenceFrames2( const Vec3xArray& reff2 )
+    void setCurrentReferenceFrames2( const Vec3Array& reff2 )
     {
         m_currentState->m_referenceFrames2.set( reff2 );
     }
@@ -149,17 +148,17 @@ public:
         m_futureState->m_referenceTwists.cleanSet( reft );
     }
 
-    Vec3x getMaterialFrame1( int vtx ) const
+    Vec3 getMaterialFrame1( int vtx ) const
     {
         return m_currentState->getMaterialFrame1( vtx );
     }
 
-    Vec3x getMaterialFrame2( int vtx ) const
+    Vec3 getMaterialFrame2( int vtx ) const
     {
         return m_currentState->getMaterialFrame2( vtx );
     }
 
-    Vec3x getEdgeVector( int vtx ) const
+    Vec3 getEdgeVector( int vtx ) const
     {
         return m_currentState->getEdgeVector( vtx );
     }
@@ -179,33 +178,28 @@ public:
         return m_currentState->m_totalForce;
     }
 
-    Scalar getUnsignedAngleToMajorRadius( int vtx, const Vec3x& vec ) const;
-    Scalar getSignedAngleToMajorRadius( int vtx, const Vec3x& vec ) const;
+    Scalar getUnsignedAngleToMajorRadius( int vtx, const Vec3& vec ) const;
+    Scalar getSignedAngleToMajorRadius( int vtx, const Vec3& vec ) const;
     Scalar getCurrentTotalLength() const;
     void freezeRestShape( unsigned begin, unsigned end, Scalar damping = 0. );
 
     ///////////////////////////////////////////
     // Future geometry
 
-    Vec3x getFutureVertex( IndexType vtx ) const
+    Vec3 getFutureVertex( IndexType vtx ) const
     {
         return m_futureState->getVertex( vtx );
     }
 
     const VecXx& getFutureDegreesOfFreedom() const
     {
-        return m_futureState->m_dofs.get();
+        return m_futureState->getDegreesOfFreedom();
     }
     void setFutureDegreesOfFreedom( const VecXx& dof );
 
     Scalar getFutureTotalLength() const;
 
     void filterFutureGeometryByRestLength( const double epsilon = 0., bool allowCompression = false );
-
-    VecXx& getFutureTotalForces()
-    {
-        return m_futureState->m_totalForce;
-    }
 
     Scalar getFutureTotalEnergy() const
     {
@@ -265,12 +259,12 @@ public:
         invalidatePhysics();
     }
 
-    Vec2x getKappaBar( const IndexType vtx ) const
+    Vec2 getKappaBar( const IndexType vtx ) const
     {
         return m_restKappas[vtx];
     }
 
-    void setKappaBar( const IndexType vtx, const Vec2x& kappaBar )
+    void setKappaBar( const IndexType vtx, const Vec2& kappaBar )
     {
         m_restKappas[vtx] = kappaBar;
         invalidatePhysics();
@@ -399,7 +393,7 @@ public:
     ///////////////
     // Segments 
 
-    void getSegment( unsigned elementID, Vec3x &start, Vec3x &end ) const;
+    void getSegment( unsigned elementID, Vec3 &start, Vec3 &end ) const;
 
     // Begin and end of edge iterators, used in SpatialHashMap
     unsigned subsamples_begin() const
@@ -417,9 +411,9 @@ public:
     template<class Archive>
     void serialize( Archive & ar, const unsigned int version )
     {
-        ar & m_currentState->m_dofs;
-        ar & m_currentState->m_referenceFrames1;
-        ar & m_currentState->m_referenceFrames2;
+        ar & m_currentState->getDegreesOfFreedom();
+        ar & m_currentState->getReferenceFrames1();
+        ar & m_currentState->getReferenceFrames2();
         ar & m_currentState->m_referenceTwists;
         ar & m_currentState->m_referenceFrames1.getPreviousTangents();
         ar & m_parameters.dt();
@@ -440,12 +434,12 @@ public:
         m_globalIndex = globalIndex;
     }
 
-    const Vec2xArray& getRestKappas() const
+    const Vec2Array& getRestKappas() const
     {
         return m_restKappas;
     }
 
-    Vec2xArray& alterRestKappas()
+    Vec2Array& alterRestKappas()
     {
         return m_restKappas;
     }
@@ -485,7 +479,7 @@ private:
     template<typename ForceT>
     void accumulateJ( StrandState& geometry ) const
     {
-        ForceAccumulator<ForceT>::accumulate( *geometry.m_totalJacobian, *this, geometry );
+        ForceAccumulator<ForceT>::accumulate( m_totalJacobian, *this, geometry );
     }
 
     // Add ForceT's energy and force to the geometry
@@ -566,7 +560,7 @@ private:
     std::vector<Scalar> m_VoronoiLengths; // rest length around each vertex
     std::vector<Scalar> m_invVoronoiLengths; // their inverses
     std::vector<Scalar> m_vertexMasses;
-    Vec2xArray m_restKappas;
+    Vec2Array m_restKappas;
     std::vector<Scalar> m_restTwists;
 
     // Flags
@@ -589,6 +583,6 @@ private:
 };
 
 
-BOOST_CLASS_VERSION( strandsim::ElasticStrand, 0 )
+BOOST_CLASS_VERSION( ElasticStrand, 0 )
 
 #endif /* ELASTICSTRAND_HH_ */

@@ -1,9 +1,9 @@
 #ifndef LOCKS
 #define LOCKS
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class Locks : public ProblemStepper
+class Locks : public Scene
 {
 public:
     
@@ -12,8 +12,8 @@ public:
     
 protected:
 
-	void layeredLockPacking( std::vector< std::vector< Vec3x > >& strands );
-    void generateSinusoidalLocksVertices( std::vector< std::vector< Vec3x > >& strands );
+	void layeredLockPacking( std::vector< std::vector< Vec3 > >& strands );
+    void generateSinusoidalLocksVertices( std::vector< std::vector< Vec3 > >& strands );
 	void includeHairTie();
     void setupStrands(); //TODO: virtual
     void setupMeshes(); //TODO: virtual

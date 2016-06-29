@@ -3,7 +3,7 @@
 #include "../Core/StrandState.hh"
 #include "../Core/ElasticStrandUtils.hh"
 #include "../Utils/TextLog.hh"
-#include "../Core/BandMatrix.hh"
+#include "../Math/BandMatrix.h"
 
 DOFScriptingController::DOFScriptingController()
 {}
@@ -81,23 +81,24 @@ void DOFScriptingController::computeRigidBodyMotion( VecXx& futureDOFs, const Ve
     enforceDisplacements( displacements );
 
     const int m_ndof = currentDOFs.size();
-    const Vec3x p0 = currentDOFs.segment<3>( 0 );
-    const Vec3x p1 = currentDOFs.segment<3>( 4 );
-    const Vec3x w0 = displacements.segment<3>( 0 );
-    const Vec3x w1 = displacements.segment<3>( 4 );
-    const Vec3x q0 = p0 + w0;
-    const Vec3x q1 = p1 + w1;
+    const Vec3 p0 = currentDOFs.segment<3>( 0 );
+    const Vec3 p1 = currentDOFs.segment<3>( 4 );
+    const Vec3 w0 = displacements.segment<3>( 0 );
+    const Vec3 w1 = displacements.segment<3>( 4 );
+    const Vec3 q0 = p0 + w0;
+    const Vec3 q1 = p1 + w1;
 
-    if( !isSmall( square( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() ) ) )
-        ErrorStream( g_log, "" ) << "First edge length is not constant, diff "
-                << fabs( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() );
+    if( !isSmall( square( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() ) ) ){
+        std::cerr << "First edge length is not constant, diff "
+                << fabs( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() ) << std::endl;
+    }
 
-    Vec3x u = ( p1 - p0 );
+    Vec3 u = ( p1 - p0 );
     const Scalar un = u.norm();
     if( !isSmall( un ) )
         u /= un;
 
-    Vec3x v = ( q1 - q0 );
+    Vec3 v = ( q1 - q0 );
     const Scalar vn = v.norm();
     if( !isSmall( vn ) )
         v /= vn;
@@ -114,7 +115,7 @@ void DOFScriptingController::computeRigidBodyMotion( VecXx& futureDOFs, const Ve
     {
         for ( int i = 0; i < m_ndof; i += 4 )
         {
-            const Vec3x pi = currentDOFs.segment<3>( i );
+            const Vec3 pi = currentDOFs.segment<3>( i );
             futureDOFs.segment<3>( i ) = q0 + parallelTransport( pi - p0, u, v );
 
         }

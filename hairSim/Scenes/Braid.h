@@ -1,9 +1,9 @@
 #ifndef BRAID
 #define BRAID
 
-#include "../ProblemStepper.hh"
+#include "Scene.h"
 
-class Braid : public ProblemStepper
+class Braid : public Scene
 {
 public:
     
@@ -12,8 +12,8 @@ public:
     
 protected:
 
-    void generateBraidVertices( std::vector< std::vector< Vec3x > >& strands );
-    void generateSinusoidalBraidVertices( std::vector< std::vector< Vec3x > >& strands );
+    void generateBraidVertices( std::vector< std::vector< Vec3 > >& strands );
+    void generateSinusoidalBraidVertices( std::vector< std::vector< Vec3 > >& strands );
     void loadNurbs();
 	void includeHairTie();
     void setupStrands(); //TODO: virtual
