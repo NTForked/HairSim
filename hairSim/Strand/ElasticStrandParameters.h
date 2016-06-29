@@ -14,7 +14,7 @@ public:
 
     ElasticStrandParameters( const ElasticStrandParameters& other );
 
-    ElasticStrandParameters( Scalar radiusA, Scalar radiusB, Scalar YoungsModulus,
+    ElasticStrandParameters( Scalar radiusA, Scalar YoungsModulus,
             Scalar shearModulus, Scalar density, Scalar viscosity, Scalar airDrag,
             Scalar baseRotation );
 
@@ -40,18 +40,11 @@ public:
 
         return interpol2 * interpol2 * m_kt.get();
     }
-    Scalar getRadiusA( int vtx ) const
+    Scalar getRadius( int vtx ) const
     {
-        return  interpolatedRadiusMultiplier( vtx ) * m_ellipticalRadii.get().first;
+        return interpolatedRadiusMultiplier( vtx ) * m_physicalRadius.get();
     }
-    Scalar getRadiusB( int vtx ) const
-    {
-        return  interpolatedRadiusMultiplier( vtx ) * m_ellipticalRadii.get().second;
-    }
-    Scalar getRadiusAtAngle( int vtx, Scalar angle ) const
-    {
-        return getRadiusB( vtx ) * getRadiusShrinkAtAngle( angle );
-    }
+
     Scalar getShearModulus() const
     {
         return m_shearModulus.get();
@@ -84,7 +77,7 @@ public:
 
     void setBaseRotation( Scalar baseRotation );
     void setDensity( Scalar density );
-    void setRadii( Scalar radiusA, Scalar radiusB );
+    void setRadius( Scalar radiusA );
     void setShearModulus( Scalar shearModulus );
     void setYoungsModulus( Scalar YoungsModulus );
     void setViscosity( Scalar viscosity );
@@ -177,13 +170,11 @@ private:
     friend class boost::serialization::access;
 
     Scalar interpolatedRadiusMultiplier( int vtx ) const;
-    Scalar getRadiusShrinkAtAngle( const Scalar angle ) const;
-    static Scalar radiusShrinkAtAngle( const Scalar ratio, const Scalar angle );
 
     template<class Archive> 
     void serialize( Archive & ar, const unsigned int version )
     {
-        ar & m_ellipticalRadii;
+        ar & m_physicalRadius;
         ar & m_youngsModulus;
         ar & m_shearModulus;
         ar & m_density;
@@ -226,7 +217,7 @@ private:
     Scalar m_viscousKs;
 
     // Dependencies
-    mutable EllipticalRadii m_ellipticalRadii;
+    mutable PhysicalRadius m_physicalRadius;
     mutable BaseRotation m_baseRotation;
     mutable BendingMatrixBase m_bendingMatrixBase;
     mutable YoungsModulus m_youngsModulus;
@@ -234,7 +225,7 @@ private:
     mutable ElasticKs m_ks;
     mutable ElasticKt m_kt;
 
-    Scalar m_dt; // This really doesn't belong here
+    Scalar m_dt; // This really doesn't belong here, mainly for convinience
 };
 
 

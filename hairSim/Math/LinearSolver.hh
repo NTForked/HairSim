@@ -1,24 +1,14 @@
-/*
- * BandMatrixLinearSolver.hh
- *
- *  Created on: 18/07/2011
- *      Author: jaubry
- */
-
 #ifndef LINEARSOLVER_HH_
 #define LINEARSOLVER_HH_
 
 #include "Definitions.hh"
 #include "BandMatrix.hh"
 
-namespace strandsim
-{
-
 template<typename BandMatrixCompressedStorageT> class DummyPreconditionner;
 template<typename BandMatrixCompressedStorageT> class JacobiPreconditionner;
 template<typename BandMatrixCompressedStorageT> class FactorizationPreconditionner;
 
-// This template class is defined in two partial template specialisations to cover different MKL-LAPACK routine calls
+// This template class is defined in two partial template specializations to cover different MKL-LAPACK routine calls
 
 template<typename ScalarT, bool symmetric, bool positiveDefinite, int kl, int ku>
 class BandMatrixCompressedStorage
@@ -268,6 +258,5 @@ typedef BandMatrixCompressedStorage<Scalar, true, true,
 typedef BandMatrixCompressedStorage<Scalar, true, true, 15, 15> RestJacobianStorage;
 typedef BandMatrixCompressedStorage< Scalar, true, false, 1, 1 > TriDiagonalStorage ;
 
-}
 
 #endif /* LINEARSOLVER_HH_ */

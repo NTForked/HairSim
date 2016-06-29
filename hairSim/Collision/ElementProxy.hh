@@ -58,7 +58,9 @@ public:
         m_implicit( stepper ), 
         m_strand( strand ), 
         m_vertexIndex( vertexIndex )
-    {}
+    {
+        std::cout << "ideally we dont need ImplicitStepper here anymore, just grab all dynamics from strand state and strand dynamics which we can get from strand" << std::endl;
+    }
 
     void computeBoundingBox( BBoxType& boundingBox, bool statique ) const
     { 
@@ -114,21 +116,24 @@ class CylinderProxy: public EdgeProxy
 public:
     CylinderProxy( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ) :
         EdgeProxy( strand, vertexIndex, stepper )
-    {}
+    {
+        m_radius = m_strand.m_collisionParameters.getLargerCollisionRadius( m_vertexIndex );
+    }
 
     void computeBoundingBox( BBoxType& boundingBox, bool statique, TwistEdgeHandler* teh = NULL ) const
     {
         Vec3x min, max;
         static const Vec3x unit = Vec3x::Ones();
         EdgeProxy::computeBoundingBox( boundingBox, statique );
-        const Scalar rad = m_strand.m_collisionParameters.getLargerCollisionRadius( m_vertexIndex );
 
-        min = boundingBox.min - rad * unit;
-        max = boundingBox.max + rad * unit;
+        min = boundingBox.min - m_radius * unit;
+        max = boundingBox.max + m_radius * unit;
 
         boundingBox.insert( min );
         boundingBox.insert( max );
     }
+
+    Scalar m_radius;
 };
 
 

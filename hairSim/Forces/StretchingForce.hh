@@ -1,29 +1,18 @@
-/*
- * StretchingForce.hh
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #ifndef STRETCHINGFORCE_HH_
 #define STRETCHINGFORCE_HH_
 
 #include "ViscousOrNotViscous.hh"
 #include "../Core/ElasticStrand.hh"
 
-namespace strandsim
-{
-
 template<typename ViscousT = NonViscous>
 class StretchingForce: public ForceBase
 {
 public:
     StretchingForce()
-    {
-    }
+    {}
+
     virtual ~StretchingForce()
-    {
-    }
+    {}
 
 public:
     static const IndexType s_first = 0; // The first index on which this force can apply
@@ -57,7 +46,5 @@ public:
     static void accumulateCurrentF( VecXx& force, ElasticStrand& strand );
     static void accumulateCurrentJ( JacobianMatrixType& Jacobian, ElasticStrand& strand );
 };
-
-}
 
 #endif /* STRETCHINGFORCE_HH_ */

@@ -171,18 +171,19 @@ void StrandDynamicTraits::multiplyByMassMatrix( VecXx& tmp ) const
     tmp.array() *= m_DOFmasses.array();
 }
 
-void StrandDynamicTraits::acceptGuess()
+void StrandDynamicTraits::acceptFuture()
 {
-    // If we are here, that's because we exited the Newton loop before futureState was touched, 
-    // so if we swap currentState will contain the accepted guess and the up-to-date forces and Jacobian.
-
-    // future will no longer be valid (prev timestep), and current will be set correctly
+    // future will no longer be valid, and current will be set correctly
+    m_currentVelocities = m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom();
     m_strand.swapStates();
+
+    // m_strand.getFutureDegreesOfFreedom() = m_strand.getCurrentDegreesOfFreedom();
 }
 
 void StrandDynamicTraits::nanFailSafe()
 {
 
+    std::cerr << "this needs to get changed to operate on future DoFs " << std::endl;
     if( containsNans( m_strand.getCurrentDegreesOfFreedom() ) )
     {
         std::cerr << "Elastic strand " << m_strand.m_globalIndex << " was contaminated by NaNs: reverting to rigid motion" << std::endl;

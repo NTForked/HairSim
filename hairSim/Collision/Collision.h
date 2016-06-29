@@ -22,15 +22,13 @@ public:
 
     friend bool compareTimes( const CollisionBase* ct1, const CollisionBase* ct2 );
 
-    virtual Vec3x offset() const;
-
     EdgeProxy* getFirstEdgeProxy() const
     { return m_firstEdgeProxy; }
     
     Scalar time() const 
     { return m_time; }
 
-    const Vec3x &normal() const 
+    const Vec3x& normal() const 
     { return m_normal; }
 
 protected:
@@ -40,9 +38,7 @@ protected:
     EdgeProxy* m_firstEdgeProxy;
 
     Scalar m_time;
-    Scalar m_mu;
     Vec3x m_normal;
-    Vec3x m_offset;
 };
 
 class EdgeCollision: public Collision
@@ -68,9 +64,11 @@ public:
     virtual const FaceProxy* face() const = 0;
     Scalar faceFrictionCoefficient() const;
 
-    Scalar m_u, m_v, m_w;
-};
+    virtual Vec3x offset() const;
 
+    Scalar m_u, m_v, m_w;
+    Vec3x m_offset;
+};
 
 struct CollisionPair
 {
@@ -78,21 +76,19 @@ public:
 
     struct Object
     {
-
         DeformationGradient* defGrad;
-        Vec3x freeVel;
+        Vec3x worldVel;
     };
 
     ProximityCollision():
     {}
     
-    Vec3x warmStartImpulse;
+    Vec3x m_warmStartImpulse;
     Mat3x m_transformationMatrix;
 
     std::pair<Object, Object> objects;
 
-    void generateTransformationMatrix() ;
-    void updateTransformationMatrix( const Mat3x& previous ) ;
+    void generateTransformationMatrix();
   
     void print( std::ostream& os ) const;
     void printShort( std::ostream& os ) const;

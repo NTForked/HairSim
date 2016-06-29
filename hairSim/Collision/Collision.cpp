@@ -31,7 +31,7 @@ bool compareTimes( const Collision* ct1, const Collision* ct2 )
     return ct1->m_time < ct2->m_time;
 }
 
-Vec3x ContinuousTimeCollision::offset() const
+Vec3x FaceCollision::offset() const
 {
     return ( m_offset.dot( m_normal ) + EXTRA_RADIUS ) * m_normal;
 }
@@ -42,7 +42,7 @@ Vec3x ContinuousTimeCollision::offset() const
 
 void ProximityCollision::generateTransformationMatrix()
 {
-    Mat3x &E = transformationMatrix;
+    Mat3x &E = m_transformationMatrix;
     E.col( 0 ) = normal ;
 
     Vec3x t1( -normal[1], normal[0], 0 ) ;
@@ -58,18 +58,6 @@ void ProximityCollision::generateTransformationMatrix()
 
     E.col(1) = t1 ;
     E.col(2) = normal.cross( t1 ).normalized() ;
-}
-
-void ProximityCollision::updateTransformationMatrix(const Mat3x &previous)
-{
-    Mat3x &E = transformationMatrix;
-    E.col(0) = normal ;
-
-    Vec3x t1 = orthonormalParallelTransport( previous.col(1), previous.col(0), normal ) ;
-    orthoNormalize( t1, normal );
-    E.col(1) = t1 ;
-
-    E.col(2) = normal.cross( E.col(1) ).normalized() ;
 }
 
 void ProximityCollision::swapIfNecessary()

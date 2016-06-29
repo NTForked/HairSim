@@ -1,16 +1,6 @@
-/*
- * TwistingForce.cc
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #include "TwistingForce.hh"
 #include "ViscousOrNotViscous.hh"
 #include "../Core/BandMatrix.hh"
-
-namespace strandsim
-{
 
 template<typename ViscousT>
 Scalar TwistingForce<ViscousT>::localEnergy( const ElasticStrand& strand, StrandState& geometry,
@@ -144,5 +134,3 @@ void TwistingForce<ViscousT>::accumulateCurrentJ( JacobianMatrixType& Jacobian,
 
 template class TwistingForce<NonViscous> ;
 template class TwistingForce<Viscous> ;
-
-}

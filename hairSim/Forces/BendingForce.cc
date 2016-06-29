@@ -1,17 +1,7 @@
-/*
- * BendingForce.cc
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #include "BendingForce.hh"
 #include "ViscousOrNotViscous.hh"
 #include "../Core/ElasticStrandUtils.hh"
 #include "../Core/BandMatrix.hh"
-
-namespace strandsim
-{
 
 template<typename ViscousT>
 Scalar BendingForce<ViscousT>::localEnergy( const ElasticStrand& strand, StrandState& geometry,
@@ -167,7 +157,5 @@ void BendingForce<ViscousT>::accumulateCurrentJ( JacobianMatrixType& Jacobian,
     }
 }
 
-template class BendingForce<NonViscous> ;
-template class BendingForce<Viscous> ;
-
-}
+template class BendingForce<NonViscous>;
+template class BendingForce<Viscous>;

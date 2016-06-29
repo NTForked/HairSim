@@ -27,17 +27,20 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/set.hpp>
 
-ElasticStrand::ElasticStrand( const VecXx& dofs, const ElasticStrandParameters& parameters,
-        DOFScriptingController* controller = NULL, double collisionRadius, int globalIndex, const Vec3x& initRefFrame1 ) :
+ElasticStrand::ElasticStrand( 
+    const VecXx& dofs, 
+    const ElasticStrandParameters& parameters,
+    DOFScriptingController* controller = NULL, 
+    int globalIndex, 
+    const Vec3x& initRefFrame1 ) :
         m_globalIndex( globalIndex ),
-        m_numVertices( m_parameters.getNumVertices() ),
         m_parameters( parameters ),
+        m_numVertices( m_parameters.getNumVertices() ),
         m_currentState( new StrandState( dofs, m_parameters.getBendingMatrixBase() ) ),
         m_futureState( new StrandState( dofs, m_parameters.getBendingMatrixBase() ) ),
         m_dynamics( NULL ), 
         m_requiresExactJacobian( false ),
         m_activelySimulated( true ),
-        m_collisionRadius( collisionRadius )
 {
     m_totalJacobian = new JacobianMatrixType;
     m_totalJacobian->resize( static_cast<IndexType>( dofs.size() ), static_cast<IndexType>( dofs.size() ) );
@@ -159,7 +162,7 @@ void ElasticStrand::updateEverythingThatDependsOnRestLengths()
     for ( IndexType vtx = 0; vtx < m_numVertices; ++vtx )
     {
         m_vertexMasses[vtx] = m_parameters.getDensity() * m_VoronoiLengths[vtx] * M_PI
-                * m_parameters.getRadiusA( vtx ) * m_parameters.getRadiusB( vtx );
+                * m_parameters.getRadius( vtx ) * m_parameters.getRadius( vtx );
 
         m_invVoronoiLengths[vtx] = 1.0 / m_VoronoiLengths[vtx];
     }
@@ -190,14 +193,14 @@ void ElasticStrand::setEdgesRestLength( const Scalar newRestLength )
     invalidatePhysics();
 }
 
-void ElasticStrand::setRadius( const Scalar radius_a, const Scalar radius_b )
+void ElasticStrand::setRadius( const Scalar radius_a )
 {
-    m_parameters.setRadii( radius_a, radius_b );
+    m_parameters.setRadius( radius_a );
 
     for ( IndexType vtx = 0; vtx < m_numVertices; ++vtx )
     {
         m_vertexMasses[vtx] = m_parameters.getDensity() * m_VoronoiLengths[vtx] * M_PI
-                * m_parameters.getRadiusA( vtx ) * m_parameters.getRadiusB( vtx );
+                * m_parameters.getRadius( vtx ) * m_parameters.getRadius( vtx );
     }
 
     invalidatePhysics();
@@ -222,11 +225,11 @@ void ElasticStrand::setParameters( const ElasticStrandParameters &parameters )
     ackParametersChanged();
 }
 
-void ElasticStrand::setParameters( double i_radiusA, double i_radiusB, double i_rootRM,
+void ElasticStrand::setParameters( double i_radiusA, double i_rootRM,
         double i_tipRM, double i_youngsModulus, double i_shearModulus, double i_density,
         double i_viscosity, double i_airDrag )
 {
-    m_parameters.setRadii( i_radiusA, i_radiusB );
+    m_parameters.setRadius( i_radiusA );
     m_parameters.setYoungsModulus( i_youngsModulus );
     m_parameters.setShearModulus( i_shearModulus );
     m_parameters.setViscosity( i_viscosity );
@@ -423,11 +426,11 @@ Scalar ElasticStrand::getCurvilinearAbscissa( int vtx, Scalar localAbscissa ) co
 {
     Scalar s = 0;
 
-    for ( auto i = 0; i < vtx; ++i )
+    for( auto i = 0; i < vtx; ++i )
     {
         s += getEdgeRestLength( i );
     }
-    if ( vtx + 1 < m_numVertices )
+    if( vtx + 1 < m_numVertices )
     {
         s += localAbscissa * getEdgeRestLength( vtx );
     }
@@ -475,144 +478,6 @@ std::ostream& operator<<( std::ostream& os, const ElasticStrand& strand )
     os << '}';
 
     return os;
-}
-
-/**
- * \brief Find the optimum thetas to minimize twisting and bending energy
- *
- * The algorithm uses the standard Levenberg-Marquart trust region.
- */
-void ElasticStrand::relaxThetas()
-{
-    // Optimization parameters
-    const unsigned numFixedThetas = 1;
-    const unsigned maxIteration = 20;
-    const Scalar initialLambda = 1.e-8;
-    const Scalar lambdaGearUp = 2.0;
-    const Scalar lambdaGearDown = 0.5;
-
-    // Initial state for thetas will be the pre-time step state
-    VecXx thetas( m_currentState->getThetas() );
-    m_futureState->setThetas( thetas, numFixedThetas );
-
-    Scalar bestEnergy = std::numeric_limits<Scalar>::max();
-    VecXx bestThetas = thetas;
-
-    // Compute energy and force
-    Scalar ETheta = 0.;
-    VecXx FTheta( m_numEdges );
-    accumulateEFThetaOnly<TwistingForce<> >( ETheta, FTheta, *m_futureState );
-    accumulateEFThetaOnly<BendingForce<> >( ETheta, FTheta, *m_futureState );
-
-    // Enforce fixed thetas
-    FTheta.segment<numFixedThetas>( 0 ).setZero();
-    Scalar residual = FTheta.squaredNorm();
-    DebugStream( g_log, "" ) << "Initial residual = " << residual;
-    if ( isSmall( residual ) )
-    {
-        DebugStream( g_log, "" ) << "ElasticStrand::relaxThetas starts with small residual, nothing to do";
-        return;
-    }
-
-    // Jacobian
-    TriDiagonalMatrixType JTheta( m_numEdges, m_numEdges );
-    TriDiagonalStorage solver;
-    const bool requiredExactJacobian = requiresExactJacobian();
-    requireExactJacobian( true );
-    bool needToRecomputeJacobian = true;
-    Scalar previousLambda = std::numeric_limits<Scalar>::signaling_NaN();
-    Scalar lambda = initialLambda;
-
-    unsigned iteration = 0;
-    for ( ; iteration < maxIteration; ++iteration )
-    {
-        // Compute regularized Jacobian
-        if ( needToRecomputeJacobian ) // We're not just changing lambda
-        {
-            JTheta.setZero();
-            accumulateJThetaOnly<TwistingForce<> >( JTheta, *m_futureState );
-            accumulateJThetaOnly<BendingForce<> >( JTheta, *m_futureState );
-            JTheta.diagonal().array() -= lambda; // Beware of the sign!!!
-            previousLambda = lambda;
-            // Enforce fixed thetas
-            for ( unsigned i = 0; i < numFixedThetas; ++i )
-            {
-                JTheta( i, i ) = 1.;
-            }
-            if ( numFixedThetas > 0 )
-            {
-                JTheta( numFixedThetas, numFixedThetas - 1 ) = JTheta( numFixedThetas - 1,
-                        numFixedThetas ) = 0.;
-            }
-        }
-        else // We are just changing lambda, so add lambda - previousLambda
-        {
-            JTheta.diagonal().tail( m_numEdges - numFixedThetas ).array() -= lambda
-                    - previousLambda; // Beware of the sign!!!
-            previousLambda = lambda;
-        }
-
-        // Solve for an increment in theta
-        solver.store( JTheta );
-        VecXx dTheta;
-        if ( solver.solve( dTheta, -FTheta ) != 0 ) // J singular, just increase lambda
-        {
-            lambda *= lambdaGearUp;
-            DebugStream( g_log, "" ) << "Iteration " << iteration << " J singular, lambda raised to " << lambda;
-            needToRecomputeJacobian = false;
-            continue;
-        }
-
-        // Back up thetas, try new ones
-        VecXx thetasBackup = thetas;
-        thetas += dTheta;
-        m_futureState->setThetas( thetas, numFixedThetas );
-
-        // Compute new energy and force
-        Scalar newEnergy = 0.;
-        FTheta.setZero();
-        accumulateEFThetaOnly<TwistingForce<> >( newEnergy, FTheta, *m_futureState );
-        accumulateEFThetaOnly<BendingForce<> >( newEnergy, FTheta, *m_futureState );
-        // Enforce fixed thetas
-        FTheta.segment<numFixedThetas>( 0 ).setZero();
-        residual = FTheta.squaredNorm();
-
-        if ( newEnergy > ETheta )
-        {
-            // Reject step
-            std::swap( thetas, thetasBackup );
-            // Increase lambda
-            lambda *= lambdaGearUp;
-            needToRecomputeJacobian = false;
-            continue;
-        }
-
-        // Step is accepted, prepare for next iteration
-        needToRecomputeJacobian = true;
-        ETheta = newEnergy;
-        lambda *= lambdaGearDown;
-
-        if ( ETheta <= bestEnergy )
-        {
-            if ( isSmall( residual ) )
-            {
-                break;
-            }
-            bestEnergy = ETheta;
-            bestThetas = thetas;
-        }
-    }
-
-    if ( iteration == maxIteration )
-    {
-        DebugStream( g_log, "" ) << "ElasticStrand " << m_globalIndex
-                << " ::relaxThetas maxed out number of iterations";
-        m_futureState->setThetas( bestThetas );
-    }
-
-    DebugStream( g_log, "" ) << "Residual = " << residual;
-
-    requireExactJacobian( requiredExactJacobian );
 }
 
 /**

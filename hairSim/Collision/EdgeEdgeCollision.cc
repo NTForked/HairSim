@@ -12,11 +12,9 @@
 
 using namespace std;
 
-
-
 bool EdgeEdgeCollision::analyse()
 {
-    if ( m_firstStrand == m_secondStrand && abs( m_firstVertex - m_secondVertex ) <= 1 ){
+    if( m_firstStrand == m_secondStrand && abs( m_firstVertex - m_secondVertex ) <= 1 ){
         return false; // dissallow collisions between vertices that form an edge.
     }
 
@@ -32,10 +30,8 @@ bool EdgeEdgeCollision::analyse()
     const Vec3x dq0 = m_secondStrand->dynamics().getDisplacement( m_secondVertex );
     const Vec3x dq1 = m_secondStrand->dynamics().getDisplacement( m_secondVertex + 1 );
 
-// cout << "xA_final: " << pp0.transpose() << " xB_final: " << pp1.transpose() << " \nxE_final: " << pq0.transpose() << " xF_final: " << pq1.transpose() <<endl;
-// cout << "dxA: " << dp0.transpose() << " dxB: " << dp1.transpose() << " \ndxE: " << dq0.transpose() << " dxF: " << dq1.transpose() << endl;
 
-
+    // Continous Time collision Detection
     double times[4];
     unsigned num_times ;
     getCoplanarityTimes( pp0 - dp0, pp1 - dp1, pq0 - dq0, pq1 - dq1, pp0, pp1, pq0, pq1, times, NULL, num_times );
@@ -54,16 +50,7 @@ bool EdgeEdgeCollision::analyse()
         Vec3x cp, cq;
         double dist_squared = ClosestPtSegmentSegment( p0col, p1col, q0col, q1col, m_s, m_t, cp, cq );
         
-        Scalar radiusSquared_ofDesiredThickness;
-        if( thickness ){
-            radiusSquared_ofDesiredThickness = 1e-3;
-        }
-        else{
-            radiusSquared_ofDesiredThickness = SQ_TOLERANCE;            
-        }
-
-
-
+        Scalar radiusSquared_ofDesiredThickness = SQ_TOLERANCE;
         if( dist_squared < radiusSquared_ofDesiredThickness )
         {
 
@@ -72,35 +59,14 @@ bool EdgeEdgeCollision::analyse()
             }
 
             m_time = times[j];
-            // std::cout << "CollisionTime: " << m_time <<endl;
 
 
-            m_normal = normalFunc( pp0 - dp0, pp1 - dp1, pq0 - dq0, pq1 - dq1, p0col, p1col, q0col, q1col, m_s, m_t );
+            std::cout << "Need to fix normal here: " << m_time <<endl;
+
+
+            m_normal = cq - cp;// normalFunc( pp0 - dp0, pp1 - dp1, pq0 - dq0, pq1 - dq1, p0col, p1col, q0col, q1col, m_s, m_t );
             double nnorm = m_normal.norm();
 
-            // If the edges happen to be parallel
-            if ( nnorm * nnorm <= SQ_TOLERANCE )
-            {
-
-#pragma omp critical
-                {
-                std::cout << "ERROR, parallel collision picked up from edgeEdge old_analyse()" << std::endl;
-                std::cout << "EdgeEdgeCollision: strand edge " << m_firstStrand->getGlobalIndex() << ' ' << m_firstVertex
-            << " vs. strand edge " << m_secondStrand->getGlobalIndex() << ' ' << m_secondVertex
-            << " by " << -m_normalRelativeDisplacement << " at time = " << m_time << " normal: " << m_normal << std::endl; 
-                }
-                // The comment on pre-timestep is WRONG. its using post-timestep
-                // also it is taking the cross product of two points
-                // std::exit ( EXIT_FAILURE );
-
-                TraceStream( g_log, "" ) << "Parallel edges in EdgeEdgeCollision";
-                // Use the pre-timestep positions of the collision points to generate a collision normal
-                m_normal = ( ( 1.0 - m_t ) * pq0 + m_t * pq1 ).cross( ( 1.0 - m_s ) * pp0 + m_s * pp1 );
-                nnorm = m_normal.norm();
-
-                assert( nnorm*nnorm > SQ_TOLERANCE );
-            }
-            // m_normal /= nnorm;
             m_normal.normalize();
 
             // vector pointing from one collision point to other
@@ -112,15 +78,6 @@ bool EdgeEdgeCollision::analyse()
             if( thickness ){
                 m_normal =  -m_normal; // usually necesary when thickness > 1e-3....
             }
-
-            cout << "AssociatedNormal: " << m_normal << endl; 
-            cout << "ApproxDist: " << dist_squared << endl; 
-cout << "COLLISION " << endl;
-cout << "m_firstStrand: " << m_firstStrand->getGlobalIndex() << endl;
-
-cout << "xA_final: " << pp0.transpose() << " xB_final: " << pp1.transpose() << " \nxE_final: " << pq0.transpose() << " xF_final: " << pq1.transpose() <<endl;
-cout << "dxA: " << dp0.transpose() << " dxB: " << dp1.transpose() << " \ndxE: " << dq0.transpose() << " dxF: " << dq1.transpose() << endl;
-
 
             if( !velCondition && !penetrationResponse ){
                 return true;
@@ -179,7 +136,7 @@ cout << "dxA: " << dp0.transpose() << " dxB: " << dp1.transpose() << " \ndxE: " 
 
 bool compare( const EdgeEdgeCollision* ef1, const EdgeEdgeCollision* ef2 )
 {
-    if ( ef1->m_firstEdgeProxy == ef2->m_firstEdgeProxy ){
+    if( ef1->m_firstEdgeProxy == ef2->m_firstEdgeProxy ){
         return ef1->m_secondEdgeProxy < ef2->m_secondEdgeProxy;
     }
     else{

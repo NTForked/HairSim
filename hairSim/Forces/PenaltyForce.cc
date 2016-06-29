@@ -3,18 +3,14 @@
 #include "../Core/ElasticStrand.hh"
 #include "../Core/BandMatrix.hh"
 
-namespace strandsim {
-
 PenaltyForce::PenaltyForce()
     : TunneledBandRuntimeForce(),
       m_stiffness( 0.0 ),
       m_thickness( 0.0 )
-{
-}
+{}
 
 PenaltyForce::~PenaltyForce()
-{
-}
+{}
 
 void PenaltyForce::setParameters( const std::vector< ElasticStrand* > &strands, const Vec3x& origin, const Scalar stiffness,
                                  const Scalar restLength, const bool allowCompression )
@@ -196,5 +192,3 @@ void PenaltyForce::computeLocalJ( const Vec3x &v, const ElasticStrand& strand, M
 
    localJ *= - m_stiffness ;
 }
-
-} // namespace strandsim

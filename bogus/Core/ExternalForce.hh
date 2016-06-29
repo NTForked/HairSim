@@ -25,8 +25,7 @@ struct AggregateVec
         */
     AggregateVec( Eigen::VectorXd& vec, const std::vector< unsigned > &indices )
         :m_vec( vec ), m_indices( indices )
-    {
-    }
+    {}
 
     //! \returns the number of elements of the object \p i
     unsigned nDofs( unsigned i ) const
@@ -69,12 +68,10 @@ class ExternalForce
 
     ExternalForce( unsigned objId )
     : m_objectID( objId )
-    {
-    }
+    {}
 
     virtual ~ExternalForce()
-    {
-    }
+    {}
 
     //! Computes the current external force
     /*! \param velocities Current generalized velocities at this point of the contact solving

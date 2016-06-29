@@ -424,7 +424,7 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     s = ( float ) s;
     t = ( float ) t;
 
-    if ( sqDist > BCRad * BCRad || s < 0 || t < 0 )
+    if ( sqDist > BCRad * BCRad )
         return false; // see FIXME in DistSegmentToSegment
 
     Vec3x PC = ( ( 1. - s ) * P0 + s * P1 );
@@ -432,7 +432,7 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     depl = ( PC - QC );
 
     const Scalar n2depl = depl.squaredNorm();
-    if ( isSmall( n2depl ) )
+    if( isSmall( n2depl ) )
         return false;
 
     depl /= std::sqrt( n2depl );
@@ -444,92 +444,6 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     d = std::sqrt( sqDist );
 
     return true;
-}
-
-static const double SQ_TOLERANCE = 1e-12;
-
-void normalFunc(
-    const Vec3x &p1_old, const Vec3x &q1_old, 
-    const Vec3x &p2_old, const Vec3x &q2_old, 
-    const Vec3x &p1_new, const Vec3x &q1_new, 
-    const Vec3x &p2_new, const Vec3x &q2_new,
-    const Scalar alpha1, const Scalar alpha2, Vec3x& normal ) 
-{
-    Vec3x e1_new = q1_new - p1_new;
-    Vec3x e2_new = q2_new - p2_new;
-    assert(SQ_TOLERANCE <= e1_new.squaredNorm());
-    assert(SQ_TOLERANCE <= e2_new.squaredNorm());
-    e1_new.normalize();
-    e2_new.normalize();
-
-    // if e1 and e2 are not parallel, use their cross product
-    Vec3x n  = e1_new.cross(e2_new);
-    if (n.squaredNorm() < SQ_TOLERANCE) {
-        // e1 and e2 are parallel, so find a vector perp. to e1
-        // try starting with the vector connecting the intersection points
-        // as observed at start of time step
-        n = ((1 - alpha2) * p2_old + alpha2 * q2_old) - 
-            ((1 - alpha1) * p1_old + alpha1 * q1_old);
-
-        // project out component along e1_new
-        n -= (n.dot(e1_new)) * e1_new;
-
-        // if that fails, try other vectors
-        if (n.squaredNorm() < SQ_TOLERANCE) {
-            n = Vec3x(1,0,0);
-            n -= (n.dot(e1_new)) * e1_new;
-
-            if (n.squaredNorm() < SQ_TOLERANCE ){
-                n = Vec3x(0,1,0);
-                n -= (n.dot(e1_new)) * e1_new;
-            }
-        }
-    }            
-    assert(SQ_TOLERANCE <= n.squaredNorm());
-    n.normalize();    
-
-    // let x0 and x1 be the full (12d) configuration at the start of time step
-    // and at the instant of collision, respectively.
-    //
-    // Let's adopt the convention that the 12d space is ordered (p1,q1,p2,q2)
-    //
-    // Compute the normal velocity nvel = (x1-x0).dot(n),
-    // where n12 is the 12d (configurational) normal at the time of collision,
-    // i.e., n12 = (-(1-alpha1)*n, -alpha1*n, (1-alpha2)*n, alpha2*n)
-
-    typedef Eigen::Matrix<Scalar, 12, 1>  Vec12;
-    
-    Vec12 x_new;
-    x_new <<
-        p1_new(0), p1_new(1), p1_new(2),
-        q1_new(0), q1_new(1), q1_new(2),
-        p2_new(0), p2_new(1), p2_new(2),
-        q2_new(0), q2_new(1), q2_new(2);
-
-    Vec12 x_old;
-    x_old <<
-        p1_old(0), p1_old(1), p1_old(2),
-        q1_old(0), q1_old(1), q1_old(2),
-        p2_old(0), p2_old(1), p2_old(2),
-        q2_old(0), q2_old(1), q2_old(2);
-
-    Vec12 n12;
-    n12 <<
-        -(1-alpha1)*n(0), -(1-alpha1)*n(1), -(1-alpha1)*n(2),
-        -(  alpha1)*n(0), -(  alpha1)*n(1), -(  alpha1)*n(2),
-        +(1-alpha2)*n(0), +(1-alpha2)*n(1), +(1-alpha2)*n(2),
-        +(  alpha2)*n(0), +(  alpha2)*n(1), +(  alpha2)*n(2);
-    n12.normalize();
-
-    const Vec12 x_col = x_new - x_new.dot(n12)*n12;
-    
-    const Scalar normal_distance = (x_old - x_col).dot(n12);
-
-    if (normal_distance < 0.) {
-        n = -n;
-    }
-
-    normal = n;
 }
 
 bool compareCT( const CollisionBase* ct1, const CollisionBase* ct2 )

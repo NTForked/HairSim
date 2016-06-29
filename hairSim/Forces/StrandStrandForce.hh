@@ -1,19 +1,9 @@
-/*
- * StrandStrandForce.hh
- *
- *  Created on: 25/10/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #ifndef STRANDSTRANDFORCE_HH_
 #define STRANDSTRANDFORCE_HH_
 
 #include "ForceBase.hh"
 #include "../Static/StaticCollision.hh"
 #include <tr1/memory>
-
-namespace strandsim
-{
 
 class StrandStrandForce: public RuntimeCollisionForceBase
 {
@@ -270,5 +260,4 @@ inline std::pair<int, int> SegmentsSituation( const Vec3x& p0, const Vec3x& p1, 
     return situation;
 }
 
-} /* namespace strandsim */
 #endif /* STRANDSTRANDFORCE_HH_ */

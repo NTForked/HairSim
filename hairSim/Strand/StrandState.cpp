@@ -24,12 +24,10 @@ StrandState::StrandState( const VecXx& dofs, BendingMatrixBase& bendingMatrixBas
         m_materialFrames1( m_trigThetas, m_referenceFrames1, m_referenceFrames2 ),
         m_materialFrames2( m_trigThetas, m_referenceFrames1, m_referenceFrames2 ),
         m_kappas( m_curvatureBinormals, m_materialFrames1, m_materialFrames2 ),
-        m_gradKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame
-                m_materialFrames2, m_kappas ),
+        m_gradKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame m_materialFrames2, m_kappas ),
         m_gradTwists( m_lengths, m_curvatureBinormals ),
         m_gradTwistsSquared( m_gradTwists ),
-        m_hessKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame
-                m_materialFrames2, m_kappas ),
+        m_hessKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame m_materialFrames2, m_kappas ),
         m_hessTwists( m_tangents, m_lengths, m_curvatureBinormals ),
         m_thetaHessKappas( m_curvatureBinormals, m_materialFrames1, m_materialFrames2 ),
         m_bendingProducts( bendingMatrixBase, m_gradKappas ),
@@ -66,70 +64,6 @@ bool StrandState::hasSmallForces( const Scalar lTwoTol, const Scalar lInfTol ) c
 {
     return ( ( m_totalForce.norm() / m_numVertices <= lTwoTol )
           || ( m_totalForce.lpNorm<Eigen::Infinity>() <= lInfTol ) );
-}
-
-
-//! Computes H and uFree such that v = H q + uFree
-/*! where v is the world velocitiy of the point at (edge, alpha)
-and q the non-fixed degrees of freedom .
-Allocates H if pH ( pointer to H ) is NULL
-*/
-void StrandState::computeDeformationGradient( const unsigned edge, const Scalar alpha,
-        const VecXx &velocities, SparseRowMatx* &pH, Vec3x &freeVel ) const
-{
-    // if ( pH )
-    // {
-    //     pH->resize( 3, getDegreesOfFreedom().rows() );
-    // }
-    // else
-    // {
-    //     pH = new SparseRowMatx( 3, getDegreesOfFreedom().rows() );
-    // }
-//        delete pH;
-        pH = new SparseRowMatx( 3, getDegreesOfFreedom().rows() );
-
-
-    SparseRowMatx& H = *pH;
-    H.reserve( alpha > 0. ? 6 : 3 );
-#pragma omp critical
-{
-    for ( unsigned k = 0; k < 3; ++k )
-    {
-        H.startVec( k );
-        const unsigned col = 4 * edge + k;
-        H.insertBackByOuterInner( k, col ) = ( 1. - alpha );
-
-        if ( alpha > 0. )
-        {
-            // H.insertBackByOuterInner( k, col + 4 ) = alpha;
-            H.insertBack( k, col + 4 ) = alpha;
-        }
-    }
-}
-
-//ORIGINAL
-    // if ( !edge )
-    //     return;
-
-    // for ( unsigned k = 0; k < 3; ++k )
-    // {
-    //     H.startVec( k );
-    //     const unsigned col = 4 * edge + k;
-    //     if ( edge == 1 )
-    //     {
-    //         freeVel[k] += ( 1. - alpha ) * velocities[col];
-    //     }
-    //     else
-    //     {
-    //         H.insertBackByOuterInner( k, col ) = ( 1. - alpha );
-    //     }
-
-    //     if ( alpha > 0. )
-    //     {
-    //         H.insertBackByOuterInner( k, col + 4 ) = alpha;
-    //     }
-    // }
-    H.finalize();
 }
 
 Vec3x StrandState::closestPoint( const Vec3x& x ) const

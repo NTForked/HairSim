@@ -29,15 +29,14 @@ namespace bogus {
 template< unsigned Dimension >
 bool PrimalFrictionProblem< Dimension >::updateExternalForces( Eigen::VectorXd& m_v, Eigen::VectorXd m_r, const std::vector < unsigned >& m_startDofs )
 {
-    const bool hasForces =  m_externalForces.size() > 0 ;
+    const bool hasForces = m_externalForces.size() > 0 ;
 
     bool needsUpdate = false;
     if( hasForces )
     {
-        // Eigen::VectorXd solverForces = m_completeRhs + m_f  ; // something //   m_completeRhs = ( m_r * m_H ) - m_f; + m_primal->f
         Eigen::VectorXd solverForces = H.transpose() * m_r;
-        AggregateVec aggV ( m_v, m_startDofs ) ;
-        AggregateVec aggSolverForces ( solverForces, m_startDofs ) ;
+        AggregateVec aggV ( m_v, m_startDofs );
+        AggregateVec aggSolverForces ( solverForces, m_startDofs );
 
 #pragma omp parallel for
         for( unsigned i = 0 ; i < m_externalForces.size() ; ++ i )
@@ -45,7 +44,7 @@ bool PrimalFrictionProblem< Dimension >::updateExternalForces( Eigen::VectorXd& 
             if( m_externalForces[i] )
             {
                 bool needsUpdate_i = m_externalForces[i]->compute( aggV( m_externalForces[i]->m_objectID), aggSolverForces( m_externalForces[i]->m_objectID) ) ; // DK: we should pass the bool from this guy to tell solver.hh whether or not to run another iteration ... instead was saying run another iter if there exist these nonlinear forces named "external forces"...
-                if ( ! needsUpdate ) needsUpdate = needsUpdate_i ; //DK: now changed to do this
+                if ( !needsUpdate ) needsUpdate = needsUpdate_i ; //DK: now changed to do this
             }
         }
     }

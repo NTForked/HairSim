@@ -16,11 +16,10 @@
 static const double SQ_TOLERANCE = 1e-12;
 
 using namespace std;
-namespace strandsim
-{
 
-bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
-{ // aka detectPotentiallyFrozenSceneEdgeEdgeNoThickness()
+bool pruneCollision( teh )
+{
+    bool ignoreCollision = false;
 
     //temp, disabling collisions between bands
     if( m_firstProxy->isTwistedBand || m_secondProxy->isTwistedBand ){
@@ -39,7 +38,6 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
     }
 
     if( teh->m_frozenScene && m_firstProxy->frozenID != teh->m_frozenCheck && m_secondProxy->frozenID != teh->m_frozenCheck ){
-// cout << "frozen check " << endl;
         return false; // When rechecking, only test against those edges that have moved
     }
 
@@ -53,7 +51,6 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
 
     if( m_secondProxy->isTwistedBand ){
         // ignore band collision with housing parents
-// cout << "m_secondProxy parents first: " << m_secondProxy->parents.first->uniqueID << " second: " << m_secondProxy->parents.second->uniqueID << endl;
         if( m_firstProxy == m_secondProxy->parents.first || m_firstProxy == m_secondProxy->parents.second ) return false;
 
         if( m_firstProxy == m_secondProxy->parents.first->prev || m_firstProxy == m_secondProxy->parents.first->next ) return false;
@@ -62,7 +59,6 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
 
     // because not sorted have to do this twice
     if( m_firstProxy->isTwistedBand ){
-// cout << "m_firstProxy parents first: " << m_firstProxy->parents.first->uniqueID << " second: " << m_firstProxy->parents.second->uniqueID << endl;
         if( m_secondProxy == m_firstProxy->parents.first || m_secondProxy == m_firstProxy->parents.second ) return false;
 
         // ignore parent neighbors:
@@ -76,9 +72,20 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
     }
 
 
+    return ignoreCollision;
+}
+
+bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
+{ // aka detectPotentiallyFrozenSceneEdgeEdgeNoThickness()
+
+    if( pruneCollision( teh ) ){
+        return false;
+    }
+
     // post timestep positions
     Vec3x xA_final, xB_final;
     teh->getEdgeVerts( m_firstProxy, false, xA_final, xB_final );
+
     Vec3x xE_final, xF_final;
     teh->getEdgeVerts( m_secondProxy, false, xE_final, xF_final );
 
@@ -116,69 +123,22 @@ bool TwistEdgeCollision::analyse( TwistEdgeHandler* teh )
     Vec3x cp, cq;
     double dist_squared = ClosestPtSegmentSegment( xA_final, xB_final, xE_final, xF_final, m_s, m_t, cp, cq );
     
-    // Scalar radiusSquared_ofDesiredThickness = SQ_TOLERANCE;
-    Scalar radiusSquared_ofDesiredThickness = (m_firstProxy->radius + m_secondProxy->radius) * (m_firstProxy->radius + m_secondProxy->radius);
-    // std::cout << "radiusSquared_ofDesiredThickness: " << radiusSquared_ofDesiredThickness << std::endl;
+    // Instantaneous Time Collision Detection
+    Scalar radiusSquared_ofDesiredThickness = (m_firstProxy->m_radius + m_secondProxy->m_radius) * (m_firstProxy->m_radius + m_secondProxy->m_radius);
     if( dist_squared < radiusSquared_ofDesiredThickness )
     {
         m_time = 1.0;
-    // std::cout << "radiusSquared_ofDesiredThickness: " << radiusSquared_ofDesiredThickness << " dist_squared: " << dist_squared << std::endl;
 
-        m_normal = normalFunc( xA_final - dxA, xB_final - dxB, xE_final - dxE, xF_final - dxF, xA_final, xB_final, xE_final, xF_final, m_s, m_t );
-        double nnorm = m_normal.norm();
-
-        // If the edges happen to be parallel
-        if ( nnorm * nnorm <= SQ_TOLERANCE )
-        {
-#pragma omp critical
-            {
-                std::cout << "ERROR, parallel collision picked up from edgeEdge old_analyse()" << std::endl;
-                std::cout << "EdgeEdgeCollision: strand edge " << m_firstStrand->getGlobalIndex() << ' ' << m_firstVertex
-                << " vs. strand edge " << m_secondStrand->getGlobalIndex() << ' ' << m_secondVertex
-                << " by " << -m_normalRelativeDisplacement << " at time = " << m_time << " normal: " << m_normal << std::endl; 
-            }
-            // The comment on pre-timestep is WRONG. its using post-timestep
-            // also it is taking the cross product of two points
-            std::exit ( EXIT_FAILURE );
-        }
-
-
-
+        m_normal = cq - cp;// normalFunc( xA_final - dxA, xB_final - dxB, xE_final - dxE, xF_final - dxF, xA_final, xB_final, xE_final, xF_final, m_s, m_t );
+        m_normal.normalize();
 
 ///////
 // H // asdfasdfsfsdfsa Look at EdgeFaceIntersection code for Edge Edge proximity and see if that is of interest here....
+        // also analyseRoughRodRodCollision
 ////////
-
-
-        m_normal.normalize();
-        m_normal *= -1.0;
-
-        const Vec3x relativeDisplacement = ( 1.0 - m_time ) * ( ( ( 1.0 - m_s ) * dxA + m_s * dxB ) - ( ( 1.0 - m_t ) * dxE + m_t * dxF ) );
-        postAnalyse( relativeDisplacement );
-
-        m_penetrationVector = Vec3x::Zero();
-        if( !penetrationResponse ){
-            return true;
-        }
-
-        Vec3x x10 = ((1 - m_s) * (xA_final - dxA) + m_s * (xB_final - dxB) );
-        Vec3x x20 = ((1 - m_t) * (xE_final - dxE) + m_t * (xF_final - dxF) );
-        const Scalar normal_dist0   = (x20 - x10).dot(m_normal);
-        const Scalar min_normal_vel = (sqrt(radiusSquared_ofDesiredThickness ) - normal_dist0);
-        // cout << "should the calc above be + or - the thickness and the normal_dist0? " << endl;
-        if( penetrationResponse ){
-            m_penetrationVector = min_normal_vel * m_normal; // NEED timestep m_dt^2 here
-        }
-
-        if( m_penetrationVector.dot(m_normal) < 0.0 ){
-            std::cout << "should be positive: collision pen dot normal " << m_penetrationVector.dot(m_normal) << std::endl;
-            std::exit ( EXIT_FAILURE );
-        }
 
         return true;
     }
 
     return false;
 }
-
-} // namespace strandsim

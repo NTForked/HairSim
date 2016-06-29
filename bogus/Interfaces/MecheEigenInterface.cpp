@@ -47,13 +47,15 @@
 namespace bogus
 {
 
-MecheFrictionProblem::MecheFrictionProblem()
-	: m_primal( 0 ), m_dual( 0 ),
-		m_lastSolveTime( 0 ),
-		m_f( 0 ), m_w( 0 ), m_mu( 0 ),
-		m_out( &std::cerr )
-{
-}
+MecheFrictionProblem::MecheFrictionProblem(): 
+	m_primal( 0 ), 
+	m_dual( 0 ),
+	m_lastSolveTime( 0 ),
+	m_f( 0 ), 
+	m_w( 0 ), 
+	m_mu( 0 ),
+	m_out( &std::cerr )
+{}
 
 
 MecheFrictionProblem::~MecheFrictionProblem()
@@ -96,7 +98,8 @@ void MecheFrictionProblem::reset ()
 }
 
 
-void MecheFrictionProblem::fromPrimal (
+void MecheFrictionProblem::fromPrimal
+	(
 		const unsigned int NObj, //!< number of subsystems
 		const std::vector<unsigned> ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
 		const std::vector < strandsim::SymmetricBandMatrixSolver<double, 10>* > MassMat, //!< the square ndof[i] long mass matrix of each subsystem
@@ -110,9 +113,9 @@ void MecheFrictionProblem::fromPrimal (
 		const std::vector < strandsim::SparseRowMatx* > HA, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
 		const std::vector < strandsim::SparseRowMatx* > HB, //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		const std::vector < unsigned > dofIndices
-		)
+	)
 {
-	reset() ;
+	reset();
 
 	// Copy M
 	// We don't actually need it after having computed a factorization of M, but we keep it around
@@ -129,7 +132,6 @@ void MecheFrictionProblem::fromPrimal (
 	{
 
 		Eigen::MatrixXd M( MassMat[i]->matrix().rows(), MassMat[i]->matrix().cols() );
-
 		for( int r = 0; r < M.rows(); ++r ){
 			for( int c= 0; c < M.cols(); ++c ){
 				M(r,c) = MassMat[i]->matrix()(r,c);
@@ -140,7 +142,6 @@ void MecheFrictionProblem::fromPrimal (
         // std::cout << "Bogus MassMat: " << M << std::endl;
 	}
 	m_primal->M.finalize() ;
-
 
 	// E
 	m_primal->E.reserve( n_in ) ;
@@ -169,23 +170,19 @@ void MecheFrictionProblem::fromPrimal (
 
 		if( ObjB[i] == -1 )
 		{
-			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd( *HA[i] ) ;
-		} else if( ObjB[i] == ObjA[i] )
+			m_primal->H.insert( i, ObjA[i] ) =  Et * Eigen::MatrixXd( *HA[i] ) ;
+		} 
+		else if( ObjB[i] == ObjA[i] )
 		{
-			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					( Eigen::MatrixXd( *HA[i] ) -
-					Eigen::MatrixXd( *HB[i] ) ) ;
-		} else {
-			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd( *HA[i] ) ;
-			m_primal->H.insert( i, ObjB[i] ) =  - Et *
-					Eigen::MatrixXd( *HB[i] ) ;
+			m_primal->H.insert( i, ObjA[i] ) =  Et * ( Eigen::MatrixXd( *HA[i] ) - Eigen::MatrixXd( *HB[i] ) ) ;
+		}
+		else {
+			m_primal->H.insert( i, ObjA[i] ) =    Et * Eigen::MatrixXd( *HA[i] ) ;
+			m_primal->H.insert( i, ObjB[i] ) =  - Et * Eigen::MatrixXd( *HB[i] ) ;
 		}
 	}
 	m_primal->H.finalize() ;
 
-    
 	m_primal->f = f_in ;
 	m_primal->w = w_in ;
 	m_primal->mu = mu_in ;
@@ -299,9 +296,8 @@ double MecheFrictionProblem::solve(
 			gs.callback().connect( callback );
 
 			// right here, we wrap this in a loop with updateExternalForces
-
 			unsigned iter = 0;
-			unsigned globalMaxIter = 3;
+			unsigned globalMaxIter = 4;
 			bool done = false;
 			do
 			{
@@ -312,9 +308,10 @@ double MecheFrictionProblem::solve(
 	            	v = m_primal->MInv * ( m_primal->H.transpose() * r_loc - m_primal->f ) ;
                     done = !m_primal->updateExternalForces( v, r_loc, m_dofIndices );					
 				}
-			}while( !done );
+			} while( !done );
 
-		} else {
+		}
+		else {
 			res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
 		}
 
@@ -326,7 +323,7 @@ double MecheFrictionProblem::solve(
 
 	r = m_primal->E * r_loc ; // put into world space coord frame
 
-	return res ;
+	return res;
 }
 
 
@@ -351,82 +348,10 @@ void MecheFrictionProblem::updateObjectRHS( unsigned oId, const Eigen::VectorXd&
 	m_primal->f.segment( m_dofIndices[oId], f.size() ) = f;
 }
 
-
 void MecheFrictionProblem::setOutStream( std::ostream *out )
 {
 	m_out = out ;
 }
-
-#ifdef BOGUS_WITH_BOOST_SERIALIZATION
-bool MecheFrictionProblem::dumpToFile( const char* fileName, const double * r0 ) const
-{
-	if( !m_primal ) return false ;
-
-	std::ofstream ofs( fileName );
-	boost::archive::binary_oarchive oa(ofs);
-	oa << m_primal->M << m_primal->H << m_primal->E ;
-	oa << boost::serialization::make_array( m_primal->f , nDegreesOfFreedom() ) ;
-	oa << boost::serialization::make_array( m_primal->w , 3 * nContacts() ) ;
-	oa << boost::serialization::make_array( m_primal->mu, nContacts() ) ;
-	bool has_r0 = r0 != 0 ;
-	oa << has_r0 ; ;
-	if( r0 )
-	{
-		oa << boost::serialization::make_array( r0, 3*nContacts() ) ;
-	}
-
-	return true ;
-}
-
-bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
-{
-	std::ifstream ifs( fileName );
-	if( !ifs.is_open() ) return false ;
-
-	reset() ;
-
-	boost::archive::binary_iarchive ia(ifs);
-	ia >> m_primal->M >> m_primal->H >> m_primal->E ;
-
-	m_f  = new double[ nDegreesOfFreedom() ] ;
-	m_w  = new double[ 3 * nContacts() ] ;
-	m_mu = new double[ nContacts() ] ;
-
-	std::cout << fileName << ": " << nDegreesOfFreedom() << " dofs, " << nContacts() << " contacts" << std::endl ;
-
-	ia >> boost::serialization::make_array( m_f , nDegreesOfFreedom() ) ;
-	ia >> boost::serialization::make_array( m_w , 3 * nContacts() ) ;
-	ia >> boost::serialization::make_array( m_mu, nContacts() ) ;
-
-	m_primal->f  = m_f ;
-	m_primal->w  = m_w ;
-	m_primal->mu = m_mu ;
-
-	r0 = new double[ 3 * nContacts() ] ;
-
-	bool has_r0 ;
-	ia >> has_r0 ;
-	if ( has_r0 ) {
-		ia >> boost::serialization::make_array( r0, 3*nContacts() ) ;
-	} else {
-		Eigen::VectorXd::Map( r0, 3*nContacts() ).setZero() ;
-	}
-
-	return true ;
-}
-
-#else
-bool MecheFrictionProblem::dumpToFile( const char*, const double* ) const
-{
-	std::cerr << "MecheInterface::dumpToFile: Error, bogus compiled without serialization capabilities" ;
-	return false ;
-}
-bool MecheFrictionProblem::fromFile(const char*, double *& ) {
-	std::cerr << "MecheInterface::fromFile: Error, bogus compiled without serialization capabilities" ;
-	return false ;
-}
-#endif
-
 
 }
 

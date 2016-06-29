@@ -11,14 +11,14 @@
 #include "../Dynamic/StrandDynamicTraits.hh"
 
 Scalar CollisionDetector::s_maxSizeForElementBBox = 1e2;
-CollisionDetector::CollisionDetector( std::vector<ElementProxy*>& elements, double& thickness ):
+CollisionDetector::CollisionDetector( std::vector<ElementProxy*>& elements ):
         m_elementProxies( elements ), 
         m_bvh(), 
         m_ignoreStrandStrand( false ), 
         m_sortedAABBFunctor( NULL ), 
         m_hashMap( NULL )
 {
-    m_proxyHistory = new TwistEdgeHandler( thickness );
+    m_proxyHistory = new TwistEdgeHandler();
 }
 
 CollisionDetector::~CollisionDetector()
@@ -27,9 +27,15 @@ CollisionDetector::~CollisionDetector()
     {
         delete *collision;
     }
+
+    for( auto elem = m_elementProxies.begin(); elem != m_elementProxies.end(); ++elem ){
+        delete *elem;
+    }
+
     m_collisions.clear();
     delete m_sortedAABBFunctor;
     delete m_hashMap;
+    delete m_proxyHistory;
 }
 
 void CollisionDetector::buildBVH( bool statique )

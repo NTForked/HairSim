@@ -8,8 +8,6 @@
 #include <vector>
 #include <map>
 
-namespace strandsim {
-
 class ElasticStrand;
 
 class PenaltyForce : public TunneledBandForceBase
@@ -50,7 +48,5 @@ private:
     Scalar m_stiffness ;
     Scalar m_thickness ;
 };
-
-} // namespace strandsim
 
 #endif // STRANDSIM_PenaltyForce_HH

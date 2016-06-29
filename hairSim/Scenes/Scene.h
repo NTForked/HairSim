@@ -59,10 +59,7 @@ public:
     
     Scalar getDt(){ return m_dt; }
     void setDt( Scalar dt) { m_dt = dt; }
-    
-    int getSubSteps(){ return m_subSteps; }
-    void setSubSteps( int subSteps ) { m_subSteps = subSteps; }
-    
+        
     // output
     void dumpRods( std::string outputdirectory, int current_frame, int file_width ) const;
     void checkpointSave( std::string outputdirectory ) const;
@@ -88,7 +85,6 @@ protected:
 
     Scalar m_t;
     Scalar m_dt;
-    int m_subSteps;
     bool m_isSimulated;
 
     SimulationParameters m_simulation_params;

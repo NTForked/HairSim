@@ -6,11 +6,11 @@
 /**
  * Unit: cm
  */
-class EllipticalRadii: public DependencyNode<std::pair<Scalar, Scalar> >
+class PhysicalRadius: public DependencyNode< Scalar >
 {
 public:
-    EllipticalRadii( Scalar radiusA, Scalar radiusB ) :
-            DependencyNode<std::pair<Scalar, Scalar> >( std::make_pair( radiusA, radiusB ) )
+    PhysicalRadius( Scalar radius ) :
+            DependencyNode< Scalar >( radius )
     {
 #ifdef VERBOSE_DEPENDENCY_NODE
         std::cout << "Creating " << name() << ' ' << this << '\n';
@@ -21,7 +21,7 @@ public:
 
     virtual const char* name() const
     {
-        return "EllipticalRadii";
+        return "PhysicalRadius";
     }
 
     friend class boost::serialization::access;
@@ -34,23 +34,20 @@ public:
         {
             WarningStream( g_log, "" ) << "Saving dirty value for " << name();
         }
-        ar & m_value.first;
-        ar & m_value.second;
+        ar & m_value;
     }
     template<class Archive>
     void load( Archive & ar, const unsigned int version )
     {
-        std::pair<Scalar, Scalar> value;
-        ar & value.first;
-        ar & value.second;
+        Scalar value;
+        ar & value;
         set( value );
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 protected    :
     virtual void compute()
-    {
-    }
+    {}
 };
 
 /**
@@ -76,8 +73,7 @@ public:
 
 protected:
     virtual void compute()
-    {
-    }
+    {}
 };
 
 /**
@@ -89,16 +85,16 @@ protected:
 class BendingMatrixBase: public DependencyNode<Mat2x>
 {
 public:
-    BendingMatrixBase( EllipticalRadii& ellipticalRadii, BaseRotation& baseRotation ) :
+    BendingMatrixBase( PhysicalRadius& rad, BaseRotation& baseRotation ) :
             DependencyNode<Mat2x>( Mat2x() ), //
-            m_ellipticalRadii( ellipticalRadii ), //
+            m_physicalRadius( rad ), //
             m_baseRotation( baseRotation )
     {
 #ifdef VERBOSE_DEPENDENCY_NODE
         std::cout << "Creating " << name() << ' ' << this << '\n';
 #endif
 
-        m_ellipticalRadii.addDependent( this );
+        m_physicalRadius.addDependent( this );
         m_baseRotation.addDependent( this );
     }
 
@@ -110,12 +106,12 @@ public:
 protected:
     virtual void compute()
     {
-        const std::pair<Scalar, Scalar>& radii = m_ellipticalRadii.get();
+        const Scalar& radius = m_physicalRadius.get();
         const Scalar baseRotation = m_baseRotation.get();
 
         Mat2x& B = m_value;
-        B( 0, 0 ) = M_PI_4 * radii.second * cube( radii.first );
-        B( 1, 1 ) = M_PI_4 * radii.first * cube( radii.second );
+        B( 0, 0 ) = M_PI_4 * radius * cube( radius );
+        B( 1, 1 ) = M_PI_4 * radius * cube( radius );
         // rotate cross section by a constant angle
         const Mat2x& rot = Eigen::Rotation2D<Scalar>( baseRotation ).toRotationMatrix();
         B = rot * B * rot.transpose();
@@ -124,7 +120,7 @@ protected:
         setDependentsDirty();
     }
 
-    EllipticalRadii& m_ellipticalRadii;
+    PhysicalRadius& m_physicalRadius;
     BaseRotation& m_baseRotation;
 };
 
@@ -147,8 +143,7 @@ public:
 
 protected:
     virtual void compute()
-    {
-    }
+    {}
 };
 
 /**
@@ -170,8 +165,7 @@ public:
 
 protected:
     virtual void compute()
-    {
-    }
+    {}
 };
 
 /**
@@ -180,12 +174,12 @@ protected:
 class ElasticKs: public DependencyNode<Scalar>
 {
 public:
-    ElasticKs( EllipticalRadii& ellrad, YoungsModulus& ym ) :
+    ElasticKs( PhysicalRadius& rad, YoungsModulus& ym ) :
             DependencyNode<Scalar>( std::numeric_limits<Scalar>::signaling_NaN() ), //
-            m_ellipticalRadii( ellrad ), //
+            m_physicalRadius( rad ), //
             m_youngsModulus( ym ) //
     {
-        m_ellipticalRadii.addDependent( this );
+        m_physicalRadius.addDependent( this );
         m_youngsModulus.addDependent( this );
     }
 
@@ -197,15 +191,15 @@ public:
 protected:
     virtual void compute()
     {
-        const std::pair<Scalar, Scalar>& radii = m_ellipticalRadii.get();
+        const Scalar& radius = m_physicalRadius.get();
         const Scalar youngsModulus = m_youngsModulus.get();
 
-        m_value = M_PI * radii.first * radii.second * youngsModulus;
+        m_value = M_PI * radius * radius * youngsModulus;
 
         setDependentsDirty();
     }
 
-    EllipticalRadii& m_ellipticalRadii;
+    PhysicalRadius& m_physicalRadius;
     YoungsModulus& m_youngsModulus;
 };
 
@@ -215,12 +209,12 @@ protected:
 class ElasticKt: public DependencyNode<Scalar>
 {
 public:
-    ElasticKt( EllipticalRadii& ellrad, ShearModulus& sm ) :
+    ElasticKt( PhysicalRadius& rad, ShearModulus& sm ) :
             DependencyNode<Scalar>( std::numeric_limits<Scalar>::signaling_NaN() ), //
-            m_ellipticalRadii( ellrad ), //
+            m_physicalRadius( rad ), //
             m_shearModulus( sm )
     {
-        m_ellipticalRadii.addDependent( this );
+        m_physicalRadius.addDependent( this );
         m_shearModulus.addDependent( this );
     }
 
@@ -232,16 +226,16 @@ public:
 protected:
     virtual void compute()
     {
-        const std::pair<Scalar, Scalar>& radii = m_ellipticalRadii.get();
+        const Scalar& radius = m_physicalRadius.get();
         const Scalar shearModulus = m_shearModulus.get();
 
-        m_value = M_PI_4 * radii.first * radii.second
-                * ( radii.first * radii.first + radii.second * radii.second ) * shearModulus;
+        m_value = M_PI_4 * radius * radius
+                * ( radius * radius + radius * radius ) * shearModulus;
 
         setDependentsDirty();
     }
 
-    EllipticalRadii& m_ellipticalRadii;
+    PhysicalRadius& m_physicalRadius;
     ShearModulus& m_shearModulus;
 };
 

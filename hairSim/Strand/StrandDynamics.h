@@ -16,9 +16,8 @@ public:
 
     void resizeSelf() ;
 
-    VecXx& getDisplacements()
+    VecXx getDisplacements()
     {
-        this needs to get reworked where used, in order to be able to modify these displacements
         return m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom()
     }
 
@@ -30,6 +29,16 @@ public:
     Vec3x getDisplacement( IndexType vtx ) const
     {
         return m_strand.getFutureVertex( vtx ) - m_strand.getVertex( vtx );
+    }
+
+    VecXx getFutureVelocities( const Scalar dt ) const
+    {
+        return getDisplacements() / dt;
+    }
+
+    VecXx getCurrentVelocities() const
+    {
+        return m_currentVelocities; // start of step vel (finite difference previous step displacements / previous step dt)
     }
 
     void invalidatePhysics()
@@ -65,7 +74,7 @@ public:
     void computeFutureConservativeEnergy();
     void addMassMatrixTo( JacobianMatrixType& J ) const;
     void multiplyByMassMatrix( VecXx& F ) const;
-    void acceptGuess();
+    void acceptFuture();
 
     // Controller
     void setScriptingController( DOFScriptingController *controller )
@@ -94,6 +103,9 @@ private:
 
     bool m_DOFmassesUpToDate;
     VecXx m_DOFmasses;
+
+    VecXx m_currentVelocities; // SERIALIZE_ME for checkpointing
+
     DOFScriptingController* m_scriptingController;
 
 };

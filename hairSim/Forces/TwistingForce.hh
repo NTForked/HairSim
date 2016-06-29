@@ -1,18 +1,8 @@
-/*
- * TwistingForce.hh
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #ifndef TWISTINGFORCE_HH_
 #define TWISTINGFORCE_HH_
 
 #include "ViscousOrNotViscous.hh"
 #include "../Core/ElasticStrand.hh"
-
-namespace strandsim
-{
 
 template<typename ViscousT = NonViscous>
 class TwistingForce: public ForceBase
@@ -20,6 +10,7 @@ class TwistingForce: public ForceBase
 public:
     TwistingForce()
     {}
+    
     virtual ~TwistingForce()
     {}
 
@@ -64,7 +55,5 @@ public:
     static void accumulateCurrentF( VecXx& force, ElasticStrand& strand );
     static void accumulateCurrentJ( JacobianMatrixType& Jacobian, ElasticStrand& strand );
 };
-
-}
 
 #endif /* TWISTINGFORCE_HH_ */

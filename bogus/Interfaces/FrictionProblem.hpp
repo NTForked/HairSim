@@ -41,6 +41,7 @@ struct PrimalFrictionProblem
 	// Primal Data
 	//! M -- mass matrix
 	SparseBlockMatrix< Eigen::MatrixXd > M ;
+
 	//! E -- local rotation matrix ( world <-> contact basis )
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension > > E ;
 
@@ -62,7 +63,7 @@ struct PrimalFrictionProblem
 
 
     /*! Returns true if at least one force has been recomputed
-      ( and therefore the velocities are note up to date )
+      ( and therefore the velocities are not up to date )
     */
     bool updateExternalForces( Eigen::VectorXd& m_v, Eigen::VectorXd m_r, const std::vector < unsigned >& m_startDofs );
 

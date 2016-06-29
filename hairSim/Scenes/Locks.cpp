@@ -13,8 +13,7 @@ ProblemStepper("Locks", "L Locks of hair forming an N braid")
     GetScalarOpt("youngs-modulus") = 3.9e+09;
     GetScalarOpt("viscosity") = 5e+8;
     GetScalarOpt("stretchingThreshold") = 1.;
-    GetScalarOpt("radiusA") = 0.0037;
-    GetScalarOpt("radiusB") = 0.0037;
+    GetScalarOpt("radius") = 0.0037;
     GetIntOpt("maxNewtonIterations") = 30;
 
     AddOption("end_time","", 10.015 );
@@ -130,8 +129,7 @@ void Locks::includeHairTie()
     includeLockTie = true;
 
     // rod options
-    Scalar radiusA = GetScalarOpt("radiusA");
-    Scalar radiusB = GetScalarOpt("radiusB");
+    Scalar radiusA = GetScalarOpt("radius");
     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     Scalar shearModulus = GetScalarOpt("shear-modulus");
     Scalar density = GetScalarOpt("density");
@@ -160,7 +158,7 @@ void Locks::includeHairTie()
     scripted_vertices.push_back( vertices[ vertices.size() - 1] );
     DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
 
-    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
     ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, 0.15 );
     strand->setGlobalIndex( m_rodDatum.size() );
     hairtieNum = m_rodDatum.size();

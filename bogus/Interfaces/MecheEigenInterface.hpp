@@ -93,16 +93,6 @@ public:
 	//! Signal< interationNumber, error, elapsedTime > that will be triggered every few iterations
 	Signal< unsigned, double, double > &callback() { return m_callback ; }
 
-	//! Dumps the current primal() to \p fileName
-	/*! \param r0 The initial guess that shouls be saved with the problem, or NULL */
-	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
-	//! Loads the primal from a previously saved problem file
-	/*! \param r0 Will be set to ploint to a newly allocated array containing the initial
-		guess, if such one was saved with the problem. Will have to be manually freed
-		by the caller using the delete[] operator.
-	*/
-	bool fromFile( const char* fileName, double* &r0 ) ;
-
 	// solvers Callback
 	void ackCurrentResidual( unsigned GSIter, double err ) ;
 

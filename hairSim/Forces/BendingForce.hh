@@ -1,17 +1,7 @@
-/*
- * BendingForce.hh
- *
- *  Created on: 12/07/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #ifndef BENDINGFORCE_HH_
 #define BENDINGFORCE_HH_
 
 #include "ViscousOrNotViscous.hh"
-
-namespace strandsim
-{
 
 class ElasticStrand;
 
@@ -20,11 +10,10 @@ class BendingForce: public ForceBase
 {
 public:
     BendingForce()
-    {
-    }
+    {}
+    
     virtual ~BendingForce()
-    {
-    }
+    {}
 
 public:
     static const IndexType s_first = 1; // The first index on which this force can apply
@@ -67,7 +56,5 @@ public:
     static void accumulateCurrentF( VecXx& force, ElasticStrand& strand );
     static void accumulateCurrentJ( JacobianMatrixType& Jacobian, ElasticStrand& strand );
 };
-
-}
 
 #endif /* BENDINGFORCE_HH_ */

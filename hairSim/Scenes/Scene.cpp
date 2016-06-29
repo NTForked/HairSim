@@ -56,7 +56,6 @@ void Scene::setup()
     // stepping params :
     m_dt = GetScalarOpt( "dt" ); // ~frame
     std::cout << "# step_size: "<< m_dt << std::endl;
-    m_subSteps = GetIntOpt( "substeps" ); // substepping
     
     setupStrands();
     setupMeshes();
@@ -68,7 +67,7 @@ void Scene::setup()
             const int numThreads = m_simulation_params.m_numberOfThreads > 0 ? m_simulation_params.m_numberOfThreads : sysconf( _SC_NPROCESSORS_ONLN );
             omp_set_num_threads( numThreads );
         }
-        m_strandsManager = new StrandImplicitManager( m_strands, m_t, m_dt, m_simulation_params );
+        m_strandsManager = new StrandImplicitManager( m_strands, m_simulation_params, m_meshes );
     }
 }
 
@@ -78,7 +77,7 @@ bool Scene::step()
 
     executeScript();
     if( m_isSimulated ){
-        m_strandsManager->execute( m_subSteps );
+        m_strandsManager->step( m_dt );
     }
 
     m_t += m_dt;    
@@ -96,6 +95,62 @@ void Scene::clearContacts()
     m_renderer->twistLabels.clear(); 
 }
 
+void Scene::addOptions()
+{ // Default options
+    AddOption("checkpointDir", "directory where checkpointing file(s) stored", "");
+
+    // world opts
+    AddOption("dt", "time-step size", 1e-2);
+    AddOption("gravity", "gravity", Vec3d(0, -981, 0));
+    
+    // rod opts
+    AddOption("externalCollisionsRadius", "rod-mesh and rod-rod CT collision radius", 0.01 );
+    AddOption("collisionRadius","rod-rod proximity collision radius", 0.01 );
+
+    AddOption("radius", "radius of physical cross-section", 0.0025);
+    AddOption("youngs-modulus", "Young's modulus for the rod", 1e10 );
+    AddOption("shear-modulus", "Shear modulus for the rod", 3.4e9 );
+    AddOption("density", "volumetric density of the rod", 1.3 );
+    AddOption("air-drag", "", 1.e-4);
+    AddOption("viscosity", "Dynamic viscosity for the rod", 1e3 );
+    AddOption("base-rotation", "base-rotation", 0.);
+
+    AddOption("nv", "number of vertices in the rod", 10 );
+    
+    AddOption( "curl_radius_perturbation" , "" , 5e-2 );
+    AddOption( "curl_density_perturbation" , "" , 5e-2 );
+    
+    AddOption( "strand_mu" , "" , 0.3 );
+    AddOption( "mesh_mu" , "" , 0.3 );
+
+    AddOption( "rootImmunityLength" , "how much of the base of the strand to ignore" , 0.3 );
+        
+    // for implicit solve :
+    AddOption("useGraphSplitOption", "whether to use graph split for large problems", false );
+    AddOption("useLengthProjection", "whether to use length projections failsafe", false );
+        
+    AddOption("stretchingThreshold","exponent for stretch threshold", 2.); //2;
+    AddOption("costretch_residual_threshold","exponent for costretch residual threshold", 0.);
+
+    
+    AddOption( "useProxRodRodCollisions" , "", true);
+    AddOption( "useCTRodRodCollisions" , "", false );
+    AddOption( "percentCTRodRodCollisionsAccept", "", 100. );
+    AddOption( "useNonLinearAsFailsafe","", false );
+    AddOption( "alwaysUseNonLinear","", true );
+
+    AddOption("maxNewtonIterations","",10);
+    
+    // sys options
+    AddOption("numberOfThreads","",4);
+    AddOption("simulationManager_limitedMemory","", false);
+    AddOption("contactProblem_limitedMemory","", false);
+    
+    //    // for YacFS solve :
+    AddOption("gaussSeidelTolerance","", 1e-6 );
+    AddOption("stochasticPruningFraction","factor for how many collisions to keep?", 0.8);
+}
+
 void Scene::setSimulationParameters()
 {
     m_simulation_params.m_numberOfThreads = GetIntOpt("numberOfThreads");
@@ -103,17 +158,13 @@ void Scene::setSimulationParameters()
     m_simulation_params.m_costretch_residual_threshold = GetScalarOpt( "costretch_residual_threshold" );
     m_simulation_params.m_useGraphSplitOption = GetBoolOpt( "useGraphSplitOption" );
     m_simulation_params.m_useLengthProjection = GetBoolOpt( "useLengthProjection" );
-    
-    m_simulation_params.m_usePreFilterGeometry = GetBoolOpt( "usePreFilterGeometry" );
-    m_simulation_params.m_useRelaxTheta = GetBoolOpt( "useRelaxTheta" );
-    
+        
     m_simulation_params.m_useProxRodRodCollisions = GetBoolOpt( "useProxRodRodCollisions" );
     m_simulation_params.m_useCTRodRodCollisions = GetBoolOpt( "useCTRodRodCollisions" );
     m_simulation_params.m_percentCTRodRodCollisionsAccept = GetScalarOpt( "percentCTRodRodCollisionsAccept" );
     
     m_simulation_params.m_useNonLinearAsFailsafe = GetBoolOpt( "useNonLinearAsFailsafe" );
     m_simulation_params.m_alwaysUseNonLinear = GetBoolOpt( "alwaysUseNonLinear" );
-    m_simulation_params.m_useImpulseMethod = GetBoolOpt( "useImpulseMethod" );
     m_simulation_params.m_maxNewtonIterations = GetIntOpt( "maxNewtonIterations" );
 
     m_simulation_params.m_simulationManager_limitedMemory = GetBoolOpt( "simulationManager_limitedMemory" );
@@ -127,9 +178,6 @@ void Scene::setRodCollisionParameters( ElasticStrand& strand )
     strand.collisionParameters().m_externalCollisionsRadius = GetScalarOpt( "externalCollisionsRadius" ); //0.05;
     strand.collisionParameters().m_collisionRadius = GetScalarOpt( "collisionRadius" ); //0.0025;
     
-    strand.collisionParameters().m_reactsToSelfCollisions = true;
-    strand.collisionParameters().m_createsSelfCollisions = true;
-    strand.collisionParameters().m_fakeLayering = true ;
     strand.collisionParameters().rootImmunityLength() *= -strand.getTotalRestLength();
     
     strand.collisionParameters().m_frictionCoefficient = GetScalarOpt("strand_mu"); //0.3;
@@ -282,65 +330,7 @@ int Scene::LoadOptions(const char* filename)
     return 0;
 }
 
-void Scene::addOptions()
-{ // Default options
-    AddOption("checkpointDir", "directory where checkpointing file(s) stored", "");
 
-    // world opts
-    AddOption("dt", "time-step size", 1e-2);
-    AddOption("gravity", "gravity", Vec3d(0, -981, 0));
-    
-    // rod opts
-    AddOption("externalCollisionsRadius", "rod-mesh and rod-rod CT collision radius", 0.01 );
-    AddOption("collisionRadius","rod-rod proximity collision radius", 0.01 );
-
-    AddOption("radiusA", "radius of major axis of cross-section", 0.0025);
-    AddOption("radiusB", "radius of minor axis of cross-section", 0.0025);
-    AddOption("youngs-modulus", "Young's modulus for the rod", 1e10 );
-    AddOption("shear-modulus", "Shear modulus for the rod", 3.4e9 );
-    AddOption("density", "volumetric density of the rod", 1.3 );
-    AddOption("air-drag", "", 1.e-4);
-    AddOption("viscosity", "Dynamic viscosity for the rod", 1e3 );
-    AddOption("base-rotation", "base-rotation", 0.);
-
-    AddOption("nv", "number of vertices in the rod", 10 );
-    
-    AddOption( "curl_radius_perturbation" , "" , 5e-2 );
-    AddOption( "curl_density_perturbation" , "" , 5e-2 );
-    
-    AddOption( "strand_mu" , "" , 0.3 );
-    AddOption( "mesh_mu" , "" , 0.3 );
-        
-    // for implicit solve :
-    AddOption("substeps", "number of substeps per timestep/frame", 1 );
-    AddOption("useGraphSplitOption", "whether to use graph split for large problems", false );
-    AddOption("useLengthProjection", "whether to use length projections failsafe", false );
-    
-    AddOption("usePreFilterGeometry","filter by length projection as a pre-step effort", false ); 
-    AddOption("useRelaxTheta","relax thetas as post-step effort", false );
-    
-    AddOption("stretchingThreshold","exponent for stretch threshold", 2.); //2;
-    AddOption("costretch_residual_threshold","exponent for costretch residual threshold", 0.);
-
-    
-    AddOption( "useProxRodRodCollisions" , "", true);
-    AddOption( "useCTRodRodCollisions" , "", false );
-    AddOption( "percentCTRodRodCollisionsAccept", "", 100. );
-    AddOption( "useNonLinearAsFailsafe","", false );
-    AddOption( "alwaysUseNonLinear","", true );
-    AddOption( "useImpulseMethod", "", false );
-
-    AddOption("maxNewtonIterations","",10);
-    
-    // sys options
-    AddOption("numberOfThreads","",4);
-    AddOption("simulationManager_limitedMemory","", false);
-    AddOption("contactProblem_limitedMemory","", false);
-    
-    //    // for YacFS solve :
-    AddOption("gaussSeidelTolerance","", 1e-6 );
-    AddOption("stochasticPruningFraction","factor for how many collisions to keep?", 0.8);
-}
 
 void Scene::PrintOptions(std::ostream& os)
 {
@@ -673,7 +663,7 @@ void Scene::checkpointRestore()
             deserializeVarHex( futureRefFrame1[v].z(), in );
         }
 
-        sptr->dynamics().getDisplacements() = Disps;
+        sptr->dynamics().setDisplacements( Disps );
         sptr->setCurrentDegreesOfFreedom( DoFs );
         sptr->setFutureDegreesOfFreedom( DoFs );
         sptr->getCurrentState().m_referenceFrames1.setPreviousTangents( prevTangCurr );

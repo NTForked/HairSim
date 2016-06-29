@@ -16,10 +16,8 @@ struct CollisionParameters
         m_collisionRadius( .1 ), 
         m_externalCollisionsRadius( .1 ), 
         m_frictionCoefficient( .2 ), 
-        m_rootImmunityLength( .5 ), 
-        m_reactsToSelfCollisions( true ), 
-        m_createsSelfCollisions( true ), 
-        m_fakeLayering( false ), 
+        m_rootImmunityLength( 0.0 ), 
+        m_rejectSelfCollisions( true ), 
         m_associatedStrandParams( NULL )
     {}
 
@@ -28,15 +26,12 @@ struct CollisionParameters
         Scalar externalCollisionsRadius,
         Scalar frictionCoefficient, 
         Scalar rootCollisionImmunity, 
-        bool reactsToSelfCollisions, 
-        bool createsSelfCollisions = true ):
+        bool rejectSelfCollisions = true ):
             m_collisionRadius( selfCollisionRadius ), 
             m_externalCollisionsRadius( externalCollisionsRadius ), 
             m_frictionCoefficient( frictionCoefficient ),
             m_rootImmunityLength( rootCollisionImmunity ), 
-            m_reactsToSelfCollisions( reactsToSelfCollisions ), 
-            m_createsSelfCollisions( createsSelfCollisions ),
-            m_fakeLayering( false ), 
+            m_rejectSelfCollisions( rejectSelfCollisions ), 
             m_associatedStrandParams( NULL )
     {}
 
@@ -91,13 +86,13 @@ struct CollisionParameters
 
 //////////
 
+private:
+
     Scalar m_collisionRadius; // this rod's radius against other rods
     Scalar m_externalCollisionsRadius; // this rod's radius against other collisions (mesh)
     Scalar m_frictionCoefficient;
     Scalar m_rootImmunityLength;
-    bool m_reactsToSelfCollisions;
-    bool m_createsSelfCollisions;
-    bool m_fakeLayering;
+    bool m_rejectSelfCollisions;
 
     // Required for getting radius interpolation
     const ElasticStrandParameters* m_associatedStrandParams;

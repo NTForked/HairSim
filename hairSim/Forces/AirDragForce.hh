@@ -4,8 +4,6 @@
 #include "ForceBase.hh"
 #include "../Core/BandMatrixFwd.hh"
 
-namespace strandsim {
-
 class AirDragForce : public ForceBase
 {
 public:
@@ -44,7 +42,5 @@ protected:
     static Vec3x s_velOrigin ;
     static Mat3x s_Omega_Cross ;
 };
-
-} // namespace strandsim
 
 #endif // STRANDSIM_AIRDRAGFORCE_HH

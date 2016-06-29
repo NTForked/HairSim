@@ -14,11 +14,8 @@ struct SimulationParameters
         m_useCTRodRodCollisions( false ), //
         m_percentCTRodRodCollisionsAccept( 100. ), //
         m_alwaysUseNonLinear( true ),
-        m_useImpulseMethod( false ),
         m_useGraphSplitOption( false ), //
         m_useLengthProjection( false ), //
-        m_usePreFilterGeometry( false ), //
-        m_useRelaxTheta( false ), //
         m_inextensibility_threshold( 1. ), //
         m_stretching_threshold( 2.0 ), //
         m_costretch_residual_threshold( 0.0 ), //
@@ -50,7 +47,6 @@ struct SimulationParameters
 
     bool m_useNonLinearAsFailsafe;
     bool m_alwaysUseNonLinear;
-    bool m_useImpulseMethod;
 
     double m_hairMeshFrictionCoefficient;
     double m_hairHairFrictionCoefficient;
@@ -62,8 +58,6 @@ struct SimulationParameters
      * Inextensibility 
      */
     bool m_useLengthProjection;
-    bool m_usePreFilterGeometry;
-    bool m_useRelaxTheta;
     double m_inextensibility_threshold; // (not in use) # of times the original step has to be halved before the inextensibility filter is applied
     double m_stretching_threshold;
     double m_costretch_residual_threshold;

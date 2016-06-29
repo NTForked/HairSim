@@ -67,9 +67,10 @@ public:
     {
         x = m_invScaling * b ;
 
-        if( m_notSPD )
-            return m_nonSPDStorage.solveInPlaceFactorized( x.derived() ) ;
-        return m_SPDStorage.solveInPlaceFactorized( x.derived() ) ;
+        if( m_notSPD ){
+            return m_nonSPDStorage.solveInPlaceFactorized( x.derived() );
+        }
+        return m_SPDStorage.solveInPlaceFactorized( x.derived() );
     }
 
     SPDStorageT& SPDStorage()
@@ -115,13 +116,13 @@ public:
     SymmetricBandMatrixSolver( const SymmetricBandMatrixSolver& ) ;
 
 private:
-    SymmetricBandMatrixSolver& operator=( const SymmetricBandMatrixSolver& ) ;
+    SymmetricBandMatrixSolver& operator=( const SymmetricBandMatrixSolver& );
 
-    SPDStorageT m_SPDStorage ;
-    NonSPDStorageT m_nonSPDStorage ;
+    SPDStorageT m_SPDStorage;
+    NonSPDStorageT m_nonSPDStorage;
 
-    bool m_notSPD ;
-    Scalar m_invScaling ;
+    bool m_notSPD;
+    Scalar m_invScaling;
 
     BandMatrixT* m_allocatedBandMatrix ; // If loaded from archive
 };

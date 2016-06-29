@@ -35,6 +35,8 @@ void StrandRenderer::render( ElasticStrand* strand, const int& w, const int& h, 
     m_wHeight = h;
     m_label = (label + 2) % 3;
 
+    std::cerr << "should steal rod drawing functions from Samson, and replace confusing quads here" << std::endl;
+
     if( ct ) m_strandRadius = m_strand->m_collisionRadius;
     else m_strandRadius = m_strand->m_physicsRadius;
 

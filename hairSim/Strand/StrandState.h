@@ -160,10 +160,7 @@ public:
     void resizeSelf();
     void freeCachedQuantities();
     bool hasSmallForces( const Scalar lTwoTol, const Scalar lInfTol ) const;
-    void computeDeformationGradient( const unsigned edge, const Scalar alpha,
-            const VecXx &velocities, SparseRowMatx* &pH, Vec3x &freeVel ) const;
     Vec3x closestPoint( const Vec3x& x ) const;
-
 
 private:
     // Convenience copy of the original number of vertices (owned by the strand).

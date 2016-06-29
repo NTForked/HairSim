@@ -1,10 +1,3 @@
-/*
- * StrandStrandForce.cc
- *
- *  Created on: 25/10/2011
- *      Author: Jean-Marie Aubry <jaubry@wetafx.co.nz>
- */
-
 #include "StrandStrandForce.hh"
 
 #include "../Static/CollisionSet.hh"

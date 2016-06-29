@@ -32,8 +32,7 @@ class ElasticStrand
 public:
 
     ElasticStrand( const VecXx& dofs, const ElasticStrandParameters& parameters,
-            DOFScriptingController* controller, double collisionRadius = 0.01, 
-            int globalIndex = -1, const Vec3x& initRefFrame1 = Vec3x() );
+            DOFScriptingController* controller, int globalIndex = -1, const Vec3x& initRefFrame1 = Vec3x() );
 
     virtual ~ElasticStrand();
 
@@ -248,17 +247,12 @@ public:
 
     void setRestShape( const VecXx &dofs, unsigned begin, unsigned end, Scalar damping = 0. );
 
-    Scalar getRadiusA( int vtx ) const
+    Scalar getRadius( int vtx ) const
     {
-        return m_parameters.getRadiusA( vtx );
+        return m_parameters.getRadius( vtx );
     }
 
-    Scalar getRadiusB( int vtx ) const
-    {
-        return m_parameters.getRadiusB( vtx );
-    }
-
-    void setRadius( const Scalar radius_a, const Scalar radius_b );
+    void setRadius( const Scalar radius );
 
     Scalar getRestTwist( const IndexType vtx ) const
     {
@@ -289,7 +283,7 @@ public:
 
     void setStiffness( const Scalar youngs );
 
-    void setParameters( double i_radiusA, double i_radiusB, double i_rootRM, double i_tipRM,
+    void setParameters( double i_radiusA, double i_rootRM, double i_tipRM,
             double i_youngsModulus, double i_shearModulus, double i_density, double i_viscosity,
             double i_airDrag );
 
@@ -329,8 +323,8 @@ public:
 
     Scalar getEdgeInertia( IndexType i )
     {
-        const Scalar a = m_parameters.getRadiusA( i );
-        const Scalar b = m_parameters.getRadiusB( i );
+        const Scalar a = m_parameters.getRadius( i );
+        const Scalar b = m_parameters.getRadius( i );
         const Scalar mass = m_parameters.getDensity() * M_PI * a * b * m_restLengths[i];
 
         return 0.25 * mass * ( square( a ) + square( b ) );
@@ -400,7 +394,6 @@ public:
     }
 
     // Operates on future state's thetas
-    void relaxThetas();
     void resetThetas();
 
     ///////////////
@@ -545,7 +538,6 @@ private:
 
     //////////////////////////////////////////////
 
-    double m_collisionRadius;
     double m_physicsRadius;
 
     int m_globalIndex; // Global index in the simulation

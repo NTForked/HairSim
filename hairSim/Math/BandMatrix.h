@@ -18,8 +18,7 @@ public:
     }
 
     ~BandMatrix()
-    {
-    }
+    {}
 
     void resize( const IndexType rows, const IndexType cols )
     {

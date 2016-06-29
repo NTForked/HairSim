@@ -13,7 +13,7 @@ DOFScriptingController::~DOFScriptingController()
 
 void DOFScriptingController::fixLHS( JacobianMatrixType& LHS ) const
 {
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -23,7 +23,7 @@ void DOFScriptingController::fixLHS( JacobianMatrixType& LHS ) const
 
 void DOFScriptingController::fixRHS( VecXx& rhs ) const
 {
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {        
@@ -33,7 +33,7 @@ void DOFScriptingController::fixRHS( VecXx& rhs ) const
 
 void DOFScriptingController::enforceDisplacements( VecXx& displacements ) const
 {
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for() std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -43,7 +43,7 @@ void DOFScriptingController::enforceDisplacements( VecXx& displacements ) const
 
 void DOFScriptingController::enforceVelocities( VecXx& velocities, Scalar dt ) const
 {
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -55,7 +55,7 @@ void DOFScriptingController::fixLHSAndRHS( JacobianMatrixType& LHS, VecXx& rhs, 
 {
     VecXx velocities( VecXx::Zero( rhs.rows() ) );
 
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -66,7 +66,7 @@ void DOFScriptingController::fixLHSAndRHS( JacobianMatrixType& LHS, VecXx& rhs, 
 
     fixLHS( LHS );
 
-    for ( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -88,18 +88,18 @@ void DOFScriptingController::computeRigidBodyMotion( VecXx& futureDOFs, const Ve
     const Vec3x q0 = p0 + w0;
     const Vec3x q1 = p1 + w1;
 
-    if ( !isSmall( square( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() ) ) )
+    if( !isSmall( square( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() ) ) )
         ErrorStream( g_log, "" ) << "First edge length is not constant, diff "
                 << fabs( ( q1 - q0 ).squaredNorm() - ( p1 - p0 ).squaredNorm() );
 
     Vec3x u = ( p1 - p0 );
     const Scalar un = u.norm();
-    if ( !isSmall( un ) )
+    if( !isSmall( un ) )
         u /= un;
 
     Vec3x v = ( q1 - q0 );
     const Scalar vn = v.norm();
-    if ( !isSmall( vn ) )
+    if( !isSmall( vn ) )
         v /= vn;
 
     if ( isSmall( u.cross( v ).squaredNorm() ) ) // pure translation

@@ -30,13 +30,6 @@ void buildFrame( const Vec3x& n_hat, Vec3x& t1, Vec3x& t2 );
 bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* sQ, const int iP,
         const int iQ, Vec3x &normalQtoP, Scalar &s, Scalar &t, Scalar &distance );
 
-void normalFunc(
-    const Vec3x &p1_old, const Vec3x &q1_old, 
-    const Vec3x &p2_old, const Vec3x &q2_old, 
-    const Vec3x &p1_new, const Vec3x &q1_new, 
-    const Vec3x &p2_new, const Vec3x &q2_new,
-    const Scalar alpha1, const Scalar alpha2, Vec3x& normal );
-
 bool compareCT( const CollisionBase* ct1, const CollisionBase* ct2 );
 
 #endif

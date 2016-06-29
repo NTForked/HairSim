@@ -1,50 +1,12 @@
-#include "StrandImplicitManager.hh"
-#include "ImplicitStepper.hh"
-#include "StrandDynamicTraits.hh"
-#include "../Collision/CollisionDetector.hh"
-#include "../Collision/ElementProxy.hh"
-#include "../Collision/EdgeFaceIntersection.hh"
-#include "../Collision/ContinuousTimeCollision.hh"
-#include "../Collision/VertexFaceCollision.hh"
-#include "../Collision/EdgeFaceCollision.hh"
-#include "../Collision/EdgeEdgeCollision.hh"
-#include "../Collision/CollisionUtils.hh"
-#include "../Core/ElasticStrand.hh"
-#include "../Forces/LevelSetForce.hh"
-#include "../Static/ReverseStaticStepper.hh"
-#include "../Render/StrandRenderer.hh"
-#include "../Utils/SpatialHashMap.hh"
-#include "../Utils/LoggingTimer.hh"
-#include "../Forces/LevelSetForce.hh"
-#include "../Render/Color.hh"
-
-#include "Config.hh"
-#include "../../bogus/Interfaces/MecheEigenInterface.hpp"
-
-#include <boost/lexical_cast.hpp>
-#include <boost/random.hpp>
-#include <boost/generator_iterator.hpp>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/variance.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
-#include <vector>
-#include <fstream>
-#include <map>
-#include <omp.h>
-#include <iostream>
-
-#define SECOND_EDGE_MIN_CONTACT_ABSCISSA 0.0001
-#define ALMOST_PARALLEL_COS 0.96592582628 // cos( Pi/12 )
+#include "Simulation.h"
 
 using namespace std;
 
-StrandImplicitManager::StrandImplicitManager( 
+Simulation::Simulation( 
         const std::vector<ElasticStrand*>& strands,
-        Scalar& dt, 
-        const SimulationParameters& params )
-: m_dt( dt )
-, m_params( params )
+        const SimulationParameters& params,
+        const std::vector< TriMesh* >& meshes )
+: m_params( params )
 , m_strands( strands )
 , m_steppers()
 , m_collisionDetector( NULL )
@@ -52,19 +14,16 @@ StrandImplicitManager::StrandImplicitManager(
 , m_num_ct_hair_hair_col ( 0 )
 , m_unconstrained_NewtonItrs( 0 )
 {
-    accumulateProxies( originalProxies );
+    std::vector< ElementProxy* > originalProxies;
+    accumulateProxies( originalProxies, meshes );
     m_externalContacts.resize( m_strands.size() );
-    m_collisionDetector = new CollisionDetector( originalProxies, radius );
+    m_collisionDetector = new CollisionDetector( originalProxies );
 }
 
-StrandImplicitManager::~StrandImplicitManager()
+Simulation::~Simulation()
 {
     for( auto stepper = m_steppers.begin(); stepper != m_steppers.end(); ++stepper ){
         delete *stepper;
-    }
-
-    for( auto elem = m_elementProxies.begin(); elem != m_elementProxies.end(); ++elem ){
-        delete *elem;
     }
 
     delete m_hashMap;
@@ -73,42 +32,24 @@ StrandImplicitManager::~StrandImplicitManager()
     delete m_collisionDetector;
 }
 
-void StrandImplicitManager::execute( int substepsInDt )
-{
-    for( int substep = 0; substep < substepsInDt; ++substep )
-    {
-        step( substep, m_dt );
-    }
-}
-
 int hIter;
 bool traversalsOn = true;
-void StrandImplicitManager::step( unsigned subStepId, Scalar dt )
+void Simulation::step( const Scalar& dt )
 {
-
     hIter = 0;
     int hMaxIter = 5;
     bool collisionResolution = true;
 
     step_prepare( dt );
-    m_mutualContacts.clear();
-    setupProximityCollisions( dt );
-
-    step_dynamics( subStepId, dt );
-    // std::cout  << "cannot access positions until after step_dynamics, otherwise may be reading in wrong q vector" << std::endl;
-
-    m_collisionDetector->m_proxyHistory->m_frozenScene = false;
-    m_collisionDetector->m_proxyHistory->trackTunneling = false;
-
-    setupContinuousTimeCollisions(); // should do a first pass where we use regular oldschool collision resolution 
-    doContinuousTimeDetection( dt );
+    step_dynamics( dt );
 
     if( collisionResolution ){
-        m_collidingGroups.clear();
-        m_collidingGroupsIdx.assign( m_strands.size(), -1 );
+        setupProximityCollisions( dt );
+        setupContinuousTimeCollisions(); // should do a first pass where we use regular oldschool collision resolution 
+        doContinuousTimeDetection( dt );
+
         step_processCollisions( dt ); // this takes care of current collisions
         step_solveCollisions(); // This is where collisions get solved and strands are finalized() (dV & dX accepted)            
-        m_mutualContacts.clear();
     }
 
     if( hLoop )
@@ -118,14 +59,13 @@ void StrandImplicitManager::step( unsigned subStepId, Scalar dt )
         {
             ++hIter;
             cout << "found unresolved contacts after loop iteration: " << hIter << endl;
-            m_collidingGroups.clear();
-            m_collidingGroupsIdx.assign( m_strands.size(), -1 );
             step_processCollisions( dt ); // this takes care of current collisions
             step_solveCollisions(); // This is where collisions get solved and strands are finalized() (dV & dX accepted)
-            m_mutualContacts.clear();
         }
         cout << "hIter: " << hIter << endl;
     }
+
+    // No further dynamics on strands beyond this point
 
     if( trackGeometricRelations )
     {
@@ -134,49 +74,46 @@ void StrandImplicitManager::step( unsigned subStepId, Scalar dt )
         setupContinuousTimeCollisions(); // create and detect loop for missed collisions
         m_collisionDetector->m_proxyHistory->m_frozenScene = true;
         
-        if( traversalsOn) {
-            ++(m_collisionDetector->m_proxyHistory->m_frozenCheck);
-            traversalCheck();  // traverse (mesh optimization)
-            ++(m_collisionDetector->m_proxyHistory->m_frozenCheck);    
-        }
-        std::cout << "avgnumbands: " << m_collisionDetector->m_proxyHistory->tunnelingBands.size() / m_strands.size() << std::endl;
-        deleteInvertedProxies(); // delete valid triangles
+        deleteInvertedProxies();
     }
 
-    m_collisionDetector->clear();
-    m_mutualContacts.clear();
-    m_time += dt;
+    step_finish();
 }
 
-void StrandImplicitManager::step_prepare( Scalar dt )
+void Simulation::step_prepare( Scalar dt )
 {
     for ( unsigned i = 0; i < m_externalContacts.size(); ++i )
     {
         m_externalContacts[i].clear();
     }
+    m_mutualContacts.clear();
+
+    m_collisionDetector->m_proxyHistory->m_frozenScene = false;
+    m_collisionDetector->m_proxyHistory->trackTunneling = false;
 }
 
-void StrandImplicitManager::step_dynamics( unsigned subStepId, Scalar substepDt )
+void Simulation::step_dynamics( Scalar dt )
 {
     // Dynamics system assembly
 #pragma omp parallel for schedule(dynamic, 10)
-    for ( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); i++ )
+    for( std::vector< ElasticStrand* >::size_type i = 0; i < m_strands.size(); ++i )
     {
-        m_steppers[i]->m_dt = substepDt; // required for checkpointing
+        m_steppers[i]->m_dt = dt; // required for checkpointing, this needs to be here so long as anything occurs before startSubstep
 
         if( penaltyOnce || !trackGeometricRelations || penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], false ); // false, just setting up m
         else if( !penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], true );
 
-        m_steppers[i]->startSubstep( subStepId, substepDt );
-
-        m_steppers[i]->solveUnconstrained();
+        m_steppers[i]->startSubstep( dt );
+        m_steppers[i]->solveUnconstrained( true );
         m_steppers[i]->update();
     }
 }
 
 static const unsigned maxObjForOuterParallelism = 8 * omp_get_max_threads();
-void StrandImplicitManager::step_processCollisions( Scalar dt )
+void Simulation::step_processCollisions( Scalar dt )
 {
+    m_collidingGroups.clear();
+    m_collidingGroupsIdx.assign( m_strands.size(), -1 );
     computeCollidingGroups( m_mutualContacts, dt );
 
     // Deformation gradients at constraints
@@ -184,14 +121,12 @@ void StrandImplicitManager::step_processCollisions( Scalar dt )
 #pragma omp parallel for reduction ( + : nExternalContacts )
     for ( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); i++ )
     {
-        if ( m_params.m_useDeterministicSolver ){
-            std::sort( m_externalContacts[i].begin(), m_externalContacts[i].end() );
-        }
-        for ( unsigned k = 0; k < m_externalContacts[i].size(); ++k )
+        std::sort( m_externalContacts[i].begin(), m_externalContacts[i].end() );
+
+        for( unsigned k = 0; k < m_externalContacts[i].size(); ++k )
         {
             setupDeformationBasis( m_externalContacts[i][k] );
         }
-
         nExternalContacts += m_externalContacts[i].size();
     }
 
@@ -208,7 +143,7 @@ void StrandImplicitManager::step_processCollisions( Scalar dt )
         }
     }
 
-    for ( std::vector<CollidingGroup>::size_type i = 0; i < m_collidingGroups.size(); i++ )
+    for( std::vector<CollidingGroup>::size_type i = 0; i < m_collidingGroups.size(); i++ )
     {
         CollidingGroup& cg = m_collidingGroups[i];
 
@@ -223,49 +158,55 @@ void StrandImplicitManager::step_processCollisions( Scalar dt )
     }
 }
 
-// DK: solve all collisions and then finalize (relax theta's and accept state update).
-void StrandImplicitManager::step_solveCollisions()
+void Simulation::step_solveCollisions()
 {
-    // Contact Dynamics solve
+    // Contact solve
 #pragma omp parallel for
-    for ( std::vector<CollidingGroup>::size_type i = 0; i < m_collidingGroups.size(); ++i )
+    for( std::vector<CollidingGroup>::size_type i = 0; i < m_collidingGroups.size(); ++i )
     {
-        if ( m_collidingGroups[i].first.size() <= maxObjForOuterParallelism ){
+        if( m_collidingGroups[i].first.size() <= maxObjForOuterParallelism ){
             solveCollidingGroup( m_collidingGroups[i], false, m_params.m_alwaysUseNonLinear );
         }
     }
 
-    for ( unsigned i = 0; i < m_collidingGroups.size(); ++i )
+    for( unsigned i = 0; i < m_collidingGroups.size(); ++i )
     {
-        if ( m_collidingGroups[i].first.size() > maxObjForOuterParallelism ){
+        if( m_collidingGroups[i].first.size() > maxObjForOuterParallelism ){
             solveCollidingGroup( m_collidingGroups[i], false, m_params.m_alwaysUseNonLinear );
         }
     }
 
 #pragma omp parallel for
-    for ( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); i++ )
+    for( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); ++i )
     {
-        if ( m_collidingGroupsIdx[i] == -1 )
-        {
+        if ( m_collidingGroupsIdx[i] == -1 ){
             if ( needsExternalSolve( i ) ){
-                solveSingleObject( i, false, m_params.m_alwaysUseNonLinear );
+                solveOnlyStrandExternal( i, false, m_params.m_alwaysUseNonLinear );
             }
-            else if ( m_params.m_alwaysUseNonLinear && !m_steppers[i]->usedNonLinearSolver() )
-            {
-                std::cout <<" this gets called" << std::endl;
-                m_steppers[i]->rewind();
+            else if( m_params.m_alwaysUseNonLinear && !m_steppers[i]->usedNonLinearSolver() ){
+                m_steppers[i]->resetStep();
                 m_steppers[i]->solveUnconstrained( true );
                 m_steppers[i]->update();
             }
         }
-        m_steppers[i]->finalize();
     }
+    m_mutualContacts.clear();    
 }
 
-void StrandImplicitManager::updateParameters( const SimulationParameters& params )
+void Simulation::step_finish()
 {
-    // Enforce desired or maximum number of threads
+#pragma omp parallel for
+    for( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); ++i )
     {
+        m_steppers[i]->finalize(); // Accept and finish with strand motion
+    }
+    m_collisionDetector->clear();
+    m_mutualContacts.clear();
+}
+
+void Simulation::updateParameters( const SimulationParameters& params )
+{
+    { // Enforce desired or maximum number of threads
         const int numThreads = params.m_numberOfThreads > 0 ? params.m_numberOfThreads : sysconf( _SC_NPROCESSORS_ONLN );
         omp_set_num_threads( numThreads );
     }
