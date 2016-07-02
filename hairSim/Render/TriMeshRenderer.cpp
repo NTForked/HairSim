@@ -1,14 +1,14 @@
-#include "TriangleMeshRenderer.hh"
+#include "TriMeshRenderer.h"
 
-#include "../Render/Color.hh"
-#include "../Render/OpenGLDecl.hh"
+#include "Color.h"
+#include "OpenGLDecl.h"
 
-TriangleMeshRenderer::TriangleMeshRenderer( const TriangularMesh& mesh )
+TriMeshRenderer::TriMeshRenderer( const TriMesh& mesh )
 : m_mesh(mesh)
 , m_mode(FLAT)
 {}
 
-void TriangleMeshRenderer::render()
+void TriMeshRenderer::render()
 {
     if( m_mode == FLAT )
     {
@@ -73,7 +73,7 @@ void TriangleMeshRenderer::render()
     }
 }
 
-Vec3d TriangleMeshRenderer::calculateObjectCenter()
+Vec3d TriMeshRenderer::calculateObjectCenter()
 {
     Vec3d center( 0.0,0.0,0.0 );
     for( unsigned i = 0; i < m_mesh.nv(); ++i )
@@ -86,7 +86,7 @@ Vec3d TriangleMeshRenderer::calculateObjectCenter()
     return center;
 }
 
-double TriangleMeshRenderer::calculateObjectBoundingRadius( const Vec3d& center )
+double TriMeshRenderer::calculateObjectBoundingRadius( const Vec3d& center )
 {
     Scalar radius = 0.0;
     for( unsigned i = 0; i < m_mesh.nv(); ++i )

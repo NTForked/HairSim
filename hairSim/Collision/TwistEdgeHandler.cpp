@@ -1,10 +1,10 @@
-#include "TwistEdgeHandler.hh"
+#include "TwistEdgeHandler.h"
 
-#include "ElementProxy.hh"
-#include "../Core/ElasticStrand.hh"
-#include "../Dynamic/StrandDynamics.hh"
-#include "../Utils/Distances.hh"
-#include "CollisionUtils.hh"
+#include "ElementProxy.h"
+#include "../Strand/ElasticStrand.h"
+#include "../Strand/StrandDynamics.h"
+#include "../Math/Distances.hh"
+#include "CollisionUtils/CollisionUtils.h"
 
 #define CROSS_RESULT_EPSILON 1e-16
 #define FRACTIONAL_INFLUENCE_MULTIPLIER 0.25
@@ -49,16 +49,16 @@ void TwistEdgeHandler::getEdgeVerts( const TwistEdge* edge, const bool& startOfS
 	}
 
     // Otherwise original strandVert, we know its position from the strandInfo:
-    assert( edge->m_vertexIndex > -1 );
+    assert( edge->getVertexIndex() > -1 );
 
     if( startOfStep )
     {
-        firstVert = edge->m_strand.getVertex( edge->m_vertexIndex );
-        secondVert = edge->m_strand.getVertex( edge->m_vertexIndex + 1 );
+        firstVert = edge->getStrandPointer()->getVertex( edge->getVertexIndex() );
+        secondVert = edge->getStrandPointer()->getVertex( edge->getVertexIndex() + 1 );
     }
     else{
-        firstVert = edge->m_strand.getFutureVertex( edge->m_vertexIndex );
-        secondVert = edge->m_strand.getFutureVertex( edge->m_vertexIndex + 1 );        
+        firstVert = edge->getStrandPointer()->getFutureVertex( edge->getVertexIndex() );
+        secondVert = edge->getStrandPointer()->getFutureVertex( edge->getVertexIndex() + 1 );        
     }
 }
 
@@ -112,7 +112,7 @@ void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, Tw
 
     double times[4];
     unsigned num_times;
-    getCoplanarityTimes( aS1, aS2, bS1, bS2, aF1, aF2, bF1, bF2, times, NULL, num_times );
+    getCoplanarityTimes( aS1, aS2, bS1, bS2, aF1, aF2, bF1, bF2, times, NULL, num_times ); // look for crossings
     bool intersecting = false;
     if( num_times > 0 ){
 
@@ -219,26 +219,20 @@ void TwistEdgeHandler::deleteBand( TwistEdge* edge, std::vector< ElementProxy* >
 
 void TwistEdgeHandler::applyImpulses( ElasticStrand* strand, ImplicitStepper* stepper, bool computeImpulses )
 {
-    stepper->m_impulseChanges.resize( strand->dynamics().getDisplacements().size() );
-    stepper->m_impulseChanges.setZero(); // changes to velocities
-
     bool impulsesON = true;
-    if( !impulsesON || !computeImpulses ){    return;    }
+    if( !impulsesON || !computeImpulses ){
+        return;
+    }
 
     int sidx = strand->getGlobalIndex();
     double springScale = 5.00;
     double dampingCoeff = 0.20;
 
-    VecXx velocities = stepper->m_strand.dynamics().getDisplacements() / stepper->m_dt;
-    strand->rod_data->m_renderer->displaceVec = stepper->m_impulseChanges;
-
     for( unsigned tb = 0; tb < tunnelingBands.size(); ++tb )
     {
-        VecXx prevImpulseChanges = stepper->m_impulseChanges;
-
         TwistEdge* edge = tunnelingBands[tb];
-        if( edge->parents.first->m_strand.getGlobalIndex() != sidx && 
-            edge->parents.second->m_strand.getGlobalIndex() != sidx ){
+        if( edge->parents.first->getStrandPointer()->getGlobalIndex() != sidx && 
+            edge->parents.second->getStrandPointer()->getGlobalIndex() != sidx ){
             continue;
         }
 
@@ -256,15 +250,16 @@ void TwistEdgeHandler::applyImpulses( ElasticStrand* strand, ImplicitStepper* st
         if( edge->intersectionTwists() == 0 ){
             x = ( 2 * edge->m_radius ) - x;
         }
-        
-        if( x < 0.0 ){
+        if( x < 0.0 ){ // set zero (don't pull outgoing objects)
             x = 0.0;
             dampingCoeff = x;
         }
 
-        if( edge->parents.first->m_strand.getGlobalIndex() == sidx )
+        VecXx& velocities = stepper->m_futureVelocities;
+
+        if( edge->parents.first->getStrandPointer()->getGlobalIndex() == sidx )
         {
-            int v = edge->parents.first->m_vertexIndex;
+            int v = edge->parents.first->getVertexIndex();
 
             double along1 = dampingCoeff * velocities.segment<3>( 4 * v ).dot( planeNormal );
             double along2 = dampingCoeff * velocities.segment<3>( 4 * (v+1) ).dot( planeNormal );
@@ -276,25 +271,24 @@ void TwistEdgeHandler::applyImpulses( ElasticStrand* strand, ImplicitStepper* st
             stepper->m_futureVelocities.segment<3>( 4 * (v + 1) ) += spring * planeNormal; 
         }
 
-        if( edge->parents.second->m_strand.getGlobalIndex() == sidx )
+        if( edge->parents.second->getStrandPointer()->getGlobalIndex() == sidx )
         {
-            int v = edge->parents.second->m_vertexIndex;
-
+            int v = edge->parents.second->getVertexIndex();
 
             double along1 = dampingCoeff * velocities.segment<3>(4*v).dot( -planeNormal );
             double along2 = dampingCoeff * velocities.segment<3>(4 * (v+1) ).dot( -planeNormal );
-            stepper->m_impulseChanges.segment<3>( 4 * v ) += dampingCoeff * -( velocities.segment<3>(4*v) ) + along1 * -planeNormal;
-            stepper->m_impulseChanges.segment<3>( 4 * (v + 1) ) += dampingCoeff * -( velocities.segment<3>( 4 * (v+1) ) ) + along2 * -planeNormal;;
+            stepper->m_futureVelocities.segment<3>( 4 * v ) += dampingCoeff * -( velocities.segment<3>(4*v) ) + along1 * -planeNormal;
+            stepper->m_futureVelocities.segment<3>( 4 * (v + 1) ) += dampingCoeff * -( velocities.segment<3>( 4 * (v+1) ) ) + along2 * -planeNormal;;
 
             double spring = -springScale * ( x );
-            stepper->m_impulseChanges.segment<3>( 4 * v ) += spring * planeNormal;
-            stepper->m_impulseChanges.segment<3>( 4 * (v + 1) ) += spring * planeNormal;
+            stepper->m_futureVelocities.segment<3>( 4 * v ) += spring * planeNormal;
+            stepper->m_futureVelocities.segment<3>( 4 * (v + 1) ) += spring * planeNormal;
         }
 
-        velocities += (stepper->m_impulseChanges - prevImpulseChanges);
-        // strand->rod_data->m_renderer->displaceVec += stepper->m_impulseChanges;
-        // std::cout << "deltaPenalty: " << (stepper->m_impulseChanges - prevImpulseChanges).transpose() << std::endl;
+        stepper->update(true); // Gauss Seidel
     }
+
+    // stepper->update(true); // Jacobi, 
 
 }
 

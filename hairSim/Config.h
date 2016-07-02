@@ -24,6 +24,5 @@ static bool hLoop = false;
 static bool trackGeometricRelations = true;
 static bool penaltyOnce = true;
 static bool penaltyAfter = true;
-extern int edgeCounter;
 
 #endif

@@ -518,9 +518,9 @@ int parseCommandLine( int argc, char** argv )
     try
     {
         TCLAP::CmdLine cmd("hairSim");
-        TCLAP::ValueArg<int> run( "r", "run", "Run a problem", true, -1, "int", cmd );
-        TCLAP::ValueArg<std::string> file( "f", "file", "Options file for a problem", true, "", "string", cmd );
-        TCLAP::ValueArg<bool> dumpcoord ( "d", "dumpcoord", "Dump coordinates of all rods and meshes at each frame", false, false, "boolean", cmd );
+        TCLAP::ValueArg<int> run( "r", "run", "Run a problem", true, -1, "int problem number", cmd );
+        TCLAP::ValueArg<std::string> file( "f", "file", "Options file for a problem", true, "", "string option filename", cmd );
+        TCLAP::ValueArg<bool> dumpcoord ( "d", "dumpcoord", "Dump coordinates of all rods and meshes at each frame", false, false, "boolean dumprods", cmd );
         cmd.parse(argc, argv);
         
         if( run.isSet() )

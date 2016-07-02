@@ -1,10 +1,9 @@
-#include "EdgeFaceCollision.hh"
-#include "../Core/ElasticStrand.hh"
-#include "ElementProxy.hh"
-#include "CollisionUtils.hh"
-#include "../Utils/Distances.hh"
-#include "../Utils/TextLog.hh"
-#include "../Dynamic/StrandDynamics.hh"
+#include "EdgeFaceCollision.h"
+#include "../Strand/ElasticStrand.h"
+#include "ElementProxy.h"
+#include "CollisionUtils/CollisionUtils.h"
+#include "../Math/Distances.hh"
+#include "../Strand/StrandDynamics.h"
 
 
 static const double SQ_TOLERANCE = 1e-12;
@@ -13,26 +12,23 @@ void EdgeFaceCollision::print( std::ostream& os ) const
 {
     os << "EdgeFaceCollision: strand edge " << m_firstStrand->getGlobalIndex() << ' ' << m_firstVertex
             << " s = " << m_s;
-    os << " vs. face edge " << m_mesh << ' ' << m_firstIdx << ' ' << m_secondIdx << " by "
-            << -m_normalRelativeDisplacement << " at time = " << m_time;
+    os << " vs. face edge " << m_mesh << ' ' << m_firstIdx << ' ' << m_secondIdx
+            << " at time = " << m_time;
 
     // Extra debugging info if needed
     os << '\n';
     os << "Normal displacement = " << m_normal << '\n';
 
-    os << "Strand edge moved from: " << m_firstStrand->getFutureState().getVertex( m_firstVertex )
-            << " --- " << m_firstStrand->getFutureState().getVertex( m_firstVertex + 1 ) << ' ';
-    os << "to " << m_firstStrand->getVertex( m_firstVertex ) << " --- "
-            << m_firstStrand->getVertex( m_firstVertex + 1 );
+    os << "Strand edge moved from: " << m_firstStrand->getVertex( m_firstVertex )
+            << " --- " << m_firstStrand->getVertex( m_firstVertex + 1 ) << ' ';
+    os << "to " << m_firstStrand->getFutureVertex( m_firstVertex ) << " --- "
+            << m_firstStrand->getFutureVertex( m_firstVertex + 1 );
     os << '\n';
 
     os << "Face edge moved from: "
             << m_mesh->getVertex( m_firstIdx ) - m_mesh->getDisplacement( m_firstIdx ) << " --- "
             << m_mesh->getVertex( m_secondIdx ) - m_mesh->getDisplacement( m_secondIdx ) << ' ';
     os << "to " << m_mesh->getVertex( m_firstIdx ) << " --- " << m_mesh->getVertex( m_secondIdx );
-    os << '\n';
-
-    os << "Normal relative displacement: " << m_normalRelativeDisplacement;
     os << '\n';
 }
 
@@ -49,8 +45,8 @@ bool EdgeFaceCollision::analyse()
     // Tolerance for the interior edge/edge collisions that point in a direction perpendicular to the face normal
     const Scalar perpEdgeTol = .1 ;
 
-    const Vec3 pp0 = m_firstStrand->getVertex( m_firstVertex );
-    const Vec3 pp1 = m_firstStrand->getVertex( m_firstVertex + 1 );
+    const Vec3 pp0 = m_firstStrand->getFutureVertex( m_firstVertex );
+    const Vec3 pp1 = m_firstStrand->getFutureVertex( m_firstVertex + 1 );
     Vec3 pq0 = m_mesh->getVertex( m_firstIdx );
     Vec3 pq1 = m_mesh->getVertex( m_secondIdx );
 
@@ -214,7 +210,7 @@ bool EdgeFaceCollision::analyse()
 
             const Vec3 relativeDisplacement = ( 1.0 - m_time )
                     * ( ( ( 1.0 - m_s ) * dp0 + m_s * dp1 ) - m_meshDisplacement );
-            postAnalyse( relativeDisplacement );
+            // postAnalyse( relativeDisplacement );
 
 
             m_offset = ( ( 1.0 - t ) * pq0 + t * pq1 ) - m_meshDisplacement //p mesh orig

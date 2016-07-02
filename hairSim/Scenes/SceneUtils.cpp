@@ -1,4 +1,11 @@
 #include "SceneUtils.h"
+#include "Scene.h"
+#include "../Utils/Option.h"
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+#include <sys/stat.h>
+#include <iomanip>
+#include <fstream>
 
 void SceneUtils::findOrthogonal( Vec3& v, const Vec3& u )
 {
@@ -22,15 +29,15 @@ void SceneUtils::findOrthogonal( Vec3& v, const Vec3& u )
     assert(std::abs(u.dot(v)) < EPSILON );
 }
 
-void SceneUtils::generateCurlyHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double curl_radius, double curl_density, double root_length )
+void SceneUtils::genCurlyHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double curl_radius, double curl_density, double root_length, double curl_density_perturbation, double curl_radius_perturbation )
 {
     // generate an orthonormal frame
     Vec3 p1;
     findOrthogonal( p1, initnorm );
     Vec3 p2 = p1.cross( initnorm );
     
-    Scalar curl_density_eps = GetScalarOpt( "curl_density_perturbation" );
-    Scalar curl_radius_eps = GetScalarOpt( "curl_radius_perturbation" );
+    Scalar curl_density_eps = curl_density_perturbation;
+    Scalar curl_radius_eps = curl_radius_perturbation;
   
     if ( curl_density_eps > 0 && curl_radius_eps > 0)
     {
@@ -70,7 +77,7 @@ void SceneUtils::generateCurlyHair( const Vec3& initnorm, const Vec3& startpoint
     }
 }
 
-void SceneUtils::generateStraightHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double root_length  )
+void SceneUtils::genStraightHair( const Vec3& initnorm, const Vec3& startpoint, const double& dL, const int& nv, std::vector<Vec3>& vertices, double root_length  )
 {
     vertices.push_back( startpoint );
     vertices.push_back( startpoint + root_length * initnorm );
@@ -105,7 +112,7 @@ void SceneUtils::transformRodRoot( ElasticStrand* strand, Mat3x& transformation,
     {
         Vec3 vert = strand->getVertex( vtx );
         Vec3 vertNext = transformation * (vert - center) + center + translate;
-        strand->dynamics()->getDofController().setVertexDisplacement( vtx, (vertNext - vert) / m_subSteps );
+        strand->dynamics().getScriptingController()->setVertexDisplacement( vtx, (vertNext - vert) );
     }
 }
 
@@ -113,23 +120,24 @@ void SceneUtils::transformRodRootVtx( ElasticStrand* strand, Mat3x& transformati
 {
     Vec3 vert = strand->getVertex( vtx );
     Vec3 vertNext = transformation * (vert - center) + center + translate;
-    strand->dynamics()->getDofController().setVertexDisplacement( vtx, (vertNext - vert) / m_subSteps );
-    strand->dynamics()->getDofController().setThetaDisplacement( 0, 0. );
+    strand->dynamics().getScriptingController()->setVertexDisplacement( vtx, (vertNext - vert) );
+    strand->dynamics().getScriptingController()->setThetaDisplacement( 0, 0. );
 }
 
 void SceneUtils::translateRodVertex( ElasticStrand* strand, int vtx_id, Vec3& translate )
 {
-    strand->dynamics()->getDofController().setVertexDisplacement( vtx_id, translate / m_subSteps );
+    strand->dynamics().getScriptingController()->setVertexDisplacement( vtx_id, translate );
 }
 
 void SceneUtils::freezeRodRoot( ElasticStrand* strand )
 {
-    strand->dynamics()->getDofController().freezeRootVertices<2>();
+    strand->dynamics().getScriptingController()->freezeVertices( 0, true );
+    strand->dynamics().getScriptingController()->freezeVertices( 1 );
 }
 
 void SceneUtils::freezeVertex( ElasticStrand* strand, int vtx )
 {
-    strand->dynamics()->getDofController().freezeVertices( vtx );
+    strand->dynamics().getScriptingController()->freezeVertices( vtx );
 }
 
 void SceneUtils::dumpMesh( std::string outputdirectory, int current_frame, int file_width, const std::vector< TriMesh* >& meshes )

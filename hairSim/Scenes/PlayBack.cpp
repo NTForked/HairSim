@@ -1,25 +1,28 @@
-#include "PlayBack.hh"
+#include "PlayBack.h"
+#include "../Mesh/TriMeshController.h"
+#include <iomanip>
+#include <fstream>
 
 PlayBack::PlayBack() :
-Scene("Play Back", "play back output files"),
-m_current_frame(0)
+    Scene("Play Back", "play back output files"),
+    m_current_frame(0)
 {
 
-AddOption("num_frames", "number of frames to play back", 10001); 
-AddOption("hair_thick", "rendering thickness", 0.02); 
-AddOption("dt_time", "dt used in original sim", 0.001); 
+AddOption( "num_frames", "number of frames to play back", 10001 ); 
+AddOption( "hair_thick", "rendering thickness", 0.02 ); 
+AddOption( "dt_time", "dt used in original sim", 0.001 ); 
 
-AddOption("padded_width", "number of 0s in frame files", 8); 
+AddOption( "padded_width", "number of 0s in frame files", 8 ); 
 
-AddOption("realtime" , "skip set number of frames" , true );
+AddOption( "realtime", "skip set number of frames", true );
 
-AddOption( "directory" , "file directory with ordered rod (single ply) and mesh (numbered obj) files" , "/Users/henrique/Desktop/tmp/tmp" );
-AddOption( "mesh_saved_elsewhere" , "if mesh is saved elsewhere" , false );
-AddOption( "mesh_directory" , "when mesh_saved_elsewhere = true, file directory with ordered mesh (numbered obj) files" , "assets/TriangulatedSphere.obj" );
-AddOption( "mesh_start_name" , "when mesh_saved_elsewhere = true, name of (numbered obj) files" , "TriangulatedSphere.obj" );
-AddOption("start_frame", "number of frames to play back", 0);
-AddOption("number_of_meshes","number of meshes to load", 0);
-AddOption("number_of_rods","number of rods to load, -1 defaults to all", -1);
+AddOption( "directory", "file directory with ordered rod (single ply) and mesh (numbered obj) files", "/Users/henrique/Desktop/tmp/tmp" );
+AddOption( "mesh_saved_elsewhere", "if mesh is saved elsewhere" , false );
+// AddOption( "mesh_directory", "when mesh_saved_elsewhere = true, file directory with ordered mesh (numbered obj) files", "assets/TriangulatedSphere.obj" );
+// AddOption( "mesh_start_name", "when mesh_saved_elsewhere = true, name of (numbered obj) files", "TriangulatedSphere.obj" );
+// AddOption( "start_frame", "number of frames to play back", 0 );
+// AddOption( "number_of_meshes","number of meshes to load", 0 );
+// AddOption( "number_of_rods","number of rods to load, -1 defaults to all", -1 );
 }
 
 PlayBack::~PlayBack(){}
@@ -74,8 +77,7 @@ void PlayBack::loadRods(int frame)
                 }
                 else{
                     // rod options
-                    Scalar radiusA = GetScalarOpt("radiusA");
-                    Scalar radiusB = GetScalarOpt("radiusB");
+                    Scalar radiusA = GetScalarOpt("radius");
                     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
                     Scalar shearModulus = GetScalarOpt("shear-modulus");
                     Scalar density = GetScalarOpt("density");
@@ -89,22 +91,17 @@ void PlayBack::loadRods(int frame)
                     for ( int i = 0; i < dofs.size(); i += 4 )
                         dofs.segment<3>( i ) = vertices[i / 4];
                     
-                    Vec3Array scripted_vertices;
-                    scripted_vertices.push_back( vertices[0] );
-                    scripted_vertices.push_back( vertices[1] );
-                    DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
-                    controller->freezeRootVertices<2>();
-                    
-                    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+                    DOFScriptingController* controller = new DOFScriptingController();
+                    controller->freezeVertices( 0, true );
+                    controller->freezeVertices( 1, true );
+
+                    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
                     
                     ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("hair_thick") );
                     strand->setGlobalIndex( rod_id );
                     setRodCollisionParameters( *strand );
                     m_strands.push_back( strand );
                     
-                    // extra stuff for render, etc...
-                    RodData* rd = new RodData( *strand, *controller );
-                    m_rodDatum.push_back( rd );
                     ++rod_id;
                     
                     //std::cout<< "loaded rod with dofs = "<< dofs << std::endl;
@@ -146,7 +143,7 @@ void PlayBack::loadRods(int frame)
                     
                     for (int i = 0; i< (int) vertices.size(); ++i)
                     {
-                        m_rodDatum[rod_id]->getStrand().setVertex( i, vertices[ i ] );
+                        m_strands[i]->setVertex( i, vertices[ i ] );
                     }
                     ++rod_id;
                     break;
@@ -156,7 +153,7 @@ void PlayBack::loadRods(int frame)
     }
     
     // std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_rodDatum.size() << " rods. from: " << name.str() << std::endl;
-    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_rodDatum.size() << " rods " << std::endl;
+    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
 }
 
 void PlayBack::loadMeshes(int frame)
@@ -191,22 +188,24 @@ void PlayBack::loadMeshes(int frame)
         ObjParser objparser;
         if(frame == GetIntOpt("start_frame"))
         {
-            SimpleMeshController* mesh = new SimpleMeshController( 0., m_dt );
-            m_meshScripting_controllers.push_back( mesh );
+            TriMeshController* mesh = new TriMeshController( 0., m_dt );
             mesh->loadMesh( mesh_name );
-            TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh->getCurrentMesh()) );
+
+            m_meshes.push_back( mesh->getMesh() );
+            TriMeshRenderer* mesh_renderer = new TriMeshRenderer( *(mesh->getMesh()) );
             m_mesh_renderers.push_back( mesh_renderer );
         }
         else {
             //get next mesh
-            SimpleMeshController* mesh = new SimpleMeshController( 0., m_dt );
+            TriMeshController* mesh = new TriMeshController( 0., m_dt );
             mesh->loadMesh( mesh_name );
+            m_meshes.push_back( mesh->getMesh() );
             
             // set current mesh
-            TriangularMesh* currentMesh = m_meshScripting_controllers[mesh_num]->getCurrentMesh();
+            TriMesh* currentMesh = m_meshes[mesh_num];
             for( unsigned i = 0; i < currentMesh->nv(); ++i )
             {
-                currentMesh->setVertex( i, mesh->getCurrentMesh()->getVertex(i) );
+                currentMesh->setVertex( i, mesh->getMesh()->getVertex(i) );
             }
             delete mesh;
             mesh = NULL;
@@ -214,7 +213,7 @@ void PlayBack::loadMeshes(int frame)
     }
     
     if( GetIntOpt("number_of_meshes") > 0 ){
-        std::cout << "\033[35;1mPlayback message:\033[m loaded " <<  m_meshScripting_controllers.size() << " mesh(es)." << std::endl;
+        std::cout << "\033[35;1mPlayback message:\033[m loaded " <<  m_meshes.size() << " mesh(es)." << std::endl;
     }
 }
 
@@ -244,13 +243,13 @@ void PlayBack::setupMeshes()
 {
     return;
     // make collision mesh
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller );
+    TriMeshController* mesh_controller = new TriMeshController( 0., m_dt );
     std::string file_name = GetStringOpt( "mesh_directory" ) ;
     mesh_controller->loadMesh(file_name);
-    
+    m_meshes.push_back( mesh_controller->getMesh() );
+
     // rescale sphere -- assumes mesh is centered at origin
-    TriangularMesh* currentMesh = m_meshScripting_controllers[0]->getCurrentMesh();
+    TriMesh* currentMesh = m_meshes[0];
     double meshradius = (currentMesh->getVertex(0)).norm();
     //std::cout<< "radius before = " << meshradius << '\n';
     double geo_rescale = 2.25;
@@ -264,7 +263,7 @@ void PlayBack::setupMeshes()
     meshradius = (currentMesh->getVertex(0)).norm();
     std::cout<< "# sphere radius: \n" << meshradius << '\n';
     
-    TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
+    TriMeshRenderer* mesh_renderer = new TriMeshRenderer( *(mesh_controller->getMesh()));
     m_mesh_renderers.push_back( mesh_renderer );
 
 }

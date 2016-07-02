@@ -9,9 +9,15 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <omp.h>
+#include <iomanip>
 
 #include "../Collision/ElementProxy.h"
 #include "../Collision/CollisionDetector.h"
+#include "../Simulation/Simulation.h"
+
+#define EIGEN_RAW 0
+#define EIGEN_SPACES_ONLY_IO Eigen::IOFormat(8, EIGEN_RAW, " ", " ", "", "", "", "")
 
 Scene::Scene( const std::string& name, const std::string& desc )
 : m_problemName( name )
@@ -67,7 +73,7 @@ void Scene::setup()
             const int numThreads = m_simulation_params.m_numberOfThreads > 0 ? m_simulation_params.m_numberOfThreads : sysconf( _SC_NPROCESSORS_ONLN );
             omp_set_num_threads( numThreads );
         }
-        m_strandsManager = new StrandImplicitManager( m_strands, m_simulation_params, m_meshes );
+        m_strandsManager = new Simulation( m_strands, m_simulation_params, m_meshes );
     }
 }
 
@@ -144,7 +150,6 @@ void Scene::addOptions()
     // sys options
     AddOption("numberOfThreads","",4);
     AddOption("simulationManager_limitedMemory","", false);
-    AddOption("contactProblem_limitedMemory","", false);
     
     //    // for YacFS solve :
     AddOption("gaussSeidelTolerance","", 1e-6 );
@@ -156,21 +161,17 @@ void Scene::setSimulationParameters()
     m_simulation_params.m_numberOfThreads = GetIntOpt("numberOfThreads");
     m_simulation_params.m_stretching_threshold = GetScalarOpt( "stretchingThreshold" );
     m_simulation_params.m_costretch_residual_threshold = GetScalarOpt( "costretch_residual_threshold" );
-    m_simulation_params.m_useGraphSplitOption = GetBoolOpt( "useGraphSplitOption" );
     m_simulation_params.m_useLengthProjection = GetBoolOpt( "useLengthProjection" );
         
     m_simulation_params.m_useProxRodRodCollisions = GetBoolOpt( "useProxRodRodCollisions" );
     m_simulation_params.m_useCTRodRodCollisions = GetBoolOpt( "useCTRodRodCollisions" );
-    m_simulation_params.m_percentCTRodRodCollisionsAccept = GetScalarOpt( "percentCTRodRodCollisionsAccept" );
     
     m_simulation_params.m_useNonLinearAsFailsafe = GetBoolOpt( "useNonLinearAsFailsafe" );
     m_simulation_params.m_alwaysUseNonLinear = GetBoolOpt( "alwaysUseNonLinear" );
     m_simulation_params.m_maxNewtonIterations = GetIntOpt( "maxNewtonIterations" );
 
     m_simulation_params.m_simulationManager_limitedMemory = GetBoolOpt( "simulationManager_limitedMemory" );
-    m_simulation_params.m_contactProblem_limitedMemory = GetBoolOpt( "contactProblem_limitedMemory" );
     m_simulation_params.m_gaussSeidelTolerance = GetScalarOpt( "gaussSeidelTolerance" );
-    m_simulation_params.m_stochasticPruning = GetScalarOpt( "stochasticPruningFraction" );
 }
 
 void Scene::setRodCollisionParameters( ElasticStrand& strand )
@@ -178,7 +179,7 @@ void Scene::setRodCollisionParameters( ElasticStrand& strand )
     strand.collisionParameters().m_externalCollisionsRadius = GetScalarOpt( "externalCollisionsRadius" ); //0.05;
     strand.collisionParameters().m_collisionRadius = GetScalarOpt( "collisionRadius" ); //0.0025;
     
-    strand.collisionParameters().rootImmunityLength() *= -strand.getTotalRestLength();
+    strand.collisionParameters().m_rootImmunityLength *= -strand.getTotalRestLength();
     
     strand.collisionParameters().m_frictionCoefficient = GetScalarOpt("strand_mu"); //0.3;
     
@@ -189,9 +190,9 @@ void Scene::render( const int& w, const int& h, const int& l, const bool& ct )
 {
     clearContacts();
 
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        m_renderer->render( strand, w, h, l, ct );
+        m_renderer->render( *sptr, w, h, l, ct );
     }
     
     for(auto m_itr = m_mesh_renderers.begin(); m_itr != m_mesh_renderers.end(); ++ m_itr)
@@ -203,9 +204,9 @@ void Scene::render( const int& w, const int& h, const int& l, const bool& ct )
 void Scene::getCenter( Vec3d& center )
 {
     int render_count = 0;
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        center += m_renderer->calculateObjectCenter( sptr );
+        center += m_renderer->calculateObjectCenter( *sptr );
         ++render_count;
     }
     
@@ -220,10 +221,10 @@ void Scene::getCenter( Vec3d& center )
 
 void Scene::getRadius( Scalar& radius, const Vec3d& simCenter )
 {
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        const Vec3 center = m_renderer->calculateObjectCenter( sptr );
-        const Scalar r = m_renderer->calculateObjectBoundingRadius( sptr );
+        const Vec3 center = m_renderer->calculateObjectCenter( *sptr );
+        const Scalar r = m_renderer->calculateObjectBoundingRadius( *sptr, simCenter );
         radius = std::max( radius, r + ( center - simCenter ).norm() );
     }
     
@@ -237,17 +238,6 @@ void Scene::getRadius( Scalar& radius, const Vec3d& simCenter )
 
 
 // Options :
-
-template <typename T> 
-int Scene::AddOption( const std::string& name, const std::string& desc, const T& def );
-{
-    if( m_options.find(name) != m_options.end() ){
-        std::cerr << "Option " << name << " already exists" << std::endl;
-        return -1;
-    }
-    m_options.insert(std::make_pair(name, Option(name, desc, def)));
-    return 0;
-}
 
 Option* Scene::GetOption(const std::string& name)
 {
@@ -353,7 +343,7 @@ void Scene::PrintOptions(std::ostream& os)
                 os << opt->r;
                 break;
             case Option::VEC:
-                os << opt->v.format(EIGEN_SPACES_ONLY_IO);
+                os << opt->v.format( EIGEN_SPACES_ONLY_IO );
                 break;
             case Option::STRING:
                 os << opt->s;
@@ -377,9 +367,9 @@ void Scene::dumpRods( std::string outputdirectory, int current_frame, int file_w
     // header
     os << "ply" << std::endl << "format ascii 1.0" <<std::endl << "comment created by BASim" << std::endl;
     int num_verts = 0;
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        num_verts += sptr->getNumVertices();
+        num_verts += (*sptr)->getNumVertices();
     }
     os << "element vertex " << num_verts << std::endl;
     os << "property float x"<< std::endl << "property float y"<< std::endl << "property float z" << std::endl
@@ -387,11 +377,11 @@ void Scene::dumpRods( std::string outputdirectory, int current_frame, int file_w
 
     // rod vertex positions
     int rod_num = 0;
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
     {
-        for (int j = 0; j < sptr->getNumVertices(); ++j)
+        for (int j = 0; j < (*sptr)->getNumVertices(); ++j)
         {
-            os << sptr->getVertex(j).x() << " " << sptr->getVertex(j).y() << " " << sptr->getVertex(j).z() << " " << rod_num <<std::endl;
+            os << (*sptr)->getVertex(j).x() << " " << (*sptr)->getVertex(j).y() << " " << (*sptr)->getVertex(j).z() << " " << rod_num <<std::endl;
         }
     }
 }
@@ -432,9 +422,10 @@ void Scene::checkpointSave( std::string outputdirectory ) const
 
     // rod Xs and dXs
     int rod_num = 0;
-    for( ElasticStrand* sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto spt = m_strands.begin(); spt != m_strands.end(); ++spt )
     {
 
+        ElasticStrand* sptr = *spt;
         numOrRods += sptr->getNumVertices() - 1;
 
         VecXx currDofs = sptr->getCurrentDegreesOfFreedom();
@@ -581,7 +572,6 @@ void Scene::checkpointRestore()
 
     // need to jump time
     deserializeVarHex( m_t, in );
-    m_strandsManager->setTime( m_t );
     std::cout << "m_t: " << m_t << std::endl;
     
     std::cout.precision( std::numeric_limits<double>::digits10 + 2);
@@ -589,8 +579,9 @@ void Scene::checkpointRestore()
 
     // rod Xs and dXs
     int rod_num = 0;
-    for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rod_num)
+    for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rod_num)
     {
+        ElasticStrand* sptr = *rd_itr;
         VecXx DoFs( sptr->getNumVertices() * 4 - 1 );
         VecXx Disps( sptr->getNumVertices() * 4 - 1 );
 

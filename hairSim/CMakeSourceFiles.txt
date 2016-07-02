@@ -1,6 +1,7 @@
 set( Sources
   Collision/CollisionUtils/BVH.cc
   Collision/CollisionUtils/CollisionUtils.cpp
+  Collision/CollisionUtils/CTCD.cpp
   Collision/Collision.cpp
   Collision/CollisionDetector.cpp
   Collision/EdgeEdgeCollision.cpp
@@ -12,14 +13,12 @@ set( Sources
   Forces/BendingForce.cc
   Forces/GravitationForce.cc
   Forces/InertialForce.cc
-  Forces/PenaltyForce.cc
-  Forces/StrandStrandForce.cc
   Forces/StretchingForce.cc
   Forces/TwistingForce.cc
   Math/Distances.cc
   Math/LinearSolver.cc
   Mesh/ObjParser.cpp
-  Mesh/TriangularMesh.cpp
+  Mesh/TriMesh.cpp
   Mesh/TriMeshController.cpp
   Render/Camera/Camera.cpp
   Render/Camera/TrackBall.cpp
@@ -27,6 +26,7 @@ set( Sources
   Render/Camera/ViewController.cpp
   Render/Camera/Zoomer.cpp
   Render/Image.cpp
+  Render/RenderUtils.cpp
   Render/StrandRenderer.cpp
   Render/TriMeshRenderer.cpp
   Scenes/Aleka.cpp
@@ -63,6 +63,8 @@ set( Headers
   Collision/CollisionUtils/BVH.hh
   Collision/CollisionUtils/BVHNode.hh
   Collision/CollisionUtils/CollisionUtils.h
+  Collision/CollisionUtils/CTCD.h
+  Collision/CollisionUtils/rpoly.h
   Collision/CollisionUtils/SpatialHashMap.hh
   Collision/CollisionUtils/SpatialHashMapFwd.hh
   Collision/Collision.h
@@ -80,8 +82,6 @@ set( Headers
   Forces/GravitationForce.hh
   Forces/InertialForce.hh
   Forces/NonLinearForce.h
-  Forces/PenaltyForce.hh
-  Forces/StrandStrandForce.hh
   Forces/StretchingForce.hh
   Forces/TwistingForce.hh
   Forces/ViscousOrNotViscous.hh
@@ -91,7 +91,7 @@ set( Headers
   Math/LinearSolver.hh
   Math/SymmetricBandMatrixSolver.h
   Mesh/ObjParser.h
-  Mesh/TriangularMesh.h
+  Mesh/TriMesh.h
   Mesh/TriMeshController.h
   Render/Camera/Camera.h
   Render/Camera/TrackBall.h
@@ -101,6 +101,7 @@ set( Headers
   Render/Color.h
   Render/Image.h
   Render/OpenGLDecl.h
+  Render/RenderUtils.h
   Render/StrandRenderer.h
   Render/TriMeshRenderer.h
   Scenes/Aleka.h

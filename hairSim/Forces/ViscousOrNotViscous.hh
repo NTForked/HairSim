@@ -1,7 +1,7 @@
 #ifndef VISCOUSORNOTVISCOUS_HH_
 #define VISCOUSORNOTVISCOUS_HH_
 
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 
 // These classes are taken as template arguments for the internal forces,
 // indicating whether we want the non-viscous or the viscous version.

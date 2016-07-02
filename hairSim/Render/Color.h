@@ -1,6 +1,8 @@
 #ifndef S_COLOR_H
 #define S_COLOR_H
 
+#include "../Utils/Definitions.h"
+
 class Color
 {
 public:

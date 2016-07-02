@@ -36,9 +36,9 @@ public:
 
 protected:
 
-    void validCollision( TwistEdgeHandler* teh );
-    void print( std::ostream& os ) const;
-    void printShort( std::ostream& os ) const;
+    bool analyseContinousTime();
+    bool analyseInstantaneous();
+    bool validCollision( TwistEdgeHandler* teh );
 
     EdgeProxy* m_secondEdgeProxy;
     Scalar m_t;

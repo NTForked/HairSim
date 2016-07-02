@@ -1,6 +1,8 @@
 #include "Simulation.h"
+#include "../Collision/CollisionDetector.h"
+#include "../Collision/ElementProxy.h"
 
-void Simulation::deleteInvertedProxies()
+void Simulation::deleteInvertedProxies( const bool& penaltyAfter, const bool& penaltyOnce )
 {
     if( penaltyAfter )
     {

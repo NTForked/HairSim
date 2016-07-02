@@ -27,7 +27,7 @@ Scene("Locks", "L Locks of hair forming an N braid")
     AddOption("hairtie", "include a hair tie", false);
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("selfCollisionsRadius") = 0.02;
+    GetScalarOpt("collisionRadius") = 0.02;
     GetScalarOpt("strand_mu") = 0.3;
     GetScalarOpt("dt") = 1e-3;
 
@@ -44,10 +44,10 @@ void Locks::layeredLockPacking( std::vector< std::vector< Vec3 > >& rodPos )
     // create packed disk/circle to be repeated for each lock
     const unsigned L = 7; // layers (including center) of rings of strands
     const double dThetaMin = 3; // increment theta in search for non-collision
-    const double R = GetScalarOpt("selfCollisionsRadius");
+    const double R = GetScalarOpt("collisionRadius");
     const double b = 0.01 * R; // buffer of space between rods
 
-    std::cout << "collision thickness: " << GetScalarOpt("selfCollisionsRadius") << std::endl;
+    std::cout << "collision thickness: " << GetScalarOpt("collisionRadius") << std::endl;
 
     std::vector< Vec3 > centroids;
     centroids.push_back( Vec3::Zero() );
@@ -92,7 +92,7 @@ void Locks::layeredLockPacking( std::vector< std::vector< Vec3 > >& rodPos )
     std::cout << "outermost radius of lock: " << outermostR << std::endl;
     std::cout << "number of strands per lock: " << rods_per_lock << std::endl;
 
-    if( outermostR == 0.0 ) outermostR = GetScalarOpt("selfCollisionsRadius") + 0.01;
+    if( outermostR == 0.0 ) outermostR = GetScalarOpt("collisionRadius") + 0.01;
 
     const unsigned N = 3; // number of centerlines
     const unsigned M = 2; // even number < N
@@ -152,45 +152,36 @@ void Locks::includeHairTie()
         dofs.segment<3>( i * 4 ) = vertices[i];
     }
 
-    // CoM += vertices.back();
-    Vec3Array scripted_vertices;
-    scripted_vertices.push_back( vertices[0] );
-    scripted_vertices.push_back( vertices[ vertices.size() - 1] );
-    DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+    DOFScriptingController* controller = new DOFScriptingController( );
 
     ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
     ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, 0.15 );
-    strand->setGlobalIndex( m_rodDatum.size() );
-    hairtieNum = m_rodDatum.size();
+    strand->setGlobalIndex( m_strands.size() );
+    hairtieNum = m_strands.size();
     setRodCollisionParameters( *strand );
 
     m_strands.push_back( strand );
-    
-    // extra stuff for render, etc...
-    RodData* rd = new RodData( *strand, *controller );
-    m_rodDatum.push_back( rd );
 
     Vec3 zero( 0.,0.,0. );
-    RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
+    ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
     Mat3x identity = Mat3x::Identity();
     double push = 0.5;
     Vec3 translate = Vec3( push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate , 0 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate , 0 );
     translate = Vec3( 0.0, 0.0, push );
-    transformRodRootVtx( *hairband, identity, zero, translate, 1 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 1 );
     translate = Vec3( -push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate, 2 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 2 );
     translate = Vec3( 0.0, 0.0, -push );
-    transformRodRootVtx( *hairband, identity, zero, translate, 3 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 3 );
     translate = Vec3( push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate, 4 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 4 );
 }
 
 void Locks::setupStrands()
 {
     // rod options
-    Scalar radiusA = GetScalarOpt("radiusA");
-    Scalar radiusB = GetScalarOpt("radiusB");
+    Scalar radiusA = GetScalarOpt("radius");
     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     Scalar shearModulus = GetScalarOpt("shear-modulus");
     Scalar density = GetScalarOpt("density");
@@ -221,14 +212,11 @@ void Locks::setupStrands()
             dofs.segment<3>( i * 4 ) = vertices[i];
         }
 
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( vertices[0] );
-        scripted_vertices.push_back( vertices[ nVertices - 1] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+        DOFScriptingController* controller = new DOFScriptingController( );
         controller->freezeVertices( 0, true );
 
         ElasticStrandParameters* params = new ElasticStrandParameters( 
-                radiusA, radiusB, youngsModulus, shearModulus, 
+                radiusA, youngsModulus, shearModulus, 
                 density, viscosity, airDrag, baseRotation );
         ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("selfCollisionsRadius") );
         strand->setGlobalIndex( rod_id );
@@ -265,32 +253,32 @@ bool Locks::executeScript()
     if( getTime() == 0.0 + m_dt && includeLockTie )
     {
         std::cout << "expanding hairtie" << std::endl;
-        RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
+        ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
         Mat3x identity = Mat3x::Identity();
         double push = -0.0;
         Vec3 translate = Vec3( push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate , 0 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate , 0 );
         translate = Vec3( 0.0, 0.0, push );
-        transformRodRootVtx( *hairband, identity, zero, translate, 1 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 1 );
         translate = Vec3( -push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate, 2 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 2 );
         translate = Vec3( 0.0, 0.0, -push );
-        transformRodRootVtx( *hairband, identity, zero, translate, 3 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 3 );
         translate = Vec3( push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate, 4 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 4 );
     }
 
     if( getTime() == 0.0 + 2 * m_dt && includeLockTie )
     {
-        RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
-        hairband->getDofController().m_scriptedDegreesOfFreedom.clear();
+        ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
+        hairband->dynamics().getScriptingController()->clear();
     }
     
     // // freezeTriangleObject( *currentMesh );
     // unsigned rod = 0;
-    // for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rod )
+    // for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rod )
     // {
-    //     if( rod == m_rodDatum.size() - 1 ) continue;
+    //     if( rod == m_strands.size() - 1 ) continue;
 
     //     freezeVertex( **rd_itr, 0);
     //     // if( getTime() >= 0.25 ){
@@ -314,10 +302,10 @@ bool Locks::executeScript()
             Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
-            for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
+            for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rodCount)
             {
                 if( rodCount == hairtieNum ) continue; // hairtie
-                transformRodRootVtx( **rd_itr, identity, zero, translate, 0 );
+                SceneUtils::transformRodRootVtx( *rd_itr, identity, zero, translate, 0 );
             }
         }
         else if( scriptType == 3 && getTime() > 0.0 + 5000 * m_dt  && includeLockTie )
@@ -329,12 +317,12 @@ bool Locks::executeScript()
             Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.001, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
-            for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
+            for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rodCount)
             {
                 if( rodCount == 20 )
                 {
-                    for( unsigned i = 0; i < (*rd_itr)->m_strand.getNumVertices(); ++i ){
-                        transformRodRootVtx( **rd_itr, identity, zero, translate, i );
+                    for( unsigned i = 0; i < (*rd_itr)->getNumVertices(); ++i ){
+                        SceneUtils::transformRodRootVtx( *rd_itr, identity, zero, translate, i );
                     }
                 }
             }
@@ -344,12 +332,12 @@ bool Locks::executeScript()
     else{
       // freezeTriangleObject( *currentMesh );
       unsigned rod = 0;
-      for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rod )
+      for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rod )
       {
-        if( rod == m_rodDatum.size() - 1 ) continue;
+        if( rod == m_strands.size() - 1 ) continue;
 
         // freezeRodRoot( **rd_itr );
-        freezeVertex( **rd_itr, 0);
+        SceneUtils::freezeVertex( *rd_itr, 0);
         // if( getTime() >= 0.25 ){
         //     freezeVertex( **rd_itr, nVertices - 1);
         // }

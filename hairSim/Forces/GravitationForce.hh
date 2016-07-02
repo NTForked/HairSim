@@ -9,7 +9,9 @@
 #define GRAVITATIONFORCE_HH_
 
 #include "ForceBase.hh"
-
+#include "../Utils/Definitions.h"
+#include "../Strand/ElasticStrand.h"
+ 
 class GravitationForce: public ForceBase
 {
 public:

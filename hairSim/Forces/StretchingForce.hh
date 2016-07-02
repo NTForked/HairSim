@@ -2,7 +2,7 @@
 #define STRETCHINGFORCE_HH_
 
 #include "ViscousOrNotViscous.hh"
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 
 template<typename ViscousT = NonViscous>
 class StretchingForce: public ForceBase

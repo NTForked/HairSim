@@ -2,7 +2,6 @@
 #define STRANDSTRANDFORCE_HH_
 
 #include "ForceBase.hh"
-#include "../Static/StaticCollision.hh"
 #include <tr1/memory>
 
 class StrandStrandForce: public RuntimeCollisionForceBase

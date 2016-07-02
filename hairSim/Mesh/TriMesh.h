@@ -1,5 +1,5 @@
-#ifndef TRIANGULARMESH_HH_
-#define TRIANGULARMESH_HH_
+#ifndef TriMesh_HH_
+#define TriMesh_HH_
 
 #include "../Utils/Definitions.h"
 class TriMeshController;
@@ -31,7 +31,7 @@ struct TriangularFace
 class TriMesh
 {
 public:
-    TriMesh( const TriMeshController* controller = NULL );
+    TriMesh( TriMeshController* controller = NULL );
     virtual ~TriMesh();
 
     void addVertex( const Vec3& point )
@@ -82,7 +82,12 @@ public:
         return m_controller;
     }
 
-    void setController( const TriMeshController* controller )
+    TriMeshController* controller()
+    {
+        return m_controller;
+    }
+
+    void setController( TriMeshController* controller )
     {
         m_controller = controller;
     }
@@ -108,7 +113,7 @@ private:
     Vec3Array m_vertices;
     Vec3Array m_displacements;
     std::vector<TriangularFace> m_faces;
-    const TriMeshController* m_controller;
+    TriMeshController* m_controller;
 };
 
-#endif /* TRIANGULARMESH_HH_ */
+#endif /* TriMesh_HH_ */

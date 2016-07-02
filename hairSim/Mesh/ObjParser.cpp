@@ -1,7 +1,7 @@
 #include "ObjParser.h"
 #include <fstream>
 
-bool ObjParser::loadTriangularMesh( const std::string& obj_file_name, TriangularMesh& tri_mesh )
+bool ObjParser::loadTriMesh( const std::string& obj_file_name, TriMesh& tri_mesh )
 {
   m_vn_vt_unsupported_printed = false;
   m_vn_unsupported_printed = false;
@@ -87,7 +87,7 @@ bool ObjParser::loadTriangularMesh( const std::string& obj_file_name, Triangular
   return m_successful_parse;
 }
 
-void ObjParser::parsevCommand( std::istringstream& commandstream, TriangularMesh& tri_mesh )
+void ObjParser::parsevCommand( std::istringstream& commandstream, TriMesh& tri_mesh )
 {
   double x, y, z;
   if( !(commandstream >> x >> y >> z) )
@@ -100,7 +100,7 @@ void ObjParser::parsevCommand( std::istringstream& commandstream, TriangularMesh
   tri_mesh.addVertex(Vec3d(x,y,z));
 }
 
-void ObjParser::parsetrianglefCommand( std::istringstream& commandstream, TriangularMesh& tri_mesh )
+void ObjParser::parsetrianglefCommand( std::istringstream& commandstream, TriMesh& tri_mesh )
 {
   int xidx,yidx,zidx;
   

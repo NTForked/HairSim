@@ -67,9 +67,8 @@ public:
 
     virtual bool analyse() = 0;
 
-    virtual Vec3 offset() const;
+    virtual Vec3 offset( const Vec3& normal ) const;
 
-    Vec3 m_normal;
     Scalar m_u, m_v, m_w;
     Vec3 m_offset;
 };
@@ -81,6 +80,7 @@ public:
     struct Object
     {
         int globalIndex;
+        int vertex; // needed for sorting
         Scalar abscissa;
         DeformationGradient* defGrad;
         Vec3 worldVel;
@@ -96,6 +96,7 @@ public:
 
     void generateTransformationMatrix();
     void swapIfNecessary();
+    bool operator<( const CollidingPair& rhs ) const;
 };
 
 typedef std::vector< CollidingPair > CollidingPairs;

@@ -1,5 +1,5 @@
 #include "Twists.hh"
-#include "../ElasticStrandUtils.hh"
+#include "../ElasticStrandUtils.h"
 
 void Twists::compute()
 {

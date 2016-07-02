@@ -1,4 +1,4 @@
-#include "ElasticStrandUtils.hh"
+#include "ElasticStrandUtils.h"
 
 Vec3 parallelTransport( const Vec3& u, const Vec3& t0, const Vec3& t1 )
 {

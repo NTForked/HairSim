@@ -16,7 +16,7 @@ public:
 
     enum DrawMode
     {
-        LINES, QUADS, QUADS_SHADED, QUADS_BLENDED
+        LINES, SHADED, BLENDED
     };
 
     enum DrawForce
@@ -31,14 +31,6 @@ public:
         TWISTING_VISCOUS
     };
 
-    struct QuadData
-    {
-        std::vector<GLfloat> m_quadVertices;
-        std::vector<GLfloat> m_quadColors;
-        std::vector<GLfloat> m_quadNormals;
-        std::vector<GLuint> m_quadIndices;
-    };
-
     StrandRenderer();
 
     void render( ElasticStrand* strand, const int& w, const int& h, const int& label, const bool& ct );
@@ -48,18 +40,14 @@ public:
     static Scalar calculateObjectBoundingRadius( ElasticStrand* strand, const Vec3& center );
 
     const Eigen::Matrix4f &transformationMatrix() const
-    {
-        return m_transformationMatrix ;
-    }
+    { return m_transformationMatrix; }
 
     Eigen::Matrix4f &transformationMatrix()
-    {
-        return m_transformationMatrix ;
-    }
+    { return m_transformationMatrix; }
 
-    void pushTransformationMatrix() const ;
-    void pushInverseTransformationMatrix() const ;
-    void popTransformationMatrix() const ;
+    void pushTransformationMatrix() const;
+    void pushInverseTransformationMatrix() const;
+    void popTransformationMatrix() const;
 
 /////////
     void labelScene( int windowWidth, int windowHeight, int label );
@@ -81,15 +69,14 @@ public:
 protected:
 
     void drawSmoothStrand();
-    void drawVertices( int flag = GL_LINE_STRIP ) const;
+    void drawVertices() const;
     void drawContacts() const;
     void drawArrows() const;
 
     template<typename ForceT>
     void drawForce(); 
     void drawForceVec( VecXx& f );
-    void computeQuads( QuadData &quads ) const ;
-    static void drawQuads( const QuadData &quads ) ;
+    void drawCylinders() ;
 
     ElasticStrand* m_strand;
     std::map<const char*, Color> m_palette;
@@ -97,7 +84,6 @@ protected:
     double m_strandRadius;
     DrawMode m_drawMode;
     DrawForce m_drawForce;
-    QuadData m_smoothStrand ;
 
 };
 

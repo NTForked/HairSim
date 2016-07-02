@@ -1,4 +1,9 @@
-#include "CousinIt.hh"
+#include "CousinIt.h"
+#include "../Mesh/TriMeshController.h"
+
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+#include <fstream>
 
 CousinIt::CousinIt() :
 Scene("Cousin It", "spinning sphere")
@@ -40,7 +45,7 @@ Scene("Cousin It", "spinning sphere")
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = false;
-    GetScalarOpt("selfCollisionsRadius") = 0.0025;
+    GetScalarOpt("collisionRadius") = 0.0025;
     GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
 
     GetStringOpt("checkpointDir") = "/Users/henrique/Desktop/LearnHair/build/Apps/StrandSimulator";
@@ -60,7 +65,6 @@ void CousinIt::generateNormalSamples( Scalar hair_region, int num_hairs, std::ve
     typedef boost::minstd_rand rng_type;
     typedef boost::uniform_real<double> dist_type;
     typedef boost::variate_generator<rng_type&, dist_type> generator_type;
-    
 
     // hypercube rejection sampling
     dist_type dist1( 1 - 2 * hair_region, 1 );
@@ -159,23 +163,18 @@ void CousinIt::loadStrands()
 //                    dofs.segment<3>( i ) = vertices[i / 4];
 //                    if( i+3 < dofs.size() ) dofs( i + 3 ) = 0.;
 //                }
-                
-                Vec3Array scripted_vertices;
-                scripted_vertices.push_back( vertices[0] );
-                scripted_vertices.push_back( vertices[1] );
-                DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
-                controller->freezeRootVertices<2>();
-                
-                ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+
+                DOFScriptingController* controller = new DOFScriptingController( );
+                controller->freezeVertices( 0, true );
+                controller->freezeVertices( 1, true );
+
+                ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
                 
                 ElasticStrand* strand = new ElasticStrand( dofs, *params, controller );
                 strand->setGlobalIndex( rod_id );
                 setRodCollisionParameters( *strand );
                 m_strands.push_back( strand );
-                
-                // extra stuff for render, etc...
-                RodData* rd = new RodData( *strand, *controller );
-                m_rodDatum.push_back( rd );
+
                 ++rod_id;
                 
                 //std::cout<< "loaded rod with dofs = "<< dofs << std::endl;
@@ -185,7 +184,7 @@ void CousinIt::loadStrands()
         }
     }
     
-    std::cout << "# \033[35;1mCousinIt message:\033[m loaded " << m_rodDatum.size() << " rods." << std::endl;
+    std::cout << "# \033[35;1mCousinIt message:\033[m loaded " << m_strands.size() << " rods." << std::endl;
 }
 
 
@@ -197,8 +196,7 @@ void CousinIt::setupStrands()
         loadStrands();
     else {
         // rod options
-        Scalar radiusA = GetScalarOpt("radiusA");
-        Scalar radiusB = GetScalarOpt("radiusB");
+        Scalar radiusA = GetScalarOpt("radius");
         Scalar youngsModulus = GetScalarOpt("youngs-modulus");
         Scalar shearModulus = GetScalarOpt("shear-modulus");
         Scalar density = GetScalarOpt("density");
@@ -232,31 +230,27 @@ void CousinIt::setupStrands()
             Scalar root_length = GetScalarOpt("root_length");
             
             if( curl_radius == 0. || curl_density == 0. )
-                generateStraightHair( initialnormals[i], sphereradius * initialnormals[i], dL, num_vertices, vertices, root_length );
+                SceneUtils::genStraightHair( initialnormals[i], sphereradius * initialnormals[i], dL, num_vertices, vertices, root_length );
             else
-                generateCurlyHair( initialnormals[i], sphereradius * initialnormals[i], dL, num_vertices, vertices, curl_radius, curl_density, root_length );
+                SceneUtils::genCurlyHair( initialnormals[i], sphereradius * initialnormals[i], dL, num_vertices, vertices, curl_radius, curl_density, root_length, GetScalarOpt("curl_density_perturbation"), GetScalarOpt("curl_radius_perturbation") );
             
             // initial strand position
             VecXd dofs( num_DoFs );
             for ( int i = 0; i < dofs.size(); i += 4 )
                 dofs.segment<3>( i ) = vertices[i / 4];
             
-            Vec3Array scripted_vertices;
-            scripted_vertices.push_back( vertices[0] );
-            scripted_vertices.push_back( vertices[1] );
-            DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
-            controller->freezeRootVertices<2>();
-            
-            ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+
+            DOFScriptingController* controller = new DOFScriptingController(  );
+                controller->freezeVertices( 0, true );
+                controller->freezeVertices( 1, true );
+
+            ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
             
             ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("selfCollisionsRadius") );
             strand->setGlobalIndex( rod_id );
             setRodCollisionParameters( *strand );
             m_strands.push_back( strand );
             
-            // extra stuff for render, etc...
-            RodData* rd = new RodData( *strand, *controller );
-            m_rodDatum.push_back( rd );
             ++rod_id;
         }
         std::cout << "# num strands: \n" << m_strands.size() <<'\n';
@@ -268,15 +262,18 @@ void CousinIt::setupStrands()
 void CousinIt::setupMeshes()
 {
     // make collision mesh
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller );
+    TriMeshController* mesh_controller = new TriMeshController( 0., m_dt );
+
     std::string file_name = GetStringOpt( "sphere_mesh_filename" ) ;
     mesh_controller->loadMesh(file_name);
+
     // set mu for mesh
     mesh_controller->setDefaultFrictionCoefficient( GetScalarOpt( "mesh_mu" ) ) ;
     
     // rescale sphere -- assumes mesh is centered at origin
-    TriangularMesh* currentMesh = m_meshScripting_controllers[0]->getCurrentMesh();
+    m_meshes.push_back( mesh_controller->getMesh() );
+    TriMesh* currentMesh = m_meshes.back();
+
     double meshradius = (currentMesh->getVertex(0)).norm();
     //std::cout<< "radius before = " << meshradius << '\n';
     double geo_rescale = GetScalarOpt("geometryscale");
@@ -290,7 +287,7 @@ void CousinIt::setupMeshes()
     meshradius = (currentMesh->getVertex(0)).norm();
     std::cout<< "# sphere radius: \n" << meshradius << '\n';
     
-    TriangleMeshRenderer* mesh_renderer = new TriangleMeshRenderer( *(mesh_controller->getCurrentMesh()));
+    TriMeshRenderer* mesh_renderer = new TriMeshRenderer( *(mesh_controller->getMesh()) );
     m_mesh_renderers.push_back( mesh_renderer );
 }
 
@@ -320,7 +317,7 @@ bool CousinIt::executeScript()
     0,0,1;
     Mat3x rotzT = rotz.transpose();
     
-    TriangularMesh* currentMesh = m_meshScripting_controllers[0]->getCurrentMesh();
+    TriMesh* currentMesh = m_meshes[0];
   
     // std::cout << " scripting_on is " << GetBoolOpt("scripting_on") << "\n";
   
@@ -328,129 +325,129 @@ bool CousinIt::executeScript()
     {
       if( getTime() <= 2. - GetScalarOpt("time_offset") )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if ( getTime() <= 3 - GetScalarOpt("time_offset") )
       {
         // transform mesh
-        transformTriangleObject( *currentMesh, rotz, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, rotz, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, rotz, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, rotz, zero, zero );
         }
       }
       else if(getTime() <= 4. - GetScalarOpt("time_offset") )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if(getTime() <= 5 - GetScalarOpt("time_offset") )
       {
         // back the other way
         // transform mesh
-        transformTriangleObject( *currentMesh, rotzT, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, rotzT, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, rotzT, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, rotzT, zero, zero );
         }
       }
       else if(getTime() <= 6. - GetScalarOpt("time_offset") )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if(getTime() <= 7 - GetScalarOpt("time_offset") )
       {
         // transform mesh
-        transformTriangleObject( *currentMesh, rotx, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, rotx, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, rotx, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, rotx, zero, zero );
         }
       }
       else if(getTime() <= 8. - GetScalarOpt("time_offset") )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if(getTime() <= 9 - GetScalarOpt("time_offset") )
       {
         // back the other way
         // transform mesh
-        transformTriangleObject( *currentMesh, rotxT, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, rotxT, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, rotxT, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, rotxT, zero, zero );
         }
       }
       else if(getTime() <= 10. - GetScalarOpt("time_offset") )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if(getTime() <= 11 - GetScalarOpt("time_offset") )
       {
         // transform mesh
-        transformTriangleObject( *currentMesh, roty, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, roty, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, roty, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, roty, zero, zero );
         }
       }
       else if(getTime() <= 12. - GetScalarOpt("time_offset")  )
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
       else if(getTime() <= 13 - GetScalarOpt("time_offset") )
       {
         // back the other way
         // transform mesh
-        transformTriangleObject( *currentMesh, rotyT, zero, zero );
+        SceneUtils::transformTriangleObject( *currentMesh, rotyT, zero, zero );
         // transform rod BC
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          transformRodRoot( **rd_itr, rotyT, zero, zero );
+          SceneUtils::transformRodRoot( *rd_itr, rotyT, zero, zero );
         }
       }
       else
       {
-        freezeTriangleObject( *currentMesh );
-        for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+        SceneUtils::freezeTriangleObject( *currentMesh );
+        for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
         {
-          freezeRodRoot( **rd_itr );
+          SceneUtils::freezeRodRoot( *rd_itr );
         }
       }
     }
     else{
-      freezeTriangleObject( *currentMesh );
-      for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr)
+      SceneUtils::freezeTriangleObject( *currentMesh );
+      for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr)
       {
-        freezeRodRoot( **rd_itr );
+        SceneUtils::freezeRodRoot( *rd_itr );
       }
     }
 

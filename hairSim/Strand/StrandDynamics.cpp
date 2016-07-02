@@ -1,8 +1,8 @@
-#include "StrandDynamics.hh"
-#include "DOFScriptingController.hh"
+#include "StrandDynamics.h"
+#include "DOFScriptingController.h"
 
-#include "../Core/ElasticStrand.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "ElasticStrand.h"
+#include "ElasticStrandUtils.h"
 
 #include "../Forces/ViscousOrNotViscous.hh"
 #include "../Forces/ForceAccumulator.hh"
@@ -14,15 +14,14 @@
 #include "../Forces/AirDragForce.hh"
 #include "../Forces/InertialForce.hh"
 
-#include "../Render/StrandRenderer.hh"
-#include "../Utils/TextLog.hh"
+#include "../Render/StrandRenderer.h"
 
 StrandDynamics::StrandDynamics( ElasticStrand &strand ) :
         m_strand( strand ),
-        m_scriptingController( NULL ), //
         m_futureJacobianUpToDate( false ), //
         m_futureForcesUpToDate( false ), //
         m_DOFmassesUpToDate( false ),
+        m_scriptingController( NULL ) //
 {}
 
 StrandDynamics::~StrandDynamics()
@@ -70,7 +69,7 @@ void StrandDynamics::computeFutureJacobian( bool withViscous, bool butOnlyForBen
 
     StrandState& futureState = *m_strand.m_futureState ;
 
-    JacobianMatrixType& futureJ = *( futureState.m_totalJacobian );
+    JacobianMatrixType& futureJ = m_strand.m_totalJacobian;
     futureJ.setZero();
 
     m_strand.accumulateJ< StretchingForce<NonViscous> > ( futureState ) ;
@@ -206,6 +205,6 @@ void StrandDynamics::nanFailSafe()
 
         m_strand.setFutureDegreesOfFreedom( futureDOFs );
 
-        acceptGuess(); // Re-compute displacements as well, as they were problably NaNised
+        acceptFuture(); // Re-compute displacements as well, as they were problably NaNised
     }
 }

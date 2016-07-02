@@ -1,30 +1,28 @@
-#include "VertexFaceCollision.hh"
-#include "../Core/ElasticStrand.hh"
-#include "ElementProxy.hh"
-#include "CollisionUtils.hh"
-#include "../Utils/Distances.hh"
-#include "../Utils/TextLog.hh"
-#include "../Dynamic/StrandDynamics.hh"
+#include "VertexFaceCollision.h"
+#include "../Strand/ElasticStrand.h"
+#include "ElementProxy.h"
+#include "CollisionUtils/CollisionUtils.h"
+#include "../Math/Distances.hh"
+#include "../Strand/StrandDynamics.h"
 
 static const double SQ_TOLERANCE = 1e-12;
 
 void VertexFaceCollision::print( std::ostream& os ) const
 {
     os << "VertexFaceCollision: strand vertex " << m_firstStrand->getGlobalIndex() << ' '
-            << m_firstVertex << " vs. " << m_faceProxy << " by " << -m_normalRelativeDisplacement
+            << m_firstVertex << " vs. " << m_faceProxy
             << " at time = " << m_time << '\n';
     os << "Normal displacement = " << m_normal << '\n';
-    os << "Vertex moved from: " << m_firstStrand->getFutureState().getVertex( m_firstVertex )
-            << " to " << m_firstStrand->getVertex( m_firstVertex ) << '\n';
+    os << "Vertex moved from: " << m_firstStrand->getVertex( m_firstVertex )
+            << " to " << m_firstStrand->getFutureVertex( m_firstVertex ) << '\n';
     os << "Face moved: " << *m_faceProxy << '\n';
-    os << "Normal relative displacement: " << m_normalRelativeDisplacement << '\n';
 }
 
 bool VertexFaceCollision::analyse()
 {
     static __thread double times[4];
 
-    const Vec3 p_off = m_firstStrand->getVertex( m_firstVertex );
+    const Vec3 p_off = m_firstStrand->getFutureVertex( m_firstVertex );
     // NB after taking off the offset p = 0
     Vec3 pf0 = m_faceProxy->getVertex( 0 ) - p_off;
     Vec3 pf1 = m_faceProxy->getVertex( 1 ) - p_off;
@@ -112,7 +110,7 @@ bool VertexFaceCollision::analyse()
             m_normal = fnsign * m_normal ;
 
 
-            postAnalyse( relativeDisplacement );
+            // postAnalyse( relativeDisplacement );
 
             return true;
         }

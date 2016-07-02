@@ -1,6 +1,6 @@
 #include "PenaltyForce.hh"
 
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 #include "../Math/BandMatrix.h"
 
 PenaltyForce::PenaltyForce()

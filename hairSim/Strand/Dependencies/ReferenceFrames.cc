@@ -1,5 +1,5 @@
 #include "ReferenceFrames.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "../ElasticStrandUtils.h"
 
 void ReferenceFrames1::storeInitialFrames( const Vec3& initRefFrame1 )
 {

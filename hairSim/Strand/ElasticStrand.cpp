@@ -1,23 +1,22 @@
-#include "ElasticStrand.hh"
-#include "LinearSolver.hh"
-#include "ElasticStrandUtils.hh"
+#include "ElasticStrand.h"
+#include "../Math/LinearSolver.hh"
+#include "ElasticStrandUtils.h"
 
 #include "../Forces/ForceAccumulator.hh"
 #include "../Forces/StretchingForce.hh"
 #include "../Forces/TwistingForce.hh"
 #include "../Forces/BendingForce.hh"
 #include "../Forces/GravitationForce.hh"
-#include "../Forces/StrandStrandForce.hh"
 
-#include "../Dynamic/StrandDynamics.hh"
+#include "StrandDynamics.h"
 
-#include "../Utils/TextLog.hh"
-#include "../Utils/EigenSerialization.hh"
+#include "../Utils/EigenSerialization.h"
 
-#include "../Dependencies/ReferenceFrames.hh"
+#include "Dependencies/ReferenceFrames.hh"
 
-#include "../Collision/CollisionUtils.hh"
-#include "../Collision/OrientedBoundingBox.hh"
+#include "../Collision/CollisionUtils/CollisionUtils.h"
+#include "DOFScriptingController.h"
+#include "../Collision/CollisionUtils/BoundingBox.hh"
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/version.hpp>
@@ -34,16 +33,16 @@ ElasticStrand::ElasticStrand(
     int globalIndex, 
     const Vec3& initRefFrame1 ) :
         m_globalIndex( globalIndex ),
-        m_parameters( parameters ),
         m_numVertices( m_parameters.getNumVertices() ),
+        m_parameters( parameters ),
         m_currentState( new StrandState( dofs, m_parameters.getBendingMatrixBase() ) ),
         m_futureState( new StrandState( dofs, m_parameters.getBendingMatrixBase() ) ),
         m_dynamics( NULL ), 
         m_requiresExactJacobian( false ),
-        m_activelySimulated( true ),
+        m_activelySimulated( true )
 {
-    m_totalJacobian = new JacobianMatrixType;
-    m_totalJacobian->resize( static_cast<IndexType>( dofs.size() ), static_cast<IndexType>( dofs.size() ) );
+    m_totalJacobian = *(new JacobianMatrixType);
+    m_totalJacobian.resize( static_cast<IndexType>( dofs.size() ), static_cast<IndexType>( dofs.size() ) );
 
     if( controller == NULL ) controller = new DOFScriptingController();
     createDynamics();
@@ -141,7 +140,6 @@ void ElasticStrand::setRestShape( const VecXx &dofs, unsigned begin, unsigned en
 
     m_currentState->setDegreesOfFreedom( backup );
 
-    invalidateCurrentGeometry();
     invalidatePhysics();
 }
 
@@ -250,10 +248,7 @@ void ElasticStrand::setFutureDegreesOfFreedom( const VecXx& dof )
 
 void ElasticStrand::setCurrentDegreesOfFreedom( const VecXx& dof )
 {
-
     getCurrentState().setDegreesOfFreedom( dof );
-
-    invalidateCurrentGeometry();
 }
 
 Scalar ElasticStrand::getUnsignedAngleToMajorRadius( int vtx, const Vec3& vec ) const
@@ -391,7 +386,7 @@ void ElasticStrand::filterFutureGeometryByRestLength( const double epsilon, bool
 
     for ( int i = 1; i < m_numVertices; ++i )
     {
-        const Vec3& xbN = m_futureState->getVertex( i );
+        const Vec3& xbN = getFutureVertex( i );
 
         const Scalar lP = getEdgeRestLength( i - 1 );
 
@@ -500,12 +495,25 @@ bool ElasticStrand::deserializeFrom( std::istream & is )
     return false;
 }
 
-using namespace std;
-void printVec3Array( Vec3Array vec )
+void ElasticStrand::getAABB( unsigned elementID, Vec3 &min, Vec3 &max )
 {
-    cout.precision( std::numeric_limits<double>::digits10 + 2);
-    for (unsigned i = 0; i < vec.size(); ++i ){
-        cout << vec[i].x() << " " << vec[i].y() << " " << vec[i].z() << " ";
-    }
-    cout << endl;   
+        BoundingBox<Scalar> boundingBox;
+        boundingBox.reset();
+
+        boundingBox.insert( getFutureVertex( elementID ) );
+        boundingBox.insert( getFutureVertex( elementID + 1) );
+
+        boundingBox.insert( getVertex( elementID ) );
+        boundingBox.insert( getVertex( elementID + 1) );
+        
+        static const Vec3 unit = Vec3::Ones();
+        const Scalar radius = collisionParameters().getLargerCollisionsRadius( elementID ); 
+        min = boundingBox.min - radius * unit;
+        max = boundingBox.max + radius * unit;
+
+        boundingBox.insert( min );
+        boundingBox.insert( max );
+
+        min = boundingBox.min;
+        max = boundingBox.max;
 }

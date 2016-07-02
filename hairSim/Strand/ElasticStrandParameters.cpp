@@ -1,5 +1,5 @@
-#include "ElasticStrandParameters.hh"
-#include "ElasticStrandUtils.hh"
+#include "ElasticStrandParameters.h"
+#include "ElasticStrandUtils.h"
 
 ElasticStrandParameters::ElasticStrandParameters() :
         // Dummy default values ElasticStrand's method do not generate FPEs
@@ -33,9 +33,14 @@ ElasticStrandParameters::ElasticStrandParameters( const ElasticStrandParameters&
         m_kt( m_physicalRadius, m_shearModulus )
 {}
 
-ElasticStrandParameters::ElasticStrandParameters( Scalar radiusA,
-        Scalar YoungsModulus, Scalar shearModulus, Scalar density, Scalar viscosity, Scalar airDrag,
-        Scalar baseRotation ) :
+ElasticStrandParameters::ElasticStrandParameters( 
+    Scalar radiusA,
+    Scalar YoungsModulus, 
+    Scalar shearModulus, 
+    Scalar density, 
+    Scalar viscosity, 
+    Scalar airDrag,
+    Scalar baseRotation ) :
         m_density( density ), //
         m_viscosity( viscosity ), //
         m_airDrag( airDrag ), //
@@ -63,9 +68,6 @@ ElasticStrandParameters& ElasticStrandParameters::operator=( const ElasticStrand
     m_baseRotation.set( other.m_baseRotation.get() );
     m_youngsModulus.set( other.m_youngsModulus.get() );
     m_shearModulus.set( other.m_shearModulus.get() );
-
-    m_ks( m_physicalRadius, m_youngsModulus );
-    m_kt( m_physicalRadius, m_shearModulus );
 
     return *this;
 }

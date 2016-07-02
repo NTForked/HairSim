@@ -1,24 +1,24 @@
-#include "StrandRenderer.hh"
+#include "StrandRenderer.h"
 
-#include "../Core/ElasticStrand.hh"
-#include "../Core/StrandState.hh"
-#include "../Core/ElasticStrandUtils.hh"
-#include "../Static/CollisionSet.hh"
-#include "../Static/StrandStaticTraits.hh"
+#include "../Strand/ElasticStrand.h"
+#include "../Strand/StrandState.h"
+#include "../Strand/ElasticStrandUtils.h"
 #include "../Forces/GravitationForce.hh"
 #include "../Forces/BendingForce.hh"
 #include "../Forces/StretchingForce.hh"
 #include "../Forces/TwistingForce.hh"
 #include "../Forces/ForceAccumulator.hh"
 
-#include "../Collision/ElementProxy.hh"
+#include "../Collision/ElementProxy.h"
+#include "../Utils/StringUtils.h"
+#include "RenderUtils.h"
 
 #define RADPERDEG 0.0174533
 
 StrandRenderer::StrandRenderer():
         m_strand( NULL ), //
-        m_drawMode( QUADS_SHADED ), // LINES, QUADS_SHADED, QUADS_BLENDED
-        m_drawForce( NONE ), // NONE, GRAVITATION, BENDING, STRETCHING, TWISTING
+        m_drawMode( SHADED ), // LINES, SHADED, BLENDED
+        m_drawForce( NONE ) // NONE, GRAVITATION, BENDING, STRETCHING, TWISTING
 {
     m_transformationMatrix.setIdentity();
     m_palette["random"] = Color(( (float) (rand() % 255) ) / 255., ( (float) (rand() % 255) ) / 255., ( (float) (rand() % 255) ) / 255.);
@@ -35,9 +35,7 @@ void StrandRenderer::render( ElasticStrand* strand, const int& w, const int& h, 
     m_wHeight = h;
     m_label = (label + 2) % 3;
 
-    std::cerr << "should steal rod drawing functions from Samson, and replace confusing quads here" << std::endl;
-
-    if( ct ) m_strandRadius = m_strand->m_collisionRadius;
+    if( ct ) m_strandRadius = m_strand->collisionParameters().collisionRadius( 0 );
     else m_strandRadius = m_strand->m_physicsRadius;
 
     glPushAttrib( GL_COLOR_BUFFER_BIT );
@@ -107,18 +105,20 @@ void StrandRenderer::drawContacts() const
     glPopAttrib();
 }
 
-void StrandRenderer::drawVertices( int flag ) const
+void StrandRenderer::drawVertices() const
 {
-    glPushAttrib( GL_ALL_ATTRIB_BITS );
-    glPointSize( 10 );
-    glBegin( GL_POINTS );
-    glColor4f( 127.0 / 255 , 1.0 , 0., 0.5 );
-    for( unsigned v = 0; v < m_strand->getNumVertices(); ++v )
+    int numperlock = 54;
+    const char* c = NULL;
+    if( m_strand->getGlobalIndex() / numperlock == 0 ) c = "orange";
+    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "green";
+    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "yellow";
+    const Color &co = m_palette.find( c )->second;
+    glColor3dv( co.data() );
+
+    for( unsigned v = 1; v < m_strand->getNumVertices() - 1; ++v )
     {
-        glVertex3fv( m_strand->getVertex( v ).data() );
+        renderSphere( m_strand->getVertex( v ), m_strandRadius );
     }
-    glEnd();
-    glPopAttrib();
 }
 
 void Arrow( GLdouble x1, GLdouble y1, GLdouble z1, GLdouble x2, GLdouble y2, GLdouble z2, GLdouble D )
@@ -183,144 +183,27 @@ void StrandRenderer::drawArrows() const
     }
 }
 
-void StrandRenderer::computeQuads( QuadData &quads ) const
+void StrandRenderer::drawCylinders()
 {
-    bool contour = false;
+    int numperlock = 54;
+    const char* c = NULL ;
+    if( m_strand->getGlobalIndex() / numperlock == 0 ) c = "orange";
+    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "green";
+    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "yellow";
+    const Color &co = m_palette.find( c )->second;
+    glColor3dv( co.data() );
 
-    float alphaCoeff = 1.f ;
-    const int slices = 8;
-    const float angleSlice = 2. * M_PI / slices;
-    const unsigned numVertices = m_strand->getNumVertices();
-
-    quads.m_quadVertices.resize( 3 * numVertices * slices );
-    quads.m_quadColors.resize( 4 * numVertices * slices );
-    quads.m_quadNormals.resize( quads.m_quadVertices.size() );
-    quads.m_quadIndices.resize( 4 * ( numVertices - 1 ) * slices );
-    const Vec3Array& materialFrames1 = m_strand->getCurrentMaterialFrames1();
-
-    Vec4fArray slicesColors( slices );
-    for( int k = 0; k < slices; ++k )
+    for( int v = 0; v < m_strand->getNumVertices() - 1; ++v )
     {
-        const char* c = NULL ;
-
-        int numperlock = 54;
-        if( m_strand.getGlobalIndex() / numperlock == 0 ) c = "orange";
-        if( m_strand.getGlobalIndex() / numperlock == 1 ) c = "green";
-        if( m_strand.getGlobalIndex() / numperlock > 1 ) c = "yellow";
-        
-        const Color &co = m_palette.find( c )->second;
-        slicesColors[k][0] = co.data()[0];
-        slicesColors[k][1] = co.data()[1];
-        slicesColors[k][2] = co.data()[2];
-        slicesColors[k][3] = alphaCoeff;
+        const Vec3& a = m_strand->getVertex( v );
+        const Vec3& b = m_strand->getVertex( v + 1 );
+        renderCylinder( a, b, m_strandRadius );
     }
-
-    if( contour ){
-        glLineWidth( 0.01 );
-        glBegin( GL_LINE_STRIP );
-        glColor4f( 0.3, 0.3 , 0.3, 0.05 );
-    }
-
-    Vec3f tangent, normal;
-    unsigned curIndex = 0, curColIndex = 0;
-    for ( unsigned j = 0; j < numVertices; ++j )
-    {
-        // Radii
-
-        const Vec3f& vertex = m_strand->getVertex( j );
-
-        if ( j + 1 < numVertices )
-        {
-            normal = materialFrames1[j];
-            tangent = ( m_strand->getVertex( j + 1 ) - vertex ).normalized();
-        }
-
-        for ( int k = 0; k < slices; ++k )
-        {
-
-            // For psychedelic results: replace curColIndex by curIndex in line below
-            Vec4f::Map( &quads.m_quadColors[curColIndex] ) = slicesColors[k];
-            float r = m_strandRadius;
-
-            Vec3f::Map( &quads.m_quadNormals[curIndex] ) = normal;
-            Vec3f::Map( &quads.m_quadVertices[curIndex] ) = vertex + r * normal;
-
-            rotateAxisAngle( normal, tangent, angleSlice );
-
-            if( contour ){
-                if( j + 1 < numVertices )
-                {
-                    Vec3f v = vertex + r * normal;
-                    Vec3f v1 = m_strand->getVertex( j + 1 ) + r * normal;
-                    glVertex3fv( v.data() );
-                    glVertex3fv( v1.data() ); 
-                }
-            }
-
-            curIndex += 3;
-            curColIndex += 4;
-        }
-
-    }
-
-    if( contour ){
-        glEnd();
-        glPopAttrib();
-    }
-
-    curIndex = 0;
-    unsigned i = 0;
-
-    for ( unsigned j = 0; j + 1 < numVertices; ++j )
-    {
-        for ( int k = 0; k < slices; ++k )
-        {
-            const unsigned k1 = ( k + 1 ) % slices;
-            quads.m_quadIndices[i++] = curIndex + k;
-            quads.m_quadIndices[i++] = curIndex + k + slices;
-            quads.m_quadIndices[i++] = curIndex + k1 + slices;
-            quads.m_quadIndices[i++] = curIndex + k1;
-        }
-        curIndex += slices;
-    }
-
-    if( !contour ){
-        glLineWidth( 0.01 );
-        glBegin( GL_LINE_STRIP );
-        glColor4f( 0.5, 0.5 , 0.5, 0.05 );
-        for( int k = 0; k < quads.m_quadVertices.size() - 3; k+=3 )
-        {
-            glVertex3fv( &quads.m_quadVertices[k] );
-            glVertex3fv( &quads.m_quadVertices[k + 3] );        
-        }
-        glEnd();
-        glPopAttrib();
-    }
-}
-
-void StrandRenderer::drawQuads( const QuadData& quads )
-{
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_COLOR_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-
-    glVertexPointer( 3, GL_FLOAT, 0, &quads.m_quadVertices[0] );
-    glColorPointer(  4, GL_FLOAT, 0, &quads.m_quadColors[0] );
-    glNormalPointer(    GL_FLOAT, 0, &quads.m_quadNormals[0] );
-
-    glDrawElements( GL_QUADS, quads.m_quadIndices.size(), GL_UNSIGNED_INT, &quads.m_quadIndices[0] );
-
-    // deactivate vertex arrays after drawing
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_COLOR_ARRAY );
-    glDisableClientState( GL_NORMAL_ARRAY );
 }
 
 void StrandRenderer::drawSmoothStrand()
 {
-    computeQuads( m_smoothStrand );
-
-    if ( m_drawMode >= QUADS_SHADED )
+    if ( m_drawMode >= SHADED )
     {
         glEnable( GL_LIGHTING );
         glEnable( GL_COLOR_MATERIAL );
@@ -329,22 +212,21 @@ void StrandRenderer::drawSmoothStrand()
         // Hack to make it work with maya's default two-sided lighting
         glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
 
-        if ( m_drawMode == QUADS_BLENDED )
+        if ( m_drawMode == BLENDED )
         {
             glEnable( GL_BLEND );
             glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
         }
-
     }
 
-    drawQuads( m_smoothStrand );
+    drawCylinders();
 
-    if ( m_drawMode >= QUADS_SHADED )
+    if ( m_drawMode >= SHADED )
     {
         glDisable( GL_COLOR_MATERIAL );
         glDisable( GL_LIGHTING );
 
-        if ( m_drawMode == QUADS_BLENDED )
+        if ( m_drawMode == BLENDED )
         {
             glDisable( GL_BLEND );
         }
@@ -363,9 +245,9 @@ void StrandRenderer::drawForce()
     // Here is a clever/ugly hack: simply doing accumulateCurrentF would give zero for viscous forces
     // because they take the current state as "rest shape".
     // Actually, if you try to call accumulateCurrentF on a dissipative force it won't compile, see why in ForceAccumulator
-    const_cast<ElasticStrand&>( m_strand ).swapStates();
-    ForceAccumulator<ForceT>::accumulateFuture( force, const_cast<ElasticStrand&>(m_strand) );
-    const_cast<ElasticStrand&>( m_strand ).swapStates();
+    const_cast<ElasticStrand&>( *m_strand ).swapStates();
+    ForceAccumulator<ForceT>::accumulateFuture( force, const_cast<ElasticStrand&>( *m_strand) );
+    const_cast<ElasticStrand&>( *m_strand ).swapStates();
 
     glLineWidth( 2 );
     glBegin( GL_LINES );
@@ -501,9 +383,9 @@ void StrandRenderer::labelScene( int windowWidth, int windowHeight, int label )
 
                 glColor3f( 0.0, 0.0, 0.0 );
 
-                renderBitmapString( winX, winY, 0.0, GLUT_BITMAP_HELVETICA_12, "         coplanar:" + convertToString( twistLabels[i].second  ) );
-                renderBitmapString( winX, winY - 12, 0.0, GLUT_BITMAP_HELVETICA_12, "         intersection:" + convertToString( twistLabels[i + 1].second ) );
-                renderBitmapString( winX, winY - 24, 0.0, GLUT_BITMAP_HELVETICA_12, "         twistAngle:" + convertToString( twistLabels[i + 2].second * (180.0/3.14159) ) );
+                renderBitmapString( winX, winY, 0.0, GLUT_BITMAP_HELVETICA_12, "         coplanar:" + toString( twistLabels[i].second  ) );
+                renderBitmapString( winX, winY - 12, 0.0, GLUT_BITMAP_HELVETICA_12, "         intersection:" + toString( twistLabels[i + 1].second ) );
+                renderBitmapString( winX, winY - 24, 0.0, GLUT_BITMAP_HELVETICA_12, "         twistAngle:" + toString( twistLabels[i + 2].second * (180.0/3.14159) ) );
 
                 glMatrixMode(GL_PROJECTION);
                 glPopMatrix();
@@ -564,7 +446,7 @@ Vec3 StrandRenderer::calculateObjectCenter( ElasticStrand* strand )
     Vec3 center = Vec3::Zero();
 
     const unsigned numVertices = strand->getNumVertices();
-    for ( int vtx = 0; vtx < numVertices; ++vtx )
+    for( unsigned vtx = 0; vtx < numVertices; ++vtx )
     {
         const Vec3& vertex = strand->getVertex( vtx );
         center += vertex;

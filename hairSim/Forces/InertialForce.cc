@@ -1,7 +1,7 @@
 #include "InertialForce.hh"
-#include "../Core/ElasticStrand.hh"
-#include "../Dynamic/StrandDynamics.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "../Strand/ElasticStrand.h"
+#include "../Strand/StrandDynamics.h"
+#include "../Strand/ElasticStrandUtils.h"
 #include "../Math/BandMatrix.h"
 
 Mat3x InertialForce::s_Omega_Cross = Mat3x::Zero() ;

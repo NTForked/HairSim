@@ -1,6 +1,5 @@
 #include "LinearSolver.hh"
-#include "BandMatrix.hh"
-#include "../Utils/TextLog.hh"
+#include "BandMatrix.h"
 
 // LAPACK
 extern "C" void dgbsv_( const int* n, const int* kl, const int* ku, const int* nrhs, double* ab, const int* ldab, int* ipiv, double* b, const int* ldb, int* info );

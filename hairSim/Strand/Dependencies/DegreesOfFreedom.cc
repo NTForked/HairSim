@@ -1,5 +1,5 @@
 #include "DegreesOfFreedom.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "../ElasticStrandUtils.h"
 
 #ifdef WETA
 #include <mkl.h>

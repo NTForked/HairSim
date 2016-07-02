@@ -1,7 +1,7 @@
 #include "AirDragForce.hh"
-#include "../Core/ElasticStrand.hh"
-#include "../Core/ElasticStrandUtils.hh"
-#include "../Dynamic/StrandDynamics.hh"
+#include "../Strand/ElasticStrand.h"
+#include "../Strand/ElasticStrandUtils.h"
+#include "../Strand/StrandDynamics.h"
 #include "../Math/BandMatrix.h"
 
 Vec3 AirDragForce::s_velOrigin = Vec3::Zero() ;

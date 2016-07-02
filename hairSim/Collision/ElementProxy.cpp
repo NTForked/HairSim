@@ -1,8 +1,6 @@
-#include "ElementProxy.hh"
-#include "BVH.hh"
-#include "../Dynamic/Config.hh"
-
-#include "../Dynamic/MeshScriptingController.hh"
+#include "ElementProxy.h"
+#include "CollisionUtils/BVH.hh"
+#include "../Utils/StringUtils.h"
 
 #define SQRT_2 1.41421356237
 
@@ -15,8 +13,8 @@ std::ostream& operator<<( std::ostream& os, const ElementProxy& elem )
 void EdgeProxy::print( std::ostream& os ) const
 {
     os << "edge: " << &m_strand << ' ' << m_vertexIndex << ": "
-        << m_strand.getVertex( m_vertexIndex ).format( EIGEN_VECTOR_IO_FORMAT ) << " --- "
-        << m_strand.getVertex( m_vertexIndex + 1 ).format( EIGEN_VECTOR_IO_FORMAT );
+        << m_strand.getFutureVertex( m_vertexIndex ).format( EIGEN_VECTOR_IO_FORMAT ) << " --- "
+        << m_strand.getFutureVertex( m_vertexIndex + 1 ).format( EIGEN_VECTOR_IO_FORMAT );
 }
 
 void FaceProxy::print( std::ostream& os ) const
@@ -58,42 +56,33 @@ void TwistEdge::computeBoundingBox( BBoxType& boundingBox, bool statique, TwistE
         return;
     }
 
-    std::cerr << "this stuff below is definitely wrong, do not need ortho" << std::endl;
-
     boundingBox.reset();
-    Vec3 min, max;
+    Vec3f min, max;
     Vec3 vA, vB;
     teh->getEdgeVerts( this, true, vA, vB );
-    min = vA.cwiseMin(vB);
-    max = vA.cwiseMax(vB);
 
-    static const Vec3 unit = Vec3::Ones();
-    Vec3 ortho = (vB-vA).cross(unit); ortho.normalize();
-    Vec3 ortho2 = unit.cross(vB-vA); ortho2.normalize();
-    min += SQRT_2 * radius * ortho.cwiseMin(ortho2);
-    max += SQRT_2 * radius * ortho.cwiseMax(ortho2);
-    boundingBox.insert( min );
-    boundingBox.insert( max );
+    boundingBox.insert( vA.cast< float >() );
+    boundingBox.insert( vB.cast< float >() );
 
     if ( !statique ) 
     {        
         teh->getEdgeVerts( this, false, vA, vB );
-        min = vA.cwiseMin(vB);
-        max = vA.cwiseMax(vB);
-        ortho = (vB-vA).cross(unit); ortho.normalize();
-        ortho2 = unit.cross(vB-vA); ortho2.normalize();
-        min += SQRT_2 * radius * ortho.cwiseMin(ortho2);
-        max += SQRT_2 * radius * ortho.cwiseMax(ortho2);
-        boundingBox.insert( min );
-        boundingBox.insert( max );
+        boundingBox.insert( vA.cast< float >() );
+        boundingBox.insert( vB.cast< float >() );
     }
+
+    static const Vec3f unit = Vec3f::Ones();
+    min = boundingBox.min - m_radius * unit;
+    max = boundingBox.max + m_radius * unit;
+
+    boundingBox.insert( min );
+    boundingBox.insert( max );
 }
 
 int edgeCounter = 0;
-TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex, Scalar radius, ImplicitStepper* stepper ):
-    EdgeProxy( strand, vertexIndex, stepper ),
+TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ):
+    CylinderProxy( strand, vertexIndex, stepper ),
     isTwistedBand( false ), 
-    radius( radius ),
     flagged( false ),
     traversed( false ),
     prev( NULL ),
@@ -105,7 +94,7 @@ TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex, Scalar radius, Imp
 }
 
 TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second ):
-    EdgeProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
+    CylinderProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
     isTwistedBand( true ),
     flagged( false ),
     traversed( false ),
@@ -115,7 +104,6 @@ TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second ):
     TwistEdge* alpha = first;
     TwistEdge* beta = second;
 
-    radius = 0.5 * (alpha->radius + beta->radius);
     uniqueID = edgeCounter++;
 
     // std::cout << "Creating tunneling from first: " << first->uniqueID << " second: " << second->uniqueID << " with edgeCounter: " << edgeCounter << " my uniqueID: " << uniqueID << std::endl;
@@ -130,7 +118,7 @@ TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second ):
 }
 
 TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second, int& uID ):
-    EdgeProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
+    CylinderProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
     isTwistedBand( true ),
     flagged( false ),
     traversed( false ),
@@ -140,7 +128,6 @@ TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second, int& uID ):
     TwistEdge* alpha = first;
     TwistEdge* beta = second;
 
-    radius = 0.5 * (alpha->radius + beta->radius);
     uniqueID = uID;
 
     // std::cout << "reinstating TwistEdge: " << uniqueID << " between " << first->uniqueID << " second: " << second->uniqueID << std::endl;
@@ -152,15 +139,6 @@ TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second, int& uID ):
 
     alpha->children.push_back( std::pair< int, TwistEdge* >( beta->uniqueID, this ) );
     beta->children.push_back( std::pair< int, TwistEdge* >( alpha->uniqueID, this ) );
-}
-
-template<typename T> void serializeVarHex( const T& var, std::ostream& output_stream )
-{
-    assert( output_stream.good() );
-    T local_var = var;
-    output_stream.precision( std::numeric_limits<double>::digits10 + 2);
-    output_stream.flags( std::ios_base::fixed | std::ios_base::scientific );
-    output_stream.write( reinterpret_cast<char*>( &local_var ), sizeof(T) );
 }
 
 void TwistEdge::printIntersections( std::stack< TwistIntersection* >& intersections, std::ofstream& out )

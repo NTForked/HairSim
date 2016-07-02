@@ -1,8 +1,7 @@
-#include "DOFScriptingController.hh"
+#include "DOFScriptingController.h"
 
-#include "../Core/StrandState.hh"
-#include "../Core/ElasticStrandUtils.hh"
-#include "../Utils/TextLog.hh"
+#include "StrandState.h"
+#include "ElasticStrandUtils.h"
 #include "../Math/BandMatrix.h"
 
 DOFScriptingController::DOFScriptingController()
@@ -33,7 +32,7 @@ void DOFScriptingController::fixRHS( VecXx& rhs ) const
 
 void DOFScriptingController::enforceDisplacements( VecXx& displacements ) const
 {
-    for() std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
+    for( std::map<int, Scalar>::const_iterator dof = m_scriptedDisplacements.begin();
             dof != m_scriptedDisplacements.end(); 
             ++dof )
     {
@@ -135,7 +134,7 @@ void DOFScriptingController::setToUnsimulatedPositions( VecXx& futureDOFs, const
     futureDOFs = currentDOFs + displacements;
 
     // Set thetas to zero
-    for ( unsigned i = 7; i < ndof; i += 4 )
+    for ( unsigned i = 7; i < currentDOFs.size(); i += 4 )
     {
         futureDOFs[i] = 0;
     }

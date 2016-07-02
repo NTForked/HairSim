@@ -454,6 +454,10 @@ public:
         return m_restTwists;
     }
 
+    void getAABB( unsigned elementID, Vec3 &min, Vec3 &max );
+
+    double m_physicsRadius;
+
 private:
 
     void resizeInternals();
@@ -477,7 +481,7 @@ private:
 
     // Add ForceT's Jacobian to the geometry
     template<typename ForceT>
-    void accumulateJ( StrandState& geometry ) const
+    void accumulateJ( StrandState& geometry )
     {
         ForceAccumulator<ForceT>::accumulate( m_totalJacobian, *this, geometry );
     }
@@ -492,7 +496,7 @@ private:
 
     // Add ForceT's energy, force and Jacobian to the geometry
     template<typename ForceT>
-    void accumulateEFJ( StrandState& geometry ) const
+    void accumulateEFJ( StrandState& geometry )
     {
         accumulateE<ForceT>( geometry );
         accumulateF<ForceT>( geometry );
@@ -500,7 +504,7 @@ private:
     }
     // Add ForceT's energy to the geometry
     template<typename ForceT>
-    void accumulate( ForceBase::Quantities q, StrandState& geometry ) const
+    void accumulate( ForceBase::Quantities q, StrandState& geometry )
     {
         switch ( q )
         {
@@ -532,7 +536,6 @@ private:
 
     //////////////////////////////////////////////
 
-    double m_physicsRadius;
 
     int m_globalIndex; // Global index in the simulation
 

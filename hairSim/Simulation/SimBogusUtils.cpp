@@ -1,4 +1,5 @@
 #include "Simulation.h"
+#include "ImplicitStepper.h"
 
 bool Simulation::assembleBogusFrictionProblem( 
         CollidingGroup& collisionGroup,
@@ -33,10 +34,10 @@ bool Simulation::assembleBogusFrictionProblem(
         dofIndices.push_back( dofCount );
         const unsigned sIdx = it->first;
         globalIds.push_back( sIdx );
-        nDofs[subCount] = m_steppers[sIdx]->futureVelocities().rows();
-        nndofs[subCount] = m_steppers[sIdx]->futureVelocities().rows();
+        nDofs[subCount] = m_steppers[sIdx]->m_futureVelocities.rows();
+        nndofs[subCount] = m_steppers[sIdx]->m_futureVelocities.rows();
         nContacts += m_externalContacts[sIdx].size();
-        dofCount += m_steppers[sIdx]->velocities().rows();
+        dofCount += m_steppers[sIdx]->m_futureVelocities.rows();
         ++subCount;
     }
 
@@ -100,8 +101,8 @@ bool Simulation::assembleBogusFrictionProblem(
         {
             CollidingPair& c = externalCollisions[i];
 
-            mu[ collisionId ] = c.mu;
-            E [ collisionId ] = c.transformationMatrix;
+            mu[ collisionId ] = c.m_mu;
+            E [ collisionId ] = c.m_transformationMatrix;
             // u_frees.segment<3>( ( collisionId ) * 3 ) = c.objects.first.freeVel - c.objects.second.freeVel;
             ObjA[ collisionId ] = (int) it->second;
             ObjB[ collisionId ] = -1;
@@ -118,8 +119,8 @@ bool Simulation::assembleBogusFrictionProblem(
         const int oId1 = collisionGroup.first.find( collision.objects.first.globalIndex )->second;
         const int oId2 = collisionGroup.first.find( collision.objects.second.globalIndex )->second;
 
-        mu[ collisionId + i ] = collision.mu;
-        E [ collisionId + i ] = collision.transformationMatrix;
+        mu[ collisionId + i ] = collision.m_mu;
+        E [ collisionId + i ] = collision.m_transformationMatrix;
         // u_frees.segment<3>( ( collisionId + i ) * 3 ) = collision.objects.first.freeVel - collision.objects.second.freeVel;
         ObjA[ collisionId + i ] = oId1;
         ObjB[ collisionId + i ] = oId2;
@@ -152,8 +153,7 @@ bool Simulation::solveBogusFrictionProblem(
         bool asFailSafe, 
         bool nonLinear, 
         VecXx& vels, 
-        VecXx& impulses, 
-        int& numSubSys )
+        VecXx& impulses )
 {
     if( nonLinear )
     {
@@ -177,7 +177,7 @@ bool Simulation::solveBogusFrictionProblem(
 
     bool failed = residual > std::sqrt( m_params.m_gaussSeidelTolerance ); // This is completely arbitrary
     if( failed ){
-        cerr << "GS did not converge [ err=" << residual << ", numContacts=" << impulses.size() / 3 << " ] ";
+        std::cerr << "GS did not converge [ err=" << residual << ", numContacts=" << impulses.size() / 3 << " ] " << std::endl;
     }
 
     return !failed;
@@ -207,7 +207,7 @@ void Simulation::postProcessBogusFrictionProblem(
             const unsigned sIdx = globalIds[i];
             const unsigned subSystem = collisionGroup.first.find( sIdx )->second;
 
-            m_steppers[sIdx]->futureVelocities() = vels.segment( startDofs[ subSystem ], nDofs[ subSystem ] );
+            m_steppers[sIdx]->m_futureVelocities = vels.segment( startDofs[ subSystem ], nDofs[ subSystem ] );
             m_steppers[sIdx]->update( true );
         }
     }

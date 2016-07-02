@@ -385,10 +385,10 @@ bool analyseRoughRodRodCollision( const ElasticStrand* sP, const ElasticStrand* 
     const CollisionParameters &cpP = sP->collisionParameters();
     const CollisionParameters &cpQ = sQ->collisionParameters();
 
-    const Vec3 &P0 = sP->getVertex( iP );
-    const Vec3 &P1 = sP->getVertex( iP + 1 );
-    const Vec3 &Q0 = sQ->getVertex( iQ );
-    const Vec3 &Q1 = sQ->getVertex( iQ + 1 );
+    const Vec3 &P0 = sP->getFutureVertex( iP );
+    const Vec3 &P1 = sP->getFutureVertex( iP + 1 );
+    const Vec3 &Q0 = sQ->getFutureVertex( iQ );
+    const Vec3 &Q1 = sQ->getFutureVertex( iQ + 1 );
 
     const Scalar BCRad = cpP.collisionRadius( iP ) + cpQ.collisionRadius( iQ );
 

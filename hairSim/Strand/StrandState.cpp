@@ -1,15 +1,14 @@
-#include "StrandState.hh"
-#include "ElasticStrandUtils.hh"
-#include "BandMatrix.hh"
+#include "StrandState.h"
+#include "ElasticStrandUtils.h"
+#include "../Math/BandMatrix.h"
 
-#include "../Utils/Distances.hh"
-#include "../Utils/TextLog.hh"
+#include "../Math/Distances.hh"
 
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 #include <Eigen/Sparse>
 
 StrandState::StrandState( const VecXx& dofs, BendingMatrixBase& bendingMatrixBase ) :
-        m_numVertices( dofs.getNumVertices() ),
+        m_numVertices( ( dofs.size() + 1 ) / 4  ),
         m_totalEnergy( 0 ),
         m_dofs( dofs ),
         m_edges( m_dofs ),
@@ -24,13 +23,13 @@ StrandState::StrandState( const VecXx& dofs, BendingMatrixBase& bendingMatrixBas
         m_materialFrames1( m_trigThetas, m_referenceFrames1, m_referenceFrames2 ),
         m_materialFrames2( m_trigThetas, m_referenceFrames1, m_referenceFrames2 ),
         m_kappas( m_curvatureBinormals, m_materialFrames1, m_materialFrames2 ),
-        m_gradKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame m_materialFrames2, m_kappas ),
+        m_gradKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrames1, m_materialFrames2, m_kappas ),
         m_gradTwists( m_lengths, m_curvatureBinormals ),
         m_gradTwistsSquared( m_gradTwists ),
-        m_hessKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrame m_materialFrames2, m_kappas ),
+        m_hessKappas( m_lengths, m_tangents, m_curvatureBinormals, m_materialFrames1, m_materialFrames2, m_kappas ),
         m_hessTwists( m_tangents, m_lengths, m_curvatureBinormals ),
         m_thetaHessKappas( m_curvatureBinormals, m_materialFrames1, m_materialFrames2 ),
-        m_bendingProducts( bendingMatrixBase, m_gradKappas ),
+        m_bendingProducts( bendingMatrixBase, m_gradKappas )
 {}
 
 StrandState::~StrandState()

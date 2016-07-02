@@ -13,6 +13,11 @@
 #include "../Render/TriMeshRenderer.h"
 #include "../Render/StrandRenderer.h"
 #include "../Utils/Option.h"
+#include "../Forces/GravitationForce.hh"
+#include "SceneUtils.h"
+#include "../Utils/Definitions.h"
+
+extern int edgeCounter;
 
 class Scene
 {
@@ -30,8 +35,16 @@ public:
     void PrintOptions(std::ostream& os);
 
     template <typename T>
-    int AddOption( const std::string& name, const std::string& desc, const T& def );
-   
+    int AddOption( const std::string& name, const std::string& desc, const T& def )
+    {
+        if (m_options.find(name) != m_options.end()) {
+            std::cerr << "Option " << name << " already exists" << std::endl;
+            return -1;
+        }
+        m_options.insert(std::make_pair(name, Option(name, desc, def)));
+        return 0;
+    }
+
     int LoadOptions( const char* filename );
     int LoadOptions( const std::string& filename ){ return LoadOptions( filename.c_str() ); }
 
@@ -93,6 +106,7 @@ protected:
     std::vector< ElasticStrand* > m_strands;
     std::vector< TriMesh* > m_meshes;
     StrandRenderer* m_renderer;
+    std::vector< TriMeshRenderer* > m_mesh_renderers;
 
 };
 #endif

@@ -6,7 +6,7 @@
  */
 
 #include "GravitationForce.hh"
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 #include "../Math/BandMatrix.h"
 
 GravitationForce::GravitationForce()

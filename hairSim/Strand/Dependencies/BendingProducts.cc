@@ -1,5 +1,5 @@
 #include "BendingProducts.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "../ElasticStrandUtils.h"
 
 void BendingProducts::compute()
 {

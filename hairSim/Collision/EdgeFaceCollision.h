@@ -16,6 +16,8 @@ public:
             m_secondIdx( secondIdx ),m_firstApex( firstApex ), m_secondApex( secondApex ),
             m_onBoundary( face->getFace().edgeOnBoundary( m_firstApex ) )
     {
+        m_firstStrand = firstProxy->getStrandPointer();
+        m_firstVertex = firstProxy->getVertexIndex();
 
         // Maintain canonical order for sorting
         if ( m_secondIdx < m_firstIdx )
@@ -54,6 +56,8 @@ protected:
     bool m_onBoundary ;
     Vec3 m_meshDisplacement;
 
+    ElasticStrand* m_firstStrand;
+    int m_firstVertex;
 };
 
 #endif

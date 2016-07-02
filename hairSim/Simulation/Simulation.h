@@ -33,12 +33,14 @@ public:
 
     friend class SimulationUtils;
 
-    Simulation( const std::vector<ElasticStrand*>& strands, const SimulationParameters& params, const std::vector< TriMesh* >& meshes );
+    Simulation( const std::vector<ElasticStrand*>& strands, SimulationParameters& params, const std::vector< TriMesh* >& meshes );
 
     virtual ~Simulation();
 
     //! Performs a simulation substep
     void step( const Scalar& dt );
+
+    CollisionDetector* m_collisionDetector; //!< BVH-based collision detector
 
 private:
 
@@ -54,6 +56,8 @@ private:
     //! Solves each colliding group
     void step_solveCollisions();
 
+    void step_finish();
+
     // take all the less important stuff out of StrandImplicitManager/Simulation and put it here
     void updateParameters( const SimulationParameters& params );
 
@@ -61,7 +65,7 @@ private:
 
     bool isCollisionInvariantCT( const Scalar dt );
 
-    void accumulateProxies( std::vector< ElementProxy* > origProxys );
+    void accumulateProxies( std::vector< ElementProxy* >& origProxys, const std::vector< TriMesh* >& meshes );
 
     void gatherProximityRodRodCollisions( Scalar dt );
 
@@ -97,27 +101,28 @@ private:
     void solveCollidingGroup( CollidingGroup &cg, bool asFailSafe, bool nonLinear );
 
     //! Solve the contacts and constraints on a single object
-    void solveSingleObject( const unsigned objectIdx, bool asFailSafe, bool nonLinear );
+    void solveOnlyStrandExternal( const unsigned objectIdx, bool asFailSafe, bool nonLinear );
 
 //// SimBogusUtils.cpp
 
     bool assembleBogusFrictionProblem( CollidingGroup& collisionGroup, bogus::MecheFrictionProblem& mecheProblem,
-            std::vector<unsigned> &globalIds, std::vector<CollidingPair*> &colPointers, VecXx& vels, VecXx& impulses,
-            VecXu& startDofs, VecXu& nDofs, int& numSubSys );
+            std::vector<unsigned> &globalIds, VecXx& vels, VecXx& impulses,
+            VecXu& startDofs, VecXu& nDofs );
+
+    //! Proper solving of the MecheFrictionProblem
+    bool solveBogusFrictionProblem( bogus::MecheFrictionProblem& mecheProblem, const std::vector<unsigned> &globalIds,
+            bool asFailSafe, bool nonLinear, VecXx& vels, VecXx& impulses );
+
     //! Cleanup a friction problem and updates the strands with the new velocities if \p accept is true
     void postProcessBogusFrictionProblem( bool accept, CollidingGroup& collisionGroup,
             const bogus::MecheFrictionProblem& mecheProblem, const std::vector<unsigned> &globalIds,
-            const std::vector<CollidingPair*> &colPointers, VecXx& vels, VecXx& impulses,
-            VecXu& startDofs, VecXu& nDofs  );
-    //! Proper solving of the MecheFrictionProblem
-    bool solveBogusFrictionProblem( bogus::MecheFrictionProblem& mecheProblem, const std::vector<unsigned> &globalIds,
-            bool asFailSafe, bool nonLinear, VecXx& vels, VecXx& impulses, int& numSubSys );
+            VecXx& vels, VecXx& impulses, VecXu& startDofs, VecXu& nDofs  );    
 
 //// SimTwistEdgeUtils.cpp
 
-    void deleteInvertedProxies();
+    void deleteInvertedProxies( const bool& penaltyAfter, const bool& penaltyOnce );
 
-    void traversalCheck();
+    // void traversalCheck();
 
 //// Member Variables
 
@@ -125,7 +130,6 @@ private:
     const std::vector< ElasticStrand* >& m_strands;
 
     std::vector< ImplicitStepper* > m_steppers;
-    CollisionDetector* m_collisionDetector; //!< BVH-based collision detector
 
     std::vector< CollidingPairs > m_externalContacts;  //!< External contacts on each strand
     CollidingPairs m_mutualContacts;           //!< List of all rod-rod contacts

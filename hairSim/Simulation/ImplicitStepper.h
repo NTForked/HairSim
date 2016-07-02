@@ -3,6 +3,7 @@
 
 #include "../Math/SymmetricBandMatrixSolver.h"
 #include "../../bogus/Interfaces/MecheEigenInterface.hpp"
+#include "../Strand/ElasticStrand.h"
 
 #include <tr1/memory>
 #include <vector>
@@ -22,11 +23,11 @@ public:
 
     virtual ~ImplicitStepper();
 
-    //! Starts a new substep
-    void startSubstep( const Scalar& dt );
+    //! Starts a new step
+    void startStep( const Scalar& dt );
 
     //! Solves the unconstrained dynamics, using either linear of non-linear solver
-    void solveUnconstrained( bool useNonLinearSolver = true );
+    void solveUnconstrained( bool useNonLinearSolver = true, const bool& penaltyBefore = false );
 
     //! Updates the strand degrees of freedom using the velocities stored in m_newVelocities
     /*! Checks if the strand has a high stretch energy. If this is the case and afterContraints if false,
@@ -55,6 +56,9 @@ public:
     Scalar getDt() const
     { return m_dt; }
 
+    void setDt( Scalar dt )
+    { m_dt = dt; }
+
     const ElasticStrand& getStrand() const
     { return m_strand; }
 
@@ -82,6 +86,8 @@ public:
     JacobianSolver& linearSolver()
     { return m_linearSolver; }
 
+    VecXx m_futureVelocities;
+
 private:
 
     void prepareDynamics();
@@ -107,10 +113,7 @@ private:
 
 //////
 
-    VecXx m_futureVelocities;
-    VecXx m_impulseChanges;
-
-    SimulationParameters& m_params; // there should only be one, this is a pointer to Scene's simParams
+    const SimulationParameters& m_params; // there should only be one, this is a pointer to Scene's simParams
     Scalar m_inextensibilityThreshold;
     Scalar m_stretchingFailureThreshold;
     Scalar m_costretchResidualFailureThreshold;

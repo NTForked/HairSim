@@ -65,15 +65,14 @@ public:
     void computeBoundingBox( BBoxType& boundingBox, bool statique ) const
     { 
         boundingBox.reset();
-
-        const Vec3f& vtx0 = m_strand.getVertex( m_vertexIndex ).cast< float >();
-        const Vec3f& vtx1 = m_strand.getVertex( m_vertexIndex + 1 ).cast< float >();
-
-        boundingBox.insert( vtx0 - m_strand.dynamics().getDisplacement( m_vertexIndex ).cast< float >() );
-        boundingBox.insert( vtx1 - m_strand.dynamics().getDisplacement( m_vertexIndex + 1 ).cast< float >() );
+        boundingBox.insert( m_strand.getFutureVertex( m_vertexIndex ).cast< float >() );
+        boundingBox.insert( m_strand.getFutureVertex( m_vertexIndex + 1).cast< float >() );
 
         if( !statique )
         {
+            const Vec3f& vtx0 = m_strand.getVertex( m_vertexIndex ).cast< float >();
+            const Vec3f& vtx1 = m_strand.getVertex( m_vertexIndex + 1 ).cast< float >();
+
             boundingBox.insert( vtx0 );
             boundingBox.insert( vtx1 );
         }
@@ -156,7 +155,7 @@ struct TwistIntersection
 class TwistEdge: public CylinderProxy
 {
 public:
-    TwistEdge( ElasticStrand& strand, int vertexIndex, Scalar radius, ImplicitStepper* stepper );
+    TwistEdge( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper );
     TwistEdge( TwistEdge* first, TwistEdge* second );
     TwistEdge( TwistEdge* first, TwistEdge* second, int& uID );
 
@@ -198,7 +197,7 @@ public:
 class FaceProxy: public ElementProxy
 {
 public:
-    FaceProxy( const unsigned faceIndex, SimpleMeshController* controller ):
+    FaceProxy( const unsigned faceIndex, TriMeshController* controller ):
         m_faceIndex( faceIndex ),
         m_face( controller->getMesh()->getFace( faceIndex ) ),
         m_controller( controller )
@@ -330,7 +329,7 @@ protected:
 
     const unsigned m_faceIndex ;
     const TriangularFace& m_face;
-    SimpleMeshController* m_controller;
+    TriMeshController* m_controller;
 };
 
 class ElementProxyBBoxFunctor

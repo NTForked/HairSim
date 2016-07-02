@@ -1,7 +1,7 @@
-#include "Aleka.hh"
+#include "Aleka.h"
 
 Aleka::Aleka() :
-Scene("Aleka", "Strands dragging across other strands"),
+Scene("Aleka", "Strands dragging orthogonally across other fixed strands"),
 m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
@@ -16,12 +16,11 @@ m_radius(3.)
     
     // Additional parameters:
     AddOption("totalLength","enforced strand length", 20.0 );
-    GetScalarOpt("selfCollisionsRadius") = std::max(GetScalarOpt("radiusA"), GetScalarOpt("radiusB"));
     
     // Pre-setup to default values:
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
-    GetScalarOpt("selfCollisionsRadius") = 0.15; 
+    GetScalarOpt("collisionRadius") = 0.15; 
     GetScalarOpt( "externalCollisionsRadius" ) = 5.5;
 
     GetBoolOpt("useCTRodRodCollisions") = true;
@@ -33,23 +32,18 @@ m_radius(3.)
 }
 
 Aleka::~Aleka()
-{
-    
-}
+{}
 
 std::vector<bool> frozen;
 void Aleka::setupStrands()
 {
-    std::cout << "Scene:: Aleka" << std::endl;
-
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
     const int nDOFs = 4 * nVertices - 1;
     
     // rod params
     const Scalar totalLength = GetScalarOpt("totalLength");
-    const Scalar radiusA = GetScalarOpt("radiusA");
-    const Scalar radiusB = GetScalarOpt("radiusB");
+    const Scalar radiusA = GetScalarOpt("radius");
     const Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     const Scalar shearModulus = GetScalarOpt("shear-modulus");
     const Scalar density = GetScalarOpt("density");
@@ -63,9 +57,9 @@ void Aleka::setupStrands()
     const Scalar fixed_rod_offset = 0.3;
     const Scalar moving_rod_offset = 0.3;
     
-    const Scalar fixed_width = fixed_rod_count * ( 2 * std::max(radiusA, radiusB) + fixed_rod_offset );
+    const Scalar fixed_width = fixed_rod_count * ( 2 * radiusA + fixed_rod_offset );
     const Scalar fixed_inc = fixed_width / fixed_rod_count;
-    const Scalar moving_width = moving_rod_count * ( 2 * std::max(radiusA, radiusB) + moving_rod_offset );
+    const Scalar moving_width = moving_rod_count * ( 2 * radiusA + moving_rod_offset );
     const Scalar moving_inc = moving_width / moving_rod_count;
     const Scalar moving_x_offset = (fixed_width / 2) + 2;
     const Scalar moving_y_offset = 7.5;
@@ -105,33 +99,23 @@ void Aleka::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[ i / 4 ];
         
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( i_vertices[ 0 ] );
-        scripted_vertices.push_back( i_vertices[ nVertices - 1 ] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
-        controller->freezeRootVertices<1>();
+        DOFScriptingController* controller = new DOFScriptingController( );
+        controller->freezeVertices( 0, true );
         controller->freezeVertices( nVertices - 1 );
-        
-        // for( int b = 0; b < nVertices; ++b ){
-        //     controller->freezeVertices( b );
-        // }
         
         frozen[ layer * layerTotal + rod_id ] = true;
 
-        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
         
         ElasticStrand* strand = new ElasticStrand( dofs, *params, controller );
         strand->setGlobalIndex( layer * layerTotal + rod_id );
         setRodCollisionParameters( *strand );
         m_strands.push_back( strand );
         
-        // extra stuff for render, etc...
-        RodData* rd = new RodData( *strand, *controller );
-        m_rodDatum.push_back( rd );
     }
 
     // make moving rods
-    for ( ; rod_id < moving_rod_count + fixed_rod_count; ++rod_id )
+    for( ; rod_id < moving_rod_count + fixed_rod_count; ++rod_id )
     {
 
         // Prepare initial rod/strand position
@@ -163,12 +147,10 @@ void Aleka::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[ i / 4 ];
         
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( i_vertices[ 0 ] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
-        controller->freezeRootVertices<1>();
+        DOFScriptingController* controller = new DOFScriptingController();
+        controller->freezeVertices( 0, true );
         
-        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
         
         frozen[ layer * layerTotal + rod_id ] = false;
 
@@ -177,10 +159,7 @@ void Aleka::setupStrands()
         strand->setGlobalIndex( layer * layerTotal + rod_id );
         setRodCollisionParameters( *strand );
         m_strands.push_back( strand );
-        
-        // extra stuff for render, etc...
-        RodData* rd = new RodData( *strand, *controller );
-        m_rodDatum.push_back( rd );
+
     }
 
     }
@@ -193,10 +172,7 @@ void Aleka::setupStrands()
 }
 
 void Aleka::setupMeshes()
-{
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller );
-}
+{}
 
 int frame = 0;
 bool Aleka::executeScript()
@@ -210,7 +186,7 @@ bool Aleka::executeScript()
 
     const int fixed_rod_count = GetIntOpt("fixed_rod_count");
     int count = 0;
-    for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++ rd_itr)
+    for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++ rd_itr)
     {
         if( !frozen[count] ){
 
@@ -218,10 +194,10 @@ bool Aleka::executeScript()
             if ( getTime() < 0.25 ){
             // if ( (frame / 10 ) % 3 == 0 ){
                 Vec3 translate = GetVecOpt("translation");
-                transformRodRootVtx( **rd_itr, id, zero, translate, 0 );
+                SceneUtils::transformRodRootVtx( *rd_itr, id, zero, translate, 0 );
             }
             else{
-                transformRodRootVtx( **rd_itr, id, zero, zero, 0 );
+                SceneUtils::transformRodRootVtx( *rd_itr, id, zero, zero, 0 );
             }
         }
         ++count;

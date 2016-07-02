@@ -31,9 +31,25 @@ bool compareTimes( const Collision* ct1, const Collision* ct2 )
     return ct1->m_time < ct2->m_time;
 }
 
-Vec3 FaceCollision::offset() const
+Vec3 FaceCollision::offset( const Vec3& normal ) const
 {
-    return ( m_offset.dot( m_normal ) + EXTRA_RADIUS ) * m_normal;
+    return ( m_offset.dot( normal ) + EXTRA_RADIUS ) * normal;
+}
+
+Scalar FaceCollision::faceFrictionCoefficient() const
+{
+    const FaceProxy* faceProxy = face();
+
+    if ( faceProxy )
+    {
+        const TriMeshController* controller = faceProxy->getMesh()->controller();
+        if ( controller )
+        {
+            return faceProxy->getFrictionCoefficient( m_u, m_v, m_w );
+        }
+    }
+
+    return 0.;
 }
 
 void CollidingPair::generateTransformationMatrix()
@@ -64,5 +80,25 @@ void CollidingPair::swapIfNecessary()
     {
         m_normal = -m_normal;
         std::swap( objects.first, objects.second );
+    }
+}
+
+bool CollidingPair::operator<( const CollidingPair &rhs ) const
+{
+    if( objects.first.globalIndex == rhs.objects.first.globalIndex ){
+        if ( objects.second.globalIndex == rhs.objects.second.globalIndex ){
+            if( objects.first.vertex == rhs.objects.first.vertex ){
+                return objects.second.vertex < rhs.objects.second.vertex;
+            }
+            else{
+                return objects.first.vertex < rhs.objects.first.vertex;
+            }
+        }
+        else{
+            return objects.second.globalIndex < rhs.objects.second.globalIndex;
+        }
+    }
+    else{
+        return objects.first.globalIndex < rhs.objects.first.globalIndex;
     }
 }

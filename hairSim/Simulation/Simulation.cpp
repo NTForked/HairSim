@@ -1,18 +1,19 @@
 #include "Simulation.h"
+#include "../Collision/CollisionDetector.h"
+#include "../Collision/CollisionUtils/SpatialHashMap.hh"
+#include <omp.h>
 
 using namespace std;
 
 Simulation::Simulation( 
         const std::vector<ElasticStrand*>& strands,
-        const SimulationParameters& params,
+        SimulationParameters& params,
         const std::vector< TriMesh* >& meshes )
-: m_params( params )
+: m_collisionDetector( NULL )
+, m_params( params )
 , m_strands( strands )
 , m_steppers()
-, m_collisionDetector( NULL )
 , m_hashMap( NULL )
-, m_num_ct_hair_hair_col ( 0 )
-, m_unconstrained_NewtonItrs( 0 )
 {
     std::vector< ElementProxy* > originalProxies;
     accumulateProxies( originalProxies, meshes );
@@ -33,7 +34,10 @@ Simulation::~Simulation()
 }
 
 int hIter;
+bool hLoop = false;
 bool traversalsOn = true;
+bool trackGeometricRelations = false;
+bool penaltyAfter = true;
 void Simulation::step( const Scalar& dt )
 {
     hIter = 0;
@@ -44,9 +48,9 @@ void Simulation::step( const Scalar& dt )
     step_dynamics( dt );
 
     if( collisionResolution ){
-        setupProximityCollisions( dt );
-        setupContinuousTimeCollisions(); // should do a first pass where we use regular oldschool collision resolution 
-        doContinuousTimeDetection( dt );
+        gatherProximityRodRodCollisions( dt );
+        detectContinuousTimeCollisions(); // should do a first pass where we use regular oldschool collision resolution 
+        preProcessContinuousTimeCollisions( dt );
 
         step_processCollisions( dt ); // this takes care of current collisions
         step_solveCollisions(); // This is where collisions get solved and strands are finalized() (dV & dX accepted)            
@@ -71,10 +75,10 @@ void Simulation::step( const Scalar& dt )
     {
         m_collisionDetector->clear();
         m_collisionDetector->m_proxyHistory->trackTunneling = true;
-        setupContinuousTimeCollisions(); // create and detect loop for missed collisions
+        detectContinuousTimeCollisions(); // create and detect loop for missed collisions
         m_collisionDetector->m_proxyHistory->m_frozenScene = true;
         
-        deleteInvertedProxies();
+        deleteInvertedProxies( penaltyAfter, !trackGeometricRelations );
     }
 
     step_finish();
@@ -98,13 +102,12 @@ void Simulation::step_dynamics( Scalar dt )
 #pragma omp parallel for schedule(dynamic, 10)
     for( std::vector< ElasticStrand* >::size_type i = 0; i < m_strands.size(); ++i )
     {
-        m_steppers[i]->m_dt = dt; // required for checkpointing, this needs to be here so long as anything occurs before startSubstep
+        m_steppers[i]->setDt( dt ); // required for checkpointing, this needs to be here so long as anything occurs before startSubstep
 
-        if( penaltyOnce || !trackGeometricRelations || penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], false ); // false, just setting up m
-        else if( !penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], true );
+        if( !penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], true );
 
-        m_steppers[i]->startSubstep( dt );
-        m_steppers[i]->solveUnconstrained( true );
+        m_steppers[i]->startStep( dt );
+        m_steppers[i]->solveUnconstrained( true, !penaltyAfter );
         m_steppers[i]->update();
     }
 }
@@ -114,7 +117,7 @@ void Simulation::step_processCollisions( Scalar dt )
 {
     m_collidingGroups.clear();
     m_collidingGroupsIdx.assign( m_strands.size(), -1 );
-    computeCollidingGroups( m_mutualContacts, dt );
+    computeCollidingGroups( m_mutualContacts );
 
     // Deformation gradients at constraints
     unsigned nExternalContacts = 0;

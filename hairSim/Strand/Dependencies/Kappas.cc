@@ -1,5 +1,5 @@
 #include "Kappas.hh"
-#include "../ElasticStrandUtils.hh"
+#include "../ElasticStrandUtils.h"
 
 void Kappas::compute()
 {

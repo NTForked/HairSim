@@ -34,6 +34,9 @@ public:
     const std::list< Collision* >& getCollisions() const
     { return m_collisions; }
 
+    std::list< Collision* >& getCollisions()
+    { return m_collisions; }
+
     static void setMaxSizeForElementBBox( double s )
     { s_maxSizeForElementBBox = s; }
 

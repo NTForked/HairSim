@@ -1,8 +1,6 @@
 #include "StrandStrandForce.hh"
 
-#include "../Static/CollisionSet.hh"
-#include "../Static/StrandStaticTraits.hh"
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 #include "../Math/BandMatrix.h"
 
 //#define USE_DISTANCE_FOR_PENALTY_FORCES

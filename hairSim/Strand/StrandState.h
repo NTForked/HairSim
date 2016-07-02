@@ -198,7 +198,7 @@ public:
     bool hasSmallForces( const Scalar lTwoTol, const Scalar lInfTol ) const;
     Vec3 closestPoint( const Vec3& x ) const;
 
-private:
+// private:
     // Convenience copy of the original number of vertices (owned by the strand).
     const IndexType m_numVertices;
 
@@ -230,6 +230,8 @@ private:
     BendingProducts m_bendingProducts;
 
     friend class ElasticStrand;
+    friend class Viscous;
+    friend class NonViscous;
 
 };
 

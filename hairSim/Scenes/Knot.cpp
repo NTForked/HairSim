@@ -1,4 +1,4 @@
-#include "Knot.hh"
+#include "Knot.h"
 
 #define PI 3.14159265358979323846
 
@@ -25,7 +25,7 @@ m_radius(3.)
     // Pre-setup to default values:
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true; // skip Proximity == true.
-    GetScalarOpt("selfCollisionsRadius") = 0.005;
+    GetScalarOpt("collisionRadius") = 0.005;
     GetBoolOpt("useCTRodRodCollisions") = true;
     GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     
@@ -34,8 +34,7 @@ m_radius(3.)
 }
 
 Knot::~Knot()
-{   
-}
+{}
 
 void Knot::setupStrands()
 {
@@ -61,8 +60,7 @@ void Knot::setupStrands()
 //    const Scalar shearModulus = 22.5e9;
 //    const Scalar density = 6450;
     
-    const Scalar radiusA = GetScalarOpt("radiusA");
-    const Scalar radiusB = GetScalarOpt("radiusB");
+    const Scalar radiusA = GetScalarOpt("radius");
     const Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     const Scalar shearModulus = GetScalarOpt("shear-modulus");
     const Scalar density = GetScalarOpt("density");
@@ -178,16 +176,12 @@ void Knot::setupStrands()
     for ( int i = 0; i < dofs.size(); i += 4 )
         dofs.segment<3>( i ) = i_vertices[i / 4];
     
-    Vec3Array scripted_vertices;
-     scripted_vertices.push_back( i_vertices[0] );
-     scripted_vertices.push_back( i_vertices[nVertices - 1] );
-    DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+    DOFScriptingController* controller = new DOFScriptingController(  );
 //    controller->freezeRootVertices<1>();
     controller->freezeVertices( nVertices - 1 );
 
     ElasticStrandParameters* params = new ElasticStrandParameters( 
                                             radiusA, 
-                                            radiusB, 
                                             youngsModulus, 
                                             shearModulus, 
                                             density, 
@@ -205,10 +199,6 @@ void Knot::setupStrands()
     }
 
     m_strands.push_back( strand );
-    
-    // extra stuff for render, etc...
-    RodData* rd = new RodData( *strand, *controller );
-    m_rodDatum.push_back( rd );
 
     std::cout << "num strands = " << m_strands.size() <<'\n';
     std::cout << "num dofs per strand = " << nDOFs <<'\n';
@@ -217,11 +207,7 @@ void Knot::setupStrands()
 }
 
 void Knot::setupMeshes()
-{
-    // make collision mesh
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller ); 
-}
+{}
 
 bool Knot::executeScript()
 {
@@ -235,9 +221,9 @@ bool Knot::executeScript()
 
     int vtx = 0; // GetIntOpt("nv") - 1;
 
-      for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++ rd_itr)
+      for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++ rd_itr)
       {
-             transformRodRootVtx( **rd_itr, id, zero, translate, vtx );
+             SceneUtils::transformRodRootVtx( *rd_itr, id, zero, translate, vtx );
       }
     return true;
 }

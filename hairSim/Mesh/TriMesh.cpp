@@ -1,7 +1,7 @@
 #include "TriMesh.h"
 
-TriMesh::TriMesh( const MeshScriptingController* controller ) :
-        m_associatedController( controller )
+TriMesh::TriMesh( TriMeshController* controller ) :
+        m_controller( controller )
 {
 
 }

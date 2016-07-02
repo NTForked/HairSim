@@ -1,16 +1,15 @@
 #include <limits>
 
-#include "ImplicitStepper.hh"
-#include "DOFScriptingController.hh"
-#include "StrandDynamics.hh"
-#include "SimulationParameters.hh"
+#include "ImplicitStepper.h"
+#include "../Strand/DOFScriptingController.h"
+#include "../Strand/StrandDynamics.h"
+#include "SimulationParameters.h"
 
-#include "../Core/ElasticStrand.hh"
-#include "../Utils/TextLog.hh"
-#include "../Core/ElasticStrand.hh"
+#include "../Strand/ElasticStrand.h"
 #include "../Forces/StretchingForce.hh"
 #include "../Forces/ForceAccumulator.hh"
-#include "../Collision/TwistEdgeHandler.hh"
+#include "../Collision/TwistEdgeHandler.h"
+#include "../Forces/NonLinearForce.h"
 
 /*
 TODO: this file/code is a long way from that,
@@ -27,7 +26,7 @@ Now it just goes directly to Nonlinear
     A dynamic step can trigger a succession of failsafes.
     Here is a summary of the process
 
-    - startSubstep()
+    - startStep()
 
     Before contacts / hard constraints : solveUnconstrained() and update( false )
     - First try with linearized dynamics and exact jacobian.
@@ -48,12 +47,12 @@ Now it just goes directly to Nonlinear
   */
 
 ImplicitStepper::ImplicitStepper( ElasticStrand& strand, const SimulationParameters &params ):
+    m_futureVelocities( VecXx::Zero( strand.getCurrentDegreesOfFreedom().rows() ) ), 
     m_params( params ),
     m_notSPD( false ), 
     m_usedNonlinearSolver( false ),
-    m_dt( 0. ),
-    m_futureVelocities( VecXx::Zero( strand.getCurrentDegreesOfFreedom().rows() ) ), 
     m_strand( strand ), //
+    m_dt( 0. ),
     m_nonlinearCallback( NULL ),
     m_newtonIter( 0 )
 {
@@ -71,7 +70,7 @@ ImplicitStepper::ImplicitStepper( ElasticStrand& strand, const SimulationParamet
 ImplicitStepper::~ImplicitStepper()
 {}
 
-void ImplicitStepper::startSubstep( const Scalar& dt )
+void ImplicitStepper::startStep( const Scalar& dt )
 {
     this->m_dt = dt;
     m_notSPD = false;
@@ -80,9 +79,11 @@ void ImplicitStepper::startSubstep( const Scalar& dt )
     m_strand.dynamics().computeViscousForceCoefficients( m_dt ); // Maybe overkill to do this each time but at least we can change the stepper's time step without worrying about it.
 }
 
-void ImplicitStepper::solveUnconstrained( bool useNonLinearSolver )
+void ImplicitStepper::solveUnconstrained( bool useNonLinearSolver, const bool& penaltyBefore )
 {
-    prepareDynamics();
+    if( !penaltyBefore ){
+        prepareDynamics();
+    }
 
     if( useNonLinearSolver )
     {
@@ -189,7 +190,7 @@ void ImplicitStepper::solveNonLinear()
         Lhs() = bestLHS;
 
         m_linearSolver.store( Lhs() );
-        m_linearSolver.solve( m_newVelocities, rhs() );
+        m_linearSolver.solve( m_futureVelocities, rhs() );
         m_notSPD = m_linearSolver.notSPD();
     }
 
@@ -263,7 +264,7 @@ bool ImplicitStepper::update( bool afterConstraints )
 
     VecXx displacements = m_futureVelocities * m_dt;
     m_strand.dynamics().getScriptingController()->enforceDisplacements( displacements ); // enforce any scripting that may have been overriden
-    m_strand.setDisplacements( displacements );
+    m_strand.dynamics().setDisplacements( displacements );
 
     // DK: failsafes here:
     const Scalar stretchE = getLineicStretch();

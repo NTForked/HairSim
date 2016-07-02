@@ -1,5 +1,6 @@
 #include "Braid.h"
 #include <random>
+#include <fstream>
 
 #define PI 3.14159265
 using namespace std;
@@ -15,11 +16,9 @@ Scene("Braid", "N Locks of hair forming a braid ")
     AddOption("sphere_mesh_filename","","assets/TriangulatedSphere.obj"); 
     AddOption("geometryscale","uniform rescaling of sphere and hair root locations", 0.3 );
 
-
     AddOption("scripting_on","", true );
     AddOption("rotatescale","uniform rescaling of rotational speeds", 1.0);
     AddOption("time_offset","start scripting at time t + offset", 1.75);
-
 
     AddOption("lock_diameter", "", 0.12 ); // lock diameter and swap_proximity must be tuned together to look right...
     AddOption("swap_proximity", "", 0.5 );
@@ -32,8 +31,7 @@ Scene("Braid", "N Locks of hair forming a braid ")
     GetScalarOpt("youngs-modulus") = 3.9e+09;
     GetScalarOpt("viscosity") = 5e+8;
     GetScalarOpt("stretchingThreshold") = 1.;
-    GetScalarOpt("radiusA") = 0.0037;
-    GetScalarOpt("radiusB") = 0.0037;
+    GetScalarOpt("radius") = 0.0037;
     GetIntOpt("maxNewtonIterations") = 30;
 
     AddOption("end_time","", 20.015 );  
@@ -46,7 +44,7 @@ Scene("Braid", "N Locks of hair forming a braid ")
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = true;
     GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
-    GetScalarOpt("selfCollisionsRadius") = 0.16; 
+    GetScalarOpt("collisionRadius") = 0.16; 
 
 
     GetScalarOpt("dt") = 1e-2;
@@ -57,8 +55,7 @@ Scene("Braid", "N Locks of hair forming a braid ")
 }
 
 Braid::~Braid()
-{    
-}
+{}
 
 void Braid::generateSinusoidalBraidVertices( vector< vector< Vec3 > >& rodPos )
 {
@@ -80,7 +77,6 @@ void Braid::generateSinusoidalBraidVertices( vector< vector< Vec3 > >& rodPos )
         {
             Scalar x = A * sin( y + rod * 2 * PI / N );
             Scalar z = B * sin( M * ( y + rod * 2 * PI / N ) );
-            // std::cout << "rod: " << rod << " x: " << x << " y: " << y << " z: " << z << std::endl;
             Vec3 vertNext = Vec3( x, y, z );
             rodPos[rod].push_back( vertNext );
         }
@@ -192,12 +188,10 @@ void Braid::includeHairTie()
     GetScalarOpt("stretchingThreshold") = 1.;
     GetScalarOpt("selfCollisionsRadius") = 0.0025;
     GetScalarOpt("radiusA") = 0.0037;
-    GetScalarOpt("radiusB") = 0.0037;
 */
 
     // rod options
     Scalar radiusA = 0.01; //GetScalarOpt("radiusA");
-    Scalar radiusB = 0.01; //GetScalarOpt("radiusB");
     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     Scalar shearModulus = GetScalarOpt("shear-modulus");
     Scalar density = GetScalarOpt("density");
@@ -223,38 +217,31 @@ void Braid::includeHairTie()
         dofs.segment<3>( i * 4 ) = vertices[i];
     }
 
-    // CoM += vertices.back();
-    Vec3Array scripted_vertices;
-    scripted_vertices.push_back( vertices[0] );
-    scripted_vertices.push_back( vertices[ vertices.size() - 1] );
-    DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+    DOFScriptingController* controller = new DOFScriptingController();
 
-    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+    ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
     ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, strandRadius );
-    strand->setGlobalIndex( m_rodDatum.size() );
+    strand->setGlobalIndex( m_strands.size() );
     setRodCollisionParameters( *strand );
     strand->collisionParameters().m_frictionCoefficient = 1.55;
 
     m_strands.push_back( strand );
     
-    // extra stuff for render, etc...
-    RodData* rd = new RodData( *strand, *controller );
-    m_rodDatum.push_back( rd );
 
     Vec3 zero( 0.,0.,0. );
-    RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
+    ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
     Mat3x identity = Mat3x::Identity();
     double push = 0.8;
     Vec3 translate = Vec3( push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate , 0 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate , 0 );
     translate = Vec3( 0.0, 0.0, push );
-    transformRodRootVtx( *hairband, identity, zero, translate, 1 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 1 );
     translate = Vec3( -push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate, 2 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 2 );
     translate = Vec3( 0.0, 0.0, -push );
-    transformRodRootVtx( *hairband, identity, zero, translate, 3 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 3 );
     translate = Vec3( push, 0.0, 0.0 );
-    transformRodRootVtx( *hairband, identity, zero, translate, 4 );
+    SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 4 );
     // translate = Vec3( 0.0, 0.0, push );
     // transformRodRootVtx( *hairband, identity, zero, translate, 5 );
 }
@@ -272,7 +259,6 @@ void Braid::setupStrands()
 
     // rod options
     Scalar radiusA = GetScalarOpt("radiusA");
-    Scalar radiusB = GetScalarOpt("radiusB");
     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     Scalar shearModulus = GetScalarOpt("shear-modulus");
     Scalar density = GetScalarOpt("density");
@@ -314,16 +300,12 @@ void Braid::setupStrands()
             dofs.segment<3>( i * 4 ) = vertices[i];
         }
 
-        // CoM += vertices.back();
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( vertices[0] );
-        scripted_vertices.push_back( vertices[ nVertices - 1] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+        DOFScriptingController* controller = new DOFScriptingController();
         controller->freezeVertices( 0, true );
         // controller->freezeVertices( vertices.size() - 1 );
 
 
-        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
         ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, strandRadius );
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
@@ -334,10 +316,6 @@ void Braid::setupStrands()
         }
 
         m_strands.push_back( strand );
-        
-        // extra stuff for render, etc...
-        RodData* rd = new RodData( *strand, *controller );
-        m_rodDatum.push_back( rd );
         ++rod_id;
     }
 
@@ -349,10 +327,7 @@ void Braid::setupStrands()
 }
 
 void Braid::setupMeshes()
-{
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller );
-}
+{}
 
 void Braid::loadNurbs()
 {
@@ -416,8 +391,7 @@ void Braid::loadNurbs()
         }
 
         // rod options
-        Scalar radiusA = GetScalarOpt("radiusA");
-        Scalar radiusB = GetScalarOpt("radiusB");
+        Scalar radiusA = GetScalarOpt("radius");
         Scalar youngsModulus = GetScalarOpt("youngs-modulus");
         Scalar shearModulus = GetScalarOpt("shear-modulus");
         Scalar density = GetScalarOpt("density");
@@ -431,13 +405,10 @@ void Braid::loadNurbs()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = vertices[i / 4];
         
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( vertices[0] );
-        // scripted_vertices.push_back( vertices[1] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+        DOFScriptingController* controller = new DOFScriptingController();
         controller->freezeVertices(0);
         
-        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, radiusB, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
+        ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
         ElasticStrand* strand = new ElasticStrand( dofs, *params, controller );
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
@@ -449,18 +420,14 @@ void Braid::loadNurbs()
         }
 
         m_strands.push_back( strand );
-        
-        // extra stuff for render, etc...
-        RodData* rd = new RodData( *strand, *controller );
-        m_rodDatum.push_back( rd );
+
         std::cout<< "loaded rod " << rod_id << " with verts = "<< numVerts << std::endl;
 
         ++rod_id;
         if( rod_id >= numStrands ) break;
     }
     
-    // std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_rodDatum.size() << " rods. from: " << name.str() << std::endl;
-    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_rodDatum.size() << " rods " << std::endl;
+    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
 }
 
 bool Braid::executeScript()
@@ -479,26 +446,26 @@ bool Braid::executeScript()
     }
     if( getTime() == 0.0 + m_dt && includeTie )
     {
-        RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
+        ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
         Mat3x identity = Mat3x::Identity();
         double push = -0.5;
         Vec3 translate = Vec3( push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate , 0 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate , 0 );
         translate = Vec3( 0.0, 0.0, push );
-        transformRodRootVtx( *hairband, identity, zero, translate, 1 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 1 );
         translate = Vec3( -push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate, 2 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 2 );
         translate = Vec3( 0.0, 0.0, -push );
-        transformRodRootVtx( *hairband, identity, zero, translate, 3 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 3 );
         translate = Vec3( push, 0.0, 0.0 );
-        transformRodRootVtx( *hairband, identity, zero, translate, 4 );
+        SceneUtils::transformRodRootVtx( hairband, identity, zero, translate, 4 );
         // translate = Vec3( 0.0, 0.0, push );
         // transformRodRootVtx( *hairband, identity, zero, translate, 5 );
     }
     if( getTime() == 0.0 + 2 * m_dt && includeTie )
     {
-        RodData* hairband = m_rodDatum[ m_rodDatum.size() - 1 ];
-        hairband->getDofController().m_scriptedDegreesOfFreedom.clear();
+        ElasticStrand* hairband = m_strands[ m_strands.size() - 1 ];
+        hairband->dynamics().getScriptingController()->clear();
     }
 
     if( getTime() == 0.0 + 15 * m_dt && includeTie )
@@ -530,9 +497,7 @@ bool Braid::executeScript()
     sin(thetazrate*getDt()),cos(thetazrate*getDt()),0,
     0,0,1;
     Mat3x rotzT = rotz.transpose();
-    
-    TriangularMesh* currentMesh = m_meshScripting_controllers[0]->getCurrentMesh();
-    
+        
     int scriptType = 3;
     if ( GetBoolOpt("scripting_on") )
     {
@@ -548,10 +513,10 @@ bool Braid::executeScript()
             Vec3 translate = Vec3( 0.1 * sin( swayRate * getTime() ), 0.0, 0.1 * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
-            for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
+            for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rodCount)
             {
                 if( rodCount == 5 ) continue; // hairtie
-                transformRodRootVtx( **rd_itr, identity, zero, translate, 0 );
+                SceneUtils::transformRodRootVtx( *rd_itr, identity, zero, translate, 0 );
             }
         }
         else if( scriptType == 3 && getTime() > 0.0 + 5 * m_dt )
@@ -564,12 +529,12 @@ bool Braid::executeScript()
             Vec3 translate = Vec3( scale * sin( swayRate * getTime() ), 0.0, scale * cos( swayRate * getTime() ) );
 
             int rodCount = 0;
-            for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rodCount)
+            for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rodCount)
             {
                 if( rodCount == 5 )
                 {
-                    for( unsigned i = 0; i < (*rd_itr)->m_strand.getNumVertices(); ++i ){
-                        transformRodRootVtx( **rd_itr, identity, zero, translate, i );
+                    for( unsigned i = 0; i < (*rd_itr)->getNumVertices(); ++i ){
+                        SceneUtils::transformRodRootVtx( *rd_itr, identity, zero, translate, i );
                     }
                 }
             }
@@ -577,14 +542,14 @@ bool Braid::executeScript()
 
     }
     else{
-      freezeTriangleObject( *currentMesh );
+
       unsigned rod = 0;
-      for(auto rd_itr = m_rodDatum.begin(); rd_itr != m_rodDatum.end(); ++rd_itr, ++rod )
+      for(auto rd_itr = m_strands.begin(); rd_itr != m_strands.end(); ++rd_itr, ++rod )
       {
-        if( rod == m_rodDatum.size() - 1 ) continue;
+        if( rod == m_strands.size() - 1 ) continue;
 
         // freezeRodRoot( **rd_itr );
-        freezeVertex( **rd_itr, 0);
+        SceneUtils::freezeVertex( *rd_itr, 0);
         // if( getTime() >= 0.25 ){
         //     freezeVertex( **rd_itr, nVertices - 1);
         // }

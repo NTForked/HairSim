@@ -17,7 +17,7 @@ public:
    * \param[in] obj_file_name String filename of OBJ format file.
    * \param[in] tri_mesh Empty tirangle mesh to load OBJ file into.
    */
-  bool loadTriangularMesh( const std::string& obj_file_name, TriMesh& tri_mesh );
+  bool loadTriMesh( const std::string& obj_file_name, TriMesh& tri_mesh );
 
 private:
   void parsevCommand( std::istringstream& commandstream, TriMesh& tri_mesh );

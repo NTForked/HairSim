@@ -1,4 +1,4 @@
-#ifndef SIMPLEMESHCONTROLLER_HH_
+#ifndef TriMeshController_HH_
 #define SIMPLESHCONTROLLER_HH_
 
 #include "../Utils/Definitions.h"
@@ -18,12 +18,12 @@
 
 class TriMesh;
 
-class SimpleMeshController
+class TriMeshController
 {
 public:
-    SimpleMeshController( double i_time, double i_dt );
+    TriMeshController( double i_time, double i_dt );
 
-    virtual ~SimpleMeshController();
+    virtual ~TriMeshController();
     
     virtual void isStaticMesh( const bool i_isStaticMesh );
 
@@ -73,13 +73,13 @@ public:
     
     double getLevelSetForceThickness() const
     {
-        std::cout << "Level sets not supported by SimpleMeshController\n";
+        std::cout << "Level sets not supported by TriMeshController\n";
         exit(1);
     }
     
     double getLevelSetForceStrength() const
     {
-        std::cout << "Level sets not supported by SimpleMeshController\n";
+        std::cout << "Level sets not supported by TriMeshController\n";
         exit(1);
     }
     
@@ -100,16 +100,17 @@ public:
     //  0 : normal is unknown
     // -1 : normal is known and correspond to clockwise vector product of vertices
     virtual short knowsNormalSign( bool atPreviousStep, unsigned faceIndex, unsigned rodIndex,
-            unsigned vertex )
-    {
-        return 1;
-    }
+            unsigned vertex );
+
     virtual void setNormalSign( short , float , unsigned , unsigned ,
             unsigned  )
     {}
 
 
 private:
+    
+    Scalar m_time;
+    Scalar m_dt;
 
     bool m_isStaticMesh;
     TriMesh* m_mesh;

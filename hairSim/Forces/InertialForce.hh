@@ -3,6 +3,7 @@
 
 #include "ForceBase.hh"
 #include "../Math/BandMatrixFwd.h"
+#include "../Strand/ElasticStrand.h"
 
 class InertialForce : public ForceBase
 {

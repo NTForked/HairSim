@@ -3,8 +3,6 @@
 
 #include "ForceBase.hh"
 
-#include "../Utils/IndexedSet.hh"
-
 #include <vector>
 #include <map>
 

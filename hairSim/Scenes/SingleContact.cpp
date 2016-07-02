@@ -1,4 +1,4 @@
-#include "SingleContact.hh"
+#include "SingleContact.h"
 
 SingleContact::SingleContact() :
 Scene("SingleContact", "Single Contact, simple orthogonal setup"),
@@ -25,7 +25,7 @@ m_radius(3.)
     // Pre-setup to default values:
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
-    GetScalarOpt("selfCollisionsRadius") = 0.16; //std::max(GetScalarOpt("radiusA"), GetScalarOpt("radiusB"));
+    GetScalarOpt("collisionRadius") = 0.16; //std::max(GetScalarOpt("radiusA"), GetScalarOpt("radiusB"));
     GetScalarOpt( "externalCollisionsRadius" ) = 0.75; /// thickness for CCD tests CULLING bounding boxes
 
     GetBoolOpt("useCTRodRodCollisions") = true;
@@ -34,12 +34,10 @@ m_radius(3.)
     GetIntOpt("numberOfThreads") = 1;
 
     GetScalarOpt("strand_mu") = 0.3;
-    setKeyBoardScriptingStrand( 1 );
 }
 
 SingleContact::~SingleContact()
-{   
-}
+{}
 
 void SingleContact::setupStrands()
 {
@@ -52,8 +50,7 @@ void SingleContact::setupStrands()
     // rod params
     const Scalar totalLength = GetScalarOpt("totalLength");
     const Scalar x_offset = GetScalarOpt("x_offset");
-    const Scalar radiusA = GetScalarOpt("radiusA");
-    const Scalar radiusB = GetScalarOpt("radiusB");
+    const Scalar radiusA = GetScalarOpt("radius");
     const Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     const Scalar shearModulus = GetScalarOpt("shear-modulus");
     const Scalar density = GetScalarOpt("density");
@@ -95,18 +92,15 @@ void SingleContact::setupStrands()
         for ( int i = 0; i < dofs.size(); i += 4 )
             dofs.segment<3>( i ) = i_vertices[i / 4];
         
-        Vec3Array scripted_vertices;
-        scripted_vertices.push_back( i_vertices[0] );
-        DOFScriptingController* controller = new DOFScriptingController( scripted_vertices );
+        DOFScriptingController* controller = new DOFScriptingController( );
 
         if( rod_id == 0 ){
-            controller->freezeRootVertices<1>();            
+            controller->freezeVertices( 0 );            
             controller->freezeVertices( nVertices - 1 );
         }
         
         ElasticStrandParameters* params = new ElasticStrandParameters( 
                                                 radiusA, 
-                                                radiusB, 
                                                 youngsModulus, 
                                                 shearModulus, 
                                                 density, 
@@ -118,10 +112,6 @@ void SingleContact::setupStrands()
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
         m_strands.push_back( strand );
-        
-        // extra stuff for render, etc...
-        RodData* rd = new RodData( *strand, *controller );
-        m_rodDatum.push_back( rd );
     }
 
     std::cout << "num strands = " << m_strands.size() <<'\n';
@@ -131,11 +121,7 @@ void SingleContact::setupStrands()
 }
 
 void SingleContact::setupMeshes()
-{
-    // make collision mesh
-    SimpleMeshController* mesh_controller = new SimpleMeshController( 0., m_dt );
-    m_meshScripting_controllers.push_back( mesh_controller ); 
-}
+{}
 
 bool SingleContact::executeScript()
 {

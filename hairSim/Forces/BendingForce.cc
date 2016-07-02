@@ -1,6 +1,6 @@
 #include "BendingForce.hh"
 #include "ViscousOrNotViscous.hh"
-#include "../Core/ElasticStrandUtils.hh"
+#include "../Strand/ElasticStrandUtils.h"
 #include "../Math/BandMatrix.h"
 
 template<typename ViscousT>
