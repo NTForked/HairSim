@@ -54,13 +54,10 @@ protected:
 class EdgeProxy: public ElementProxy
 {
 public:
-    EdgeProxy( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ):
-        m_implicit( stepper ), 
+    EdgeProxy( ElasticStrand& strand, int vertexIndex ):
         m_strand( strand ), 
         m_vertexIndex( vertexIndex )
-    {
-        std::cout << "ideally we dont need ImplicitStepper here anymore, just grab all dynamics from strand state and strand dynamics which we can get from strand" << std::endl;
-    }
+    {}
 
     void computeBoundingBox( BBoxType& boundingBox, bool statique ) const
     { 
@@ -100,12 +97,8 @@ public:
     ElasticStrand& getStrand()
     { return m_strand; }
 
-    ImplicitStepper* getImplicitStepper() const
-    { return m_implicit; }
-
 protected:
     virtual void print( std::ostream& os ) const;
-    ImplicitStepper* m_implicit;
     ElasticStrand& m_strand;
     int m_vertexIndex;
 };
@@ -113,8 +106,8 @@ protected:
 class CylinderProxy: public EdgeProxy
 {
 public:
-    CylinderProxy( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ) :
-        EdgeProxy( strand, vertexIndex, stepper )
+    CylinderProxy( ElasticStrand& strand, int vertexIndex ) :
+        EdgeProxy( strand, vertexIndex )
     {
         m_radius = m_strand.collisionParameters().getLargerCollisionsRadius( m_vertexIndex );
     }
@@ -155,7 +148,7 @@ struct TwistIntersection
 class TwistEdge: public CylinderProxy
 {
 public:
-    TwistEdge( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper );
+    TwistEdge( ElasticStrand& strand, int vertexIndex );
     TwistEdge( TwistEdge* first, TwistEdge* second );
     TwistEdge( TwistEdge* first, TwistEdge* second, int& uID );
 

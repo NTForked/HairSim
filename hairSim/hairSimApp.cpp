@@ -42,7 +42,7 @@ std::string g_outputdirectory; // directory to save to
 bool g_dumpcoord = false; // dump coords
 bool g_dont_dumpmesh = true; // save space don't dump mesh
 
-Scalar g_fps = 100; // framerate to generate movies &/or dumps with
+Scalar g_fps = -1; // framerate to generate movies &/or dumps with
 int g_last_frame_num = -1; // last frame # that was output
 int g_current_frame = 0;
 
@@ -68,13 +68,13 @@ void createProblem()
             g_ps = new Aleka();
             break;
         case 5:
-            g_ps = new Knot();
+            g_ps = new Knot(); // Not Tested
             break;
         case 6:
-            g_ps = new MultipleContact();
+            g_ps = new MultipleContact(); // Not tested
             break;
         case 7:
-            g_ps = new Braid();
+            g_ps = new Braid(); // Not tested
             break;
         case 8:
             g_ps = new Locks();
@@ -275,7 +275,7 @@ void output()
 {
     if( g_dumpcoord || g_dump_checkpoint )
     {
-        int steps_per_frame = -1;
+        int steps_per_frame = 1;
         if( g_fps > 0 )
         {
             const double seconds_per_frame = 1.0 / ( (double) g_fps );

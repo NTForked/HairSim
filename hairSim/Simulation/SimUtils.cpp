@@ -8,7 +8,6 @@
 #include "../Collision/EdgeFaceCollision.h"
 #include <Eigen/Sparse>
 
-
 #define SECOND_EDGE_MIN_CONTACT_ABSCISSA 0.0001
 #define ALMOST_PARALLEL_COS 0.96592582628 // cos( Pi/12 )
 
@@ -24,7 +23,7 @@ void Simulation::accumulateProxies( std::vector< ElementProxy* >& originalProxie
 
         for ( int vtx = 0; vtx < ( *strand )->getNumEdges(); ++vtx )
         {
-            TwistEdge* te = new TwistEdge( **strand, vtx, m_steppers.back() );
+            TwistEdge* te = new TwistEdge( **strand, vtx );
 
             if( vtx > 0 ){
                 te->prev = last;
@@ -347,7 +346,7 @@ void Simulation::preProcessContinuousTimeCollisions( Scalar dt )
         }
 
     }
-    std::cout << "CTCD " << nCTCD << std::endl;
+    std::cout << "CTCD " << nCTCD << " ext: " << nInt << std::endl;
 }
 
 bool Simulation::addExternalContact( const unsigned strIdx, const unsigned edgeIdx, const Scalar abscissa, const CollidingPair& externalContact )
@@ -463,6 +462,7 @@ void Simulation::computeCollidingGroups( const CollidingPairs &origMutualCollisi
             it->second = k++; // assign increasing group indices from 0 -> k
         }
     }
+    std::cout << "numCollidingGroups: " << m_collidingGroups.size() << std::endl;
 }
 
 void Simulation::setupDeformationBasis( CollidingPair &collision ) const

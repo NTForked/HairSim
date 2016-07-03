@@ -132,7 +132,7 @@ void ImplicitStepper::solveNonLinear()
 
     // Newton loop -- try to zero-out m_rhs
     for( m_newtonIter = 0; m_newtonIter < m_params.m_maxNewtonIterations; ++m_newtonIter )
-    {
+    {     
         dynamics.setDisplacements( m_dt * m_futureVelocities );
 
         prevRhs = m_rhs;
@@ -227,7 +227,6 @@ void ImplicitStepper::computeRHS()
 
 void ImplicitStepper::computeLHS()
 {
-    std::cerr << "why is there no minus sign here, looking at LHS equation" << std::endl;    
     StrandDynamics& dynamics = m_strand.dynamics() ;
 
     const Scalar origKs = m_strand.getParameters().getKs();
@@ -389,19 +388,23 @@ bool ImplicitStepper::updateLinearSystem( const VecXx solverForces )
     dynamics.setDisplacements( m_dt * m_futureVelocities );
     
     const Scalar stretchE = getLineicStretch();
-    bool needUpdate = stretchE > m_stretchingFailureThreshold ;
+    bool needUpdate = stretchE > m_stretchingFailureThreshold;
     
     if( !needUpdate )
     {
         computeRHS();
         dynamics.getScriptingController()->fixRHS( m_rhs );
         m_usedNonlinearSolver = true;
-        const Scalar residual = ( m_rhs + solverForces ).squaredNorm() / m_rhs.rows();
-        needUpdate = residual > m_costretchResidualFailureThreshold;
+
+        //Below should be present, turning off because usually causes needUpdate to occur when stretching is small
+        // const Scalar residual = ( m_rhs + solverForces ).squaredNorm() / m_rhs.rows();
+        // needUpdate = residual > m_costretchResidualFailureThreshold;
+        // std::cout << "stretchE: " << stretchE << " | " << m_stretchingFailureThreshold << " ||| residual: " << residual << " | " << m_costretchResidualFailureThreshold << std::endl;
+
     }
         
     if( needUpdate ) // DK: if residual or stretchE too big.
-    {
+    { // Unclear which is better here...
         // solveLinear();
         solveNonLinear();
     }

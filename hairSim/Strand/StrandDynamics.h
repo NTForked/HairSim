@@ -21,7 +21,7 @@ public:
         return m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom();
     }
 
-    void setDisplacements( const Vec3& difference )
+    void setDisplacements( const VecXx& difference )
     {
         m_strand.setFutureDegreesOfFreedom( m_strand.getCurrentDegreesOfFreedom() + difference );
     }

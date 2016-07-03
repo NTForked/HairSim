@@ -24,11 +24,10 @@ m_radius(3.)
     // Pre-setup to default values:
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
-    GetScalarOpt("collisionRadius") = 0.16; //std::max(GetScalarOpt("radiusA"), GetScalarOpt("radiusB"));
+    GetScalarOpt("collisionRadius") = 0.16;
     GetScalarOpt( "externalCollisionsRadius" ) = 5.5;
 
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     
     GetIntOpt("numberOfThreads") = 1; // 5
     GetScalarOpt("strand_mu") = 0.0;

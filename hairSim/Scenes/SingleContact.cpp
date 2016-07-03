@@ -8,8 +8,7 @@ m_radius(3.)
     
     // Global opts
     GetScalarOpt("dt") = 1e-3;
-    GetVecOpt("gravity") = Vec3( 0.0, -100.0, 0.0 );
-    // GetVecOpt("gravity") = Vec3( 0.0, 0.0, 0.0 );
+    GetVecOpt("gravity") = Vec3( 0.0, -981.0, 0.0 );
 
     // Rod opts
     GetIntOpt("nv") = 6; //try 11, 981.0, uneven vertices (shows it better)
@@ -25,11 +24,10 @@ m_radius(3.)
     // Pre-setup to default values:
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
-    GetScalarOpt("collisionRadius") = 0.16; //std::max(GetScalarOpt("radiusA"), GetScalarOpt("radiusB"));
+    GetScalarOpt("collisionRadius") = 0.16;
     GetScalarOpt( "externalCollisionsRadius" ) = 0.75; /// thickness for CCD tests CULLING bounding boxes
 
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     
     GetIntOpt("numberOfThreads") = 1;
 

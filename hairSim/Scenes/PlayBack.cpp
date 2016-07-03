@@ -14,15 +14,16 @@ AddOption( "dt_time", "dt used in original sim", 0.001 );
 
 AddOption( "padded_width", "number of 0s in frame files", 8 ); 
 
-AddOption( "realtime", "skip set number of frames", true );
+AddOption( "realtime", "skip set number of frames", false );
 
-AddOption( "directory", "file directory with ordered rod (single ply) and mesh (numbered obj) files", "/Users/henrique/Desktop/tmp/tmp" );
+AddOption( "directory", "file directory with ordered rod (single ply) and mesh (numbered obj) files", "/Users/henrique/Desktop/HairSim/build/hairSim/output/2016_07_03_13_05_20_output" );
 AddOption( "mesh_saved_elsewhere", "if mesh is saved elsewhere" , false );
+
 // AddOption( "mesh_directory", "when mesh_saved_elsewhere = true, file directory with ordered mesh (numbered obj) files", "assets/TriangulatedSphere.obj" );
 // AddOption( "mesh_start_name", "when mesh_saved_elsewhere = true, name of (numbered obj) files", "TriangulatedSphere.obj" );
-// AddOption( "start_frame", "number of frames to play back", 0 );
-// AddOption( "number_of_meshes","number of meshes to load", 0 );
-// AddOption( "number_of_rods","number of rods to load, -1 defaults to all", -1 );
+AddOption( "start_frame", "number of frames to play back", 0 );
+AddOption( "number_of_meshes","number of meshes to load", 0 );
+AddOption( "number_of_rods","number of rods to load, -1 defaults to all", -1 );
 }
 
 PlayBack::~PlayBack(){}
@@ -141,9 +142,9 @@ void PlayBack::loadRods(int frame)
                 }
                 else{
                     
-                    for (int i = 0; i< (int) vertices.size(); ++i)
+                    for( int i = 0; i < (int) vertices.size(); ++i )
                     {
-                        m_strands[i]->setVertex( i, vertices[ i ] );
+                        m_strands[rod_id]->setVertex( i, vertices[ i ] );
                     }
                     ++rod_id;
                     break;

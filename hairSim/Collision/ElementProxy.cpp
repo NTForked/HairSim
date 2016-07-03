@@ -80,8 +80,8 @@ void TwistEdge::computeBoundingBox( BBoxType& boundingBox, bool statique, TwistE
 }
 
 int edgeCounter = 0;
-TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex, ImplicitStepper* stepper ):
-    CylinderProxy( strand, vertexIndex, stepper ),
+TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex ):
+    CylinderProxy( strand, vertexIndex ),
     isTwistedBand( false ), 
     flagged( false ),
     traversed( false ),
@@ -94,7 +94,7 @@ TwistEdge::TwistEdge( ElasticStrand& strand, int vertexIndex, ImplicitStepper* s
 }
 
 TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second ):
-    CylinderProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
+    CylinderProxy( first->m_strand, first->m_vertexIndex ),
     isTwistedBand( true ),
     flagged( false ),
     traversed( false ),
@@ -118,7 +118,7 @@ TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second ):
 }
 
 TwistEdge::TwistEdge( TwistEdge* first, TwistEdge* second, int& uID ):
-    CylinderProxy( first->m_strand, first->m_vertexIndex, first->m_implicit ),
+    CylinderProxy( first->m_strand, first->m_vertexIndex ),
     isTwistedBand( true ),
     flagged( false ),
     traversed( false ),

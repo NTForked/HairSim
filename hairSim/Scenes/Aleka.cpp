@@ -24,7 +24,6 @@ m_radius(3.)
     GetScalarOpt( "externalCollisionsRadius" ) = 5.5;
 
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     
     GetIntOpt("numberOfThreads") = 3;
     GetScalarOpt("strand_mu") = 0.3;

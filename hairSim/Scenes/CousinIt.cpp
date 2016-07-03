@@ -17,8 +17,7 @@ Scene("Cousin It", "spinning sphere")
     GetScalarOpt("youngs-modulus") = 3.9e+09;
     GetScalarOpt("viscosity") = 5e+07;
     GetScalarOpt("stretchingThreshold") = 1.;
-    GetScalarOpt("radiusA") = 0.0037;
-    GetScalarOpt("radiusB") = 0.0037;
+    GetScalarOpt("radius") = 0.0037;
     GetIntOpt("maxNewtonIterations") = 30;
     AddOption("geometryscale","uniform rescaling of sphere and hair root locations", 2.25);
     // GetBoolOpt("failure_testing_on") = true;
@@ -32,9 +31,9 @@ Scene("Cousin It", "spinning sphere")
     
     AddOption("hair_region", "(0, 1] specifies percent of sphere to cover, 0 specifies load hair", 0.5 );
     AddOption("hair_load_file","if hair_region  = 0", "assets/problemfiles/cousinit_profile_startRods.ply");
-    AddOption("num_hairs", "number of hair seeds to grow in hair_region (i.e., if hair_region != 0) ", 1000);
+    AddOption("num_hairs", "number of hair seeds to grow in hair_region (i.e., if hair_region != 0) ", 10);
     AddOption("rotatescale","uniform rescaling of rotational speeds", 1.0);
-    AddOption("sphere_mesh_filename","","assets/TriangulatedSphere.obj"); 
+    AddOption("sphere_mesh_filename","","/Users/henrique/Desktop/HairSim/assets/TriangulatedSphere.obj"); 
     
     AddOption("time_offset","start scripting at time t + offset", 0.);
 
@@ -45,8 +44,7 @@ Scene("Cousin It", "spinning sphere")
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = false;
-    GetScalarOpt("collisionRadius") = 0.0025;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
+    GetScalarOpt("collisionRadius") = 0.025;//0.0025;
 
     GetStringOpt("checkpointDir") = "/Users/henrique/Desktop/LearnHair/build/Apps/StrandSimulator";
 
@@ -142,7 +140,6 @@ void CousinIt::loadStrands()
             else{
                 // rod options
                 Scalar radiusA = GetScalarOpt("radiusA");
-                Scalar radiusB = GetScalarOpt("radiusB");
                 Scalar youngsModulus = GetScalarOpt("youngs-modulus");
                 Scalar shearModulus = GetScalarOpt("shear-modulus");
                 Scalar density = GetScalarOpt("density");
@@ -191,7 +188,6 @@ void CousinIt::loadStrands()
 
 void CousinIt::setupStrands()
 {
-    std::cout << "NEED to use Bogus, with and without friction, multi-threaded, loop on, no redundancies, real abscissas, render should be off, dump coords appropriately, vertices displayed off" << std::endl;
     if( GetScalarOpt("hair_region") == 0. )
         loadStrands();
     else {
@@ -246,7 +242,7 @@ void CousinIt::setupStrands()
 
             ElasticStrandParameters* params = new ElasticStrandParameters( radiusA, youngsModulus, shearModulus, density, viscosity, airDrag, baseRotation );
             
-            ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("selfCollisionsRadius") );
+            ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("collisionRadius") );
             strand->setGlobalIndex( rod_id );
             setRodCollisionParameters( *strand );
             m_strands.push_back( strand );

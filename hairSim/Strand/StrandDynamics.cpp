@@ -21,6 +21,7 @@ StrandDynamics::StrandDynamics( ElasticStrand &strand ) :
         m_futureJacobianUpToDate( false ), //
         m_futureForcesUpToDate( false ), //
         m_DOFmassesUpToDate( false ),
+        m_currentVelocities( VecXx::Zero(strand.getCurrentDegreesOfFreedom().rows()) ),
         m_scriptingController( NULL ) //
 {}
 
@@ -33,7 +34,7 @@ void StrandDynamics::resizeSelf()
     m_DOFmasses.resize( ndofs );
 }
 
-void StrandDynamics::computeViscousForceCoefficients(Scalar dt)
+void StrandDynamics::computeViscousForceCoefficients( Scalar dt )
 {
     computeDOFMasses();
     m_strand.getParameters().computeViscousForceCoefficients( dt );
@@ -175,18 +176,13 @@ void StrandDynamics::acceptFuture()
     // future will no longer be valid, and current will be set correctly
     m_currentVelocities = m_strand.getFutureDegreesOfFreedom() - m_strand.getCurrentDegreesOfFreedom();
     m_strand.swapStates();
-
-    // m_strand.getFutureDegreesOfFreedom() = m_strand.getCurrentDegreesOfFreedom();
 }
 
 void StrandDynamics::nanFailSafe()
 {
-
-    std::cerr << "this needs to get changed to operate on future DoFs " << std::endl;
-    if( containsNans( m_strand.getCurrentDegreesOfFreedom() ) )
+    if( containsNans( m_strand.getFutureDegreesOfFreedom() ) )
     {
         std::cerr << "Elastic strand " << m_strand.m_globalIndex << " was contaminated by NaNs: reverting to rigid motion" << std::endl;
-        m_strand.swapStates();
 
         const VecXx& currentDOFs = m_strand.getCurrentDegreesOfFreedom();
         VecXx futureDOFs;

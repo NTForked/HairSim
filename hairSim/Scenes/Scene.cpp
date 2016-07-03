@@ -141,7 +141,6 @@ void Scene::addOptions()
     
     AddOption( "useProxRodRodCollisions" , "", true);
     AddOption( "useCTRodRodCollisions" , "", false );
-    AddOption( "percentCTRodRodCollisionsAccept", "", 100. );
     AddOption( "useNonLinearAsFailsafe","", false );
     AddOption( "alwaysUseNonLinear","", true );
 
@@ -377,7 +376,7 @@ void Scene::dumpRods( std::string outputdirectory, int current_frame, int file_w
 
     // rod vertex positions
     int rod_num = 0;
-    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr )
+    for( auto sptr = m_strands.begin(); sptr != m_strands.end(); ++sptr, ++rod_num)
     {
         for (int j = 0; j < (*sptr)->getNumVertices(); ++j)
         {

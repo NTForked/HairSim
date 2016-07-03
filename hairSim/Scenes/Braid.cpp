@@ -43,7 +43,6 @@ Scene("Braid", "N Locks of hair forming a braid ")
     GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     GetScalarOpt("collisionRadius") = 0.16; 
 
 
@@ -186,7 +185,7 @@ void Braid::includeHairTie()
     GetScalarOpt("youngs-modulus") = 3.9e+09;
     GetScalarOpt("viscosity") = 5e+8;
     GetScalarOpt("stretchingThreshold") = 1.;
-    GetScalarOpt("selfCollisionsRadius") = 0.0025;
+    GetScalarOpt("collisionRadius") = 0.0025;
     GetScalarOpt("radiusA") = 0.0037;
 */
 

@@ -22,8 +22,8 @@ StrandRenderer::StrandRenderer():
 {
     m_transformationMatrix.setIdentity();
     m_palette["random"] = Color(( (float) (rand() % 255) ) / 255., ( (float) (rand() % 255) ) / 255., ( (float) (rand() % 255) ) / 255.);
-    m_palette["yellow"] = Color( 189, 73, 50 );
-    m_palette["orange"] = Color( 255, 211, 78 );
+    m_palette["orange"] = Color( 189, 73, 50 );
+    m_palette["yellow"] = Color( 255, 211, 78 );
     m_palette["green"] = Color( 16, 91, 99 );
     m_palette["force"] = Color( 0, 0, 255 );
 }

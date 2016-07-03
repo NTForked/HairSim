@@ -27,7 +27,6 @@ m_radius(3.)
     GetBoolOpt("useProxRodRodCollisions") = true; // skip Proximity == true.
     GetScalarOpt("collisionRadius") = 0.005;
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
     
     GetScalarOpt("strand_mu") = 0.0;
 
@@ -55,7 +54,6 @@ void Knot::setupStrands()
     
     
 //    const Scalar radiusA = 0.000254;
-//    const Scalar radiusB = 0.000254;
 //    const Scalar youngsModulus = 67.5e9;
 //    const Scalar shearModulus = 22.5e9;
 //    const Scalar density = 6450;

@@ -298,9 +298,19 @@ bool CTCD::edgeEdgeCTCD(const Eigen::Vector3d &q0start,
         {
             // TODO
             // handle parallel edges via VertexEdgeCTCD
-            parallel.push_back(rawcoplane[i]);
-            std::cout << "parallel edges detected! in CTCD, edgeEdgeCTCD" <<std::endl;
-            std::exit( EXIT_FAILURE ); 
+            // parallel.push_back(rawcoplane[i]);
+            // std::cout << "parallel edges detected! in CTCD, edgeEdgeCTCD" <<std::endl;
+            // std::exit( EXIT_FAILURE ); 
+
+            // [H] my attempt to rectify parallel edge collisions
+            if( vertexEdgeCTCD( q0start, q1start, p1start, q0end, q1end, p1end, eta, t ) ){
+                return true;
+            }
+            else{
+                return vertexEdgeCTCD( p0start, q1start, p1start, p0end, q1end, p1end, eta, t );
+            }
+
+
         }
         else
             coplane.push_back(rawcoplane[i]);

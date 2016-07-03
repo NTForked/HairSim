@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <iomanip>
 #include <fstream>
+#define EPSILON 1.0e-12
 
 void SceneUtils::findOrthogonal( Vec3& v, const Vec3& u )
 {

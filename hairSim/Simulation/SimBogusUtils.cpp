@@ -97,7 +97,7 @@ bool Simulation::assembleBogusFrictionProblem(
         }
 
         CollidingPairs & externalCollisions = m_externalContacts[sIdx];
-        for ( unsigned i = 0; i < externalCollisions.size(); ++i )
+        for ( unsigned i = 0; i < externalCollisions.size(); ++i, ++collisionId )
         {
             CollidingPair& c = externalCollisions[i];
 

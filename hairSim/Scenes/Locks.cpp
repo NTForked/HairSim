@@ -22,17 +22,15 @@ Scene("Locks", "L Locks of hair forming an N braid")
 
     // Pre-setup to default values:
     GetScalarOpt("stochasticPruningFraction" ) = 0.5;
-    GetScalarOpt("percentCTRodRodCollisionsAccept") = 100.0;
 
     AddOption("hairtie", "include a hair tie", false);
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = true;
-    GetScalarOpt("collisionRadius") = 0.02;
+    GetScalarOpt("collisionRadius") = 0.01;
     GetScalarOpt("strand_mu") = 0.3;
     GetScalarOpt("dt") = 1e-3;
 
     GetScalarOpt("mesh_mu") = 0.1;
-    GetScalarOpt("fps") = 1.0 / GetScalarOpt("dt");
     GetStringOpt("checkpointDir") = "/Users/henrique/Desktop/LearnHair/build/Apps/StrandSimulator";
 }
 
@@ -42,7 +40,7 @@ Locks::~Locks()
 void Locks::layeredLockPacking( std::vector< std::vector< Vec3 > >& rodPos )
 {
     // create packed disk/circle to be repeated for each lock
-    const unsigned L = 7; // layers (including center) of rings of strands
+    const unsigned L = 5; // layers (including center) of rings of strands
     const double dThetaMin = 3; // increment theta in search for non-collision
     const double R = GetScalarOpt("collisionRadius");
     const double b = 0.01 * R; // buffer of space between rods
@@ -218,7 +216,7 @@ void Locks::setupStrands()
         ElasticStrandParameters* params = new ElasticStrandParameters( 
                 radiusA, youngsModulus, shearModulus, 
                 density, viscosity, airDrag, baseRotation );
-        ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("selfCollisionsRadius") );
+        ElasticStrand* strand = new ElasticStrand( dofs, *params, controller, GetScalarOpt("collisionRadius") );
         strand->setGlobalIndex( rod_id );
         setRodCollisionParameters( *strand );
 
