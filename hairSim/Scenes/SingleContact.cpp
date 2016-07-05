@@ -7,8 +7,12 @@ m_radius(3.)
     AddOption( m_problemName, m_problemDesc, "" );
     
     // Global opts
-    GetScalarOpt("dt") = 1e-3;
+    GetScalarOpt("dt") = 1e-2;
     GetVecOpt("gravity") = Vec3( 0.0, -981.0, 0.0 );
+
+    GetScalarOpt("density") = 1.5;
+    GetScalarOpt("youngs-modulus") = 3.9e+09;
+    GetScalarOpt("viscosity") = 7e+7;
 
     // Rod opts
     GetIntOpt("nv") = 6; //try 11, 981.0, uneven vertices (shows it better)
@@ -22,7 +26,6 @@ m_radius(3.)
     //  AddOption("mass-damping", "mass damping for the rod", 0.0);
 
     // Pre-setup to default values:
-    GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetScalarOpt("collisionRadius") = 0.16;
     GetScalarOpt( "externalCollisionsRadius" ) = 0.75; /// thickness for CCD tests CULLING bounding boxes

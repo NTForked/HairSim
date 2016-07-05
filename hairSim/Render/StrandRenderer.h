@@ -76,7 +76,10 @@ protected:
     template<typename ForceT>
     void drawForce(); 
     void drawForceVec( VecXx& f );
-    void drawCylinders() ;
+    void drawCylinders();
+
+    void pushMode() const;
+    void popMode() const;
 
     ElasticStrand* m_strand;
     std::map<const char*, Color> m_palette;

@@ -14,7 +14,7 @@
 #include "RenderUtils.h"
 
 #define RADPERDEG 0.0174533
-#define NUM_PER_LOCK 31
+#define NUM_PER_LOCK 54
 
 StrandRenderer::StrandRenderer():
         m_strand( NULL ), //
@@ -108,6 +108,8 @@ void StrandRenderer::drawContacts() const
 
 void StrandRenderer::drawVertices() const
 {
+    pushMode();
+
     int numperlock = NUM_PER_LOCK;
     const char* c = NULL;
     if( m_strand->getGlobalIndex() / numperlock == 0 ) c = "orange";
@@ -120,6 +122,8 @@ void StrandRenderer::drawVertices() const
     {
         renderSphere( m_strand->getVertex( v ), m_strandRadius );
     }
+
+    popMode();
 }
 
 void Arrow( GLdouble x1, GLdouble y1, GLdouble z1, GLdouble x2, GLdouble y2, GLdouble z2, GLdouble D )
@@ -204,34 +208,9 @@ void StrandRenderer::drawCylinders()
 
 void StrandRenderer::drawSmoothStrand()
 {
-    if ( m_drawMode >= SHADED )
-    {
-        glEnable( GL_LIGHTING );
-        glEnable( GL_COLOR_MATERIAL );
-        glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
-
-        // Hack to make it work with maya's default two-sided lighting
-        glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
-
-        if ( m_drawMode == BLENDED )
-        {
-            glEnable( GL_BLEND );
-            glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-        }
-    }
-
+    pushMode();
     drawCylinders();
-
-    if ( m_drawMode >= SHADED )
-    {
-        glDisable( GL_COLOR_MATERIAL );
-        glDisable( GL_LIGHTING );
-
-        if ( m_drawMode == BLENDED )
-        {
-            glDisable( GL_BLEND );
-        }
-    }
+    popMode();
 }
 
 template<typename ForceT>
@@ -468,6 +447,39 @@ Scalar StrandRenderer::calculateObjectBoundingRadius( ElasticStrand* strand, con
         radius = std::max( radius, ( vertex - center ).norm() );
     }
     return radius;
+}
+
+void StrandRenderer::pushMode() const
+{
+    if ( m_drawMode >= SHADED )
+    {
+        glEnable( GL_LIGHTING );
+        glEnable( GL_COLOR_MATERIAL );
+        glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
+
+        // Hack to make it work with maya's default two-sided lighting
+        glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
+
+        if ( m_drawMode == BLENDED )
+        {
+            glEnable( GL_BLEND );
+            glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        }
+    }
+}
+
+void StrandRenderer::popMode() const
+{
+    if ( m_drawMode >= SHADED )
+    {
+        glDisable( GL_COLOR_MATERIAL );
+        glDisable( GL_LIGHTING );
+
+        if ( m_drawMode == BLENDED )
+        {
+            glDisable( GL_BLEND );
+        }
+    }
 }
 
 void StrandRenderer::pushTransformationMatrix() const

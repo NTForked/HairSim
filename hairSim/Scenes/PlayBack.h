@@ -3,12 +3,12 @@
 
 #include "Scene.h"
 
-class PlayBack : public Scene
+class Playback : public Scene
 {
 public:
     
-    PlayBack();
-    ~PlayBack();
+    Playback();
+    ~Playback();
     
 protected:
 

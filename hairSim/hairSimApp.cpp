@@ -19,7 +19,7 @@
 #include "Scenes/Knot.h"
 #include "Scenes/Locks.h"
 #include "Scenes/MultipleContact.h"
-#include "Scenes/PlayBack.h"
+#include "Scenes/Playback.h"
 #include "Scenes/SingleContact.h"
 //
 
@@ -59,7 +59,8 @@ void createProblem()
             g_ps = new CousinIt();
             break;
         case 2:
-            g_ps = new PlayBack();
+            g_ps = new Playback();
+            g_ps->isSimulated( false );
             break;
         case 3:
             g_ps = new SingleContact();
@@ -68,13 +69,13 @@ void createProblem()
             g_ps = new Aleka();
             break;
         case 5:
-            g_ps = new Knot(); // Not Tested
+            g_ps = new Knot(); // Not Tested, has tunneling
             break;
         case 6:
-            g_ps = new MultipleContact(); // Not tested
+            g_ps = new MultipleContact();
             break;
         case 7:
-            g_ps = new Braid(); // Not tested
+            g_ps = new Braid();
             break;
         case 8:
             g_ps = new Locks();
@@ -533,14 +534,8 @@ int parseCommandLine( int argc, char** argv )
         {
             g_problem_idx = run.getValue();
             createProblem();
-            setOptions();            
-            createOptionsFile( file.getValue() );
-            if( g_ps->LoadOptions(file.getValue()) == -1 )
-            {
-                return -1;
-            }
-            getOptions();
-            
+            setOptions();  
+
             if( dumpcoord.isSet() )
             {
                 g_dumpcoord = true;
@@ -552,6 +547,15 @@ int parseCommandLine( int argc, char** argv )
                 createOptionsFile( name.str() );                
                 std::cout << "Dumped options for problem" << g_ps->m_problemName << " to file " << name.str() << std::endl;
             }
+            else{
+                createOptionsFile( file.getValue() );
+                if( g_ps->LoadOptions(file.getValue()) == -1 )
+                {
+                    return -1;
+                }                
+            }
+
+            getOptions();
             
             return g_problem_idx;
         }

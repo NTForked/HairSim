@@ -175,7 +175,7 @@ bool Simulation::solveBogusFrictionProblem(
                             false, // use projected gradient
                             0 ); // cadoux iters
 
-    bool failed = residual > std::sqrt( m_params.m_gaussSeidelTolerance ); // This is completely arbitrary
+    bool failed = residual > std::sqrt( m_params.m_gaussSeidelTolerance ); // arbitrary tolerance
     if( failed ){
         std::cerr << "GS did not converge [ err=" << residual << ", numContacts=" << impulses.size() / 3 << " ] " << std::endl;
     }

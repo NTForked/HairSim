@@ -536,7 +536,7 @@ void Simulation::solveCollidingGroup( CollidingGroup& collisionGroup, bool asFai
     if( mustRetry )
     {
         if( globalIds.size() > 1 )
-        { // Failed, drop mutual collisions, keep external
+        { // Failed, drop rod-rod collisions, keep external
 #pragma omp parallel for
             for ( unsigned i = 0; i < globalIds.size(); ++i )
             {
@@ -547,7 +547,7 @@ void Simulation::solveCollidingGroup( CollidingGroup& collisionGroup, bool asFai
             }
         }
         else if( asFailSafe && nonLinear )
-        { // H just solve unconstrained and ignore contacts
+        { // H, otherwise just solve unconstrained and ignore contacts
             ImplicitStepper& stepper = *m_steppers[globalIds[0]];
             stepper.resetStep();
             stepper.solveUnconstrained( true );

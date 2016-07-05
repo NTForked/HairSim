@@ -1,22 +1,22 @@
-#include "PlayBack.h"
+#include "Playback.h"
 #include "../Mesh/TriMeshController.h"
 #include <iomanip>
 #include <fstream>
 
-PlayBack::PlayBack() :
+Playback::Playback() :
     Scene("Play Back", "play back output files"),
     m_current_frame(0)
 {
 
 AddOption( "num_frames", "number of frames to play back", 10001 ); 
-AddOption( "hair_thick", "rendering thickness", 0.02 ); 
-AddOption( "dt_time", "dt used in original sim", 0.001 ); 
+AddOption( "hair_thick", "rendering thickness", 0.01 ); 
+AddOption( "dt_time", "dt used in original sim", 0.01 ); 
 
 AddOption( "padded_width", "number of 0s in frame files", 8 ); 
 
 AddOption( "realtime", "skip set number of frames", false );
 
-AddOption( "directory", "file directory with ordered rod (single ply) and mesh (numbered obj) files", "/Users/henrique/Desktop/HairSim/build/hairSim/output/2016_07_03_13_05_20_output" );
+AddOption( "directory", "file directory with ordered rod (single ply) and mesh (numbered obj) files", "/Users/henrique/Desktop/tmp/newHair/2016_07_05_13_40_08_output" );
 AddOption( "mesh_saved_elsewhere", "if mesh is saved elsewhere" , false );
 
 // AddOption( "mesh_directory", "when mesh_saved_elsewhere = true, file directory with ordered mesh (numbered obj) files", "assets/TriangulatedSphere.obj" );
@@ -26,9 +26,9 @@ AddOption( "number_of_meshes","number of meshes to load", 0 );
 AddOption( "number_of_rods","number of rods to load, -1 defaults to all", -1 );
 }
 
-PlayBack::~PlayBack(){}
+Playback::~Playback(){}
 
-void PlayBack::loadRods(int frame)
+void Playback::loadRods( int frame )
 {
     std::string inputdirectory = GetStringOpt("directory");
     
@@ -153,11 +153,11 @@ void PlayBack::loadRods(int frame)
         }
     }
     
-    // std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_rodDatum.size() << " rods. from: " << name.str() << std::endl;
-    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
+    // std::cout << "\033[35;1mPlayback message:\033[m loaded " << m_rodDatum.size() << " rods. from: " << name.str() << std::endl;
+    std::cout << "\033[35;1mPlayback message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
 }
 
-void PlayBack::loadMeshes(int frame)
+void Playback::loadMeshes(int frame)
 {
     for(int mesh_num = 0; mesh_num < GetIntOpt("number_of_meshes"); ++mesh_num )
     {
@@ -218,7 +218,7 @@ void PlayBack::loadMeshes(int frame)
     }
 }
 
-void PlayBack::setupStrands()
+void Playback::setupStrands()
 {    
     // ensure screen grab outputs on every frame
     m_dt = 1. / GetScalarOpt("fps");
@@ -240,7 +240,7 @@ void PlayBack::setupStrands()
     ++m_current_frame;
 }
 
-void PlayBack::setupMeshes()
+void Playback::setupMeshes()
 {
     return;
     // make collision mesh
@@ -269,7 +269,7 @@ void PlayBack::setupMeshes()
 
 }
 
-bool PlayBack::executeScript()
+bool Playback::executeScript()
 {
 
     if( GetBoolOpt("realtime") ){

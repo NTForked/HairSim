@@ -150,9 +150,8 @@ void Scene::addOptions()
     AddOption("numberOfThreads","",4);
     AddOption("simulationManager_limitedMemory","", false);
     
-    //    // for YacFS solve :
-    AddOption("gaussSeidelTolerance","", 1e-6 );
-    AddOption("stochasticPruningFraction","factor for how many collisions to keep?", 0.8);
+    //
+    AddOption("gaussSeidelTolerance","", 1e-5 );
 }
 
 void Scene::setSimulationParameters()

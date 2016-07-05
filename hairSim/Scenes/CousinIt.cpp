@@ -41,7 +41,6 @@ Scene("Cousin It", "spinning sphere")
     GetIntOpt("numberOfThreads") = 3; // 32?
 
     // Pre-setup to default values:
-    GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = false;
     GetScalarOpt("collisionRadius") = 0.025;//0.0025;

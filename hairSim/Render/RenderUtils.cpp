@@ -11,7 +11,7 @@ void renderSphere( const Vec3& p, GLdouble radius )
 
         quadObj = gluNewQuadric();
         gluQuadricDrawStyle( quadObj, GLU_FILL );
-        gluSphere( quadObj, radius, 12, 12 );
+        gluSphere( quadObj, radius, 16, 16 );
         gluDeleteQuadric(quadObj);
 
     glPopMatrix ();

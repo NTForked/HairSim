@@ -40,7 +40,6 @@ Scene("Braid", "N Locks of hair forming a braid ")
     GetIntOpt("numberOfThreads") = 1;
 
     // Pre-setup to default values:
-    GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetBoolOpt("useCTRodRodCollisions") = true;
     GetScalarOpt("collisionRadius") = 0.16; 
@@ -257,7 +256,7 @@ void Braid::setupStrands()
     }
 
     // rod options
-    Scalar radiusA = GetScalarOpt("radiusA");
+    Scalar radiusA = GetScalarOpt("radius");
     Scalar youngsModulus = GetScalarOpt("youngs-modulus");
     Scalar shearModulus = GetScalarOpt("shear-modulus");
     Scalar density = GetScalarOpt("density");
@@ -426,7 +425,7 @@ void Braid::loadNurbs()
         if( rod_id >= numStrands ) break;
     }
     
-    std::cout << "\033[35;1mPlayBack message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
+    std::cout << "\033[35;1mPlayback message:\033[m loaded " << m_strands.size() << " rods " << std::endl;
 }
 
 bool Braid::executeScript()

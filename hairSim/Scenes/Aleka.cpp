@@ -18,7 +18,6 @@ m_radius(3.)
     AddOption("totalLength","enforced strand length", 20.0 );
     
     // Pre-setup to default values:
-    GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
     GetScalarOpt("collisionRadius") = 0.15; 
     GetScalarOpt( "externalCollisionsRadius" ) = 5.5;

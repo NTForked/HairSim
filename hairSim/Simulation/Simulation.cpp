@@ -35,8 +35,8 @@ Simulation::~Simulation()
 
 int hIter;
 bool hLoop = false;
-bool traversalsOn = true;
-bool trackGeometricRelations = false;
+bool traversalsOn = false;
+bool trackGeometricRelations = true;
 bool penaltyAfter = true;
 void Simulation::step( const Scalar& dt )
 {
@@ -69,7 +69,7 @@ void Simulation::step( const Scalar& dt )
         cout << "hIter: " << hIter << endl;
     }
 
-    // No further dynamics on strands beyond this point
+    // No further dynamics on strands beyond this point, just book-keeping
 
     if( trackGeometricRelations )
     {

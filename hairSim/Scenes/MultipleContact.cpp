@@ -1,13 +1,13 @@
 #include "MultipleContact.h"
 
 MultipleContact::MultipleContact() :
-Scene("MultipleContact", "MultipleContact, one strand edge falls between fixed strands with opposing normals"),
-m_radius(3.)
+    Scene("MultipleContact", "MultipleContact, one strand edge falls between fixed strands with opposing normals"),
+    m_radius(3.)
 {
     AddOption( m_problemName, m_problemDesc, "" );
 
     // Global opts
-    GetScalarOpt("dt") = 1e-3;
+    GetScalarOpt("dt") = 5e-3;
     GetVecOpt("gravity") = Vec3( 0.0, -1000.0, 0.0 );
 
     // Rod opts
@@ -17,30 +17,25 @@ m_radius(3.)
     AddOption("totalLength","enforced strand length", 20.0 );
     AddOption("fix_all_verts","script all vertices to be fixed", false );
     AddOption("x_offset","between 0 to totalLength/2", 0.0 );
+
     //  AddOption("thickness", "thickness", 0.5);
     //  AddOption("stiffness", "stiffness", 1000.0);
     //  AddOption("mass-damping", "mass damping for the rod", 0.0);
 
     // Pre-setup to default values:
-    GetScalarOpt( "stochasticPruningFraction" ) = 0.5;
     GetBoolOpt("useProxRodRodCollisions") = true;
-    GetScalarOpt("collisionRadius") = 0.16;
-    GetScalarOpt( "externalCollisionsRadius" ) = 5.5;
-
     GetBoolOpt("useCTRodRodCollisions") = true;
+    GetScalarOpt("collisionRadius") = 0.16;
     
     GetIntOpt("numberOfThreads") = 1; // 5
     GetScalarOpt("strand_mu") = 0.0;
 }
 
 MultipleContact::~MultipleContact()
-{   
-}
+{}
 
 void MultipleContact::setupStrands()
 {
-    std::cout << "Scene:: MultipleContact" << std::endl;
-
     // discrete rod params
     const int nVertices = GetIntOpt("nv");
     const int nDOFs = 4 * nVertices - 1;
@@ -67,7 +62,6 @@ void MultipleContact::setupStrands()
         // Store arbitrary vertex coordinates
         for ( int i = 0; i < nVertices; i++ )
         {
-            
             if( rod_id == 0 ){
                 i_vertices.push_back( Vec3d( totalLength * i / ( nVertices - 1 ) - (totalLength/2), 5, 0. ) );
             }
@@ -120,7 +114,7 @@ void MultipleContact::setupStrands()
                 }
             }
             
-            controller->freezeVertices( nVertices - 1, true );
+            controller->freezeVertices( nVertices - 1 );
         }
         
         ElasticStrandParameters* params = new ElasticStrandParameters( 
@@ -146,9 +140,7 @@ void MultipleContact::setupStrands()
 }
 
 void MultipleContact::setupMeshes()
-{
-
-}
+{}
 
 bool MultipleContact::executeScript()
 {

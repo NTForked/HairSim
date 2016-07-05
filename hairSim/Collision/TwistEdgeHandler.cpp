@@ -80,7 +80,7 @@ bool signPos( double number )
 {
     return number > 1e-17; // tweak this..
 }
-
+static int crossingCount = 0;
 void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, TwistEdge* startPB, TwistEdge* endPA, TwistEdge* endPB, const bool& traversal )
 {
     Vec3 edgeA, edgeB;
@@ -138,6 +138,7 @@ void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, Tw
                 edge->intersections.push( new TwistIntersection( finalAngle ) );
                 edge->intersections.top()->originalTwistAngle = finalAngle;
                 edge->intersections.top()->currAngle = finalAngle;
+                std::cout << "crossing " << ++crossingCount << std::endl;
                 return;
             }
         }
