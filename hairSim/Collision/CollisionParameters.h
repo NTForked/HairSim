@@ -13,7 +13,7 @@ struct CollisionParameters
     // For now nothing depends on edges, but maybe it will later
 
     CollisionParameters() :
-        m_useInstantenousForCT( false ),
+        m_useInstantenousForCT( true ),
         m_rejectSelfCollisions( true ), 
         m_collisionRadius( .1 ), 
         m_externalCollisionsRadius( .1 ), 
@@ -28,7 +28,7 @@ struct CollisionParameters
         Scalar frictionCoefficient, 
         Scalar rootCollisionImmunity, 
         bool rejectSelfCollisions = true ):
-            m_useInstantenousForCT( false ),
+            m_useInstantenousForCT( true ),
             m_rejectSelfCollisions( rejectSelfCollisions ), 
             m_collisionRadius( selfCollisionRadius ), 
             m_externalCollisionsRadius( externalCollisionsRadius ), 

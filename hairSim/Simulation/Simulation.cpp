@@ -103,8 +103,7 @@ void Simulation::step_dynamics( Scalar dt )
     for( std::vector< ElasticStrand* >::size_type i = 0; i < m_strands.size(); ++i )
     {
         m_steppers[i]->setDt( dt ); // required for checkpointing, this needs to be here so long as anything occurs before startSubstep
-
-        if( !penaltyAfter ) m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], true );
+        m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], !penaltyAfter );
 
         m_steppers[i]->startStep( dt );
         m_steppers[i]->solveUnconstrained( true, !penaltyAfter );

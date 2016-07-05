@@ -108,7 +108,7 @@ void Simulation::gatherProximityRodRodCollisions( Scalar dt )
     SpatialHashMapT::Result result( true, 10 );
     m_hashMap->compute( result );
 
-    unsigned nRough = 0, nExt = 0;
+    unsigned nRough = 0, nExt = 0, nProx = 0;
 
     // Processes batches of collision in parallel
     SpatialHashMapT::Result::Collisions collisions;
@@ -181,6 +181,7 @@ void Simulation::gatherProximityRodRodCollisions( Scalar dt )
 #pragma omp critical
                         {
                             m_mutualContacts.push_back( mutualContact );
+                            ++nProx;
                         }
                     }
                     else
@@ -192,6 +193,7 @@ void Simulation::gatherProximityRodRodCollisions( Scalar dt )
             }
         }
     }
+    std::cout << "Prox " << nProx << std::endl;
 
     if( m_params.m_simulationManager_limitedMemory )
     {

@@ -9,7 +9,7 @@ void Simulation::deleteInvertedProxies( const bool& penaltyAfter, const bool& pe
         for ( std::vector<ElasticStrand*>::size_type i = 0; i < m_strands.size(); i++ )
         {
             m_collisionDetector->m_proxyHistory->applyImpulses( m_strands[i], m_steppers[i], true );
-            m_steppers[i]->update( true );
+            // m_steppers[i]->update( true );
         }
     }
 

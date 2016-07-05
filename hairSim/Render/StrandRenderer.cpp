@@ -14,6 +14,7 @@
 #include "RenderUtils.h"
 
 #define RADPERDEG 0.0174533
+#define NUM_PER_LOCK 31
 
 StrandRenderer::StrandRenderer():
         m_strand( NULL ), //
@@ -107,11 +108,11 @@ void StrandRenderer::drawContacts() const
 
 void StrandRenderer::drawVertices() const
 {
-    int numperlock = 54;
+    int numperlock = NUM_PER_LOCK;
     const char* c = NULL;
     if( m_strand->getGlobalIndex() / numperlock == 0 ) c = "orange";
-    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "green";
-    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "yellow";
+    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "yellow";
+    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "green";
     const Color &co = m_palette.find( c )->second;
     glColor3dv( co.data() );
 
@@ -185,11 +186,11 @@ void StrandRenderer::drawArrows() const
 
 void StrandRenderer::drawCylinders()
 {
-    int numperlock = 54;
+    int numperlock = NUM_PER_LOCK;
     const char* c = NULL ;
     if( m_strand->getGlobalIndex() / numperlock == 0 ) c = "orange";
-    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "green";
-    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "yellow";
+    if( m_strand->getGlobalIndex() / numperlock == 1 ) c = "yellow";
+    if( m_strand->getGlobalIndex() / numperlock > 1 ) c = "green";
     const Color &co = m_palette.find( c )->second;
     glColor3dv( co.data() );
 

@@ -385,11 +385,11 @@ bool ImplicitStepper::updateLinearSystem( const VecXx solverForces )
 { //DK: this is where the lineic stretch gets checked and a possible update is applied
     StrandDynamics& dynamics = m_strand.dynamics();
     m_strand.requireExactJacobian( false );
-    dynamics.setDisplacements( m_dt * m_futureVelocities );
+    dynamics.setDisplacements( m_dt * m_futureVelocities ); // updated in NonLinearForce from Bogus, pushing updates 
     
     const Scalar stretchE = getLineicStretch();
     bool needUpdate = stretchE > m_stretchingFailureThreshold;
-    
+    Scalar residual = 0;
     if( !needUpdate )
     {
         computeRHS();
@@ -397,17 +397,18 @@ bool ImplicitStepper::updateLinearSystem( const VecXx solverForces )
         m_usedNonlinearSolver = true;
 
         //Below should be present, turning off because usually causes needUpdate to occur when stretching is small
-        // const Scalar residual = ( m_rhs + solverForces ).squaredNorm() / m_rhs.rows();
+        residual = ( m_rhs + solverForces ).squaredNorm() / m_rhs.rows();
         // needUpdate = residual > m_costretchResidualFailureThreshold;
-        // std::cout << "stretchE: " << stretchE << " | " << m_stretchingFailureThreshold << " ||| residual: " << residual << " | " << m_costretchResidualFailureThreshold << std::endl;
 
     }
         
     if( needUpdate ) // DK: if residual or stretchE too big.
-    { // Unclear which is better here...
-        // solveLinear();
-        solveNonLinear();
+    { // solveLinear causes less stretching
+
+        solveLinear();
+        // solveNonLinear();
     }
+        // std::cout << needUpdate << " stretchE: " << stretchE << " | " << m_stretchingFailureThreshold << " ||| residual: " << residual << " | " << m_costretchResidualFailureThreshold << std::endl;
     
     return needUpdate; // DK: now returns true if needs update
 }

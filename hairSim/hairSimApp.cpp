@@ -130,6 +130,11 @@ void drawText( std::string s, int x, int y )
 
 void drawHUD()
 {
+    std::ostringstream oss; 
+    if( g_paused ){
+        oss << "PAUSED";
+        drawText( oss.str(), 7, 40 ); oss.str(""); oss.clear();
+    }
 /*
     std::ostringstream oss; 
     if( nonLinearCallbackBogus ) oss << "nonlinearCallback: ON";
@@ -434,6 +439,7 @@ void keyboard( unsigned char key, int, int )
         case 'p':
         case ' ':
             g_paused = !g_paused;
+            glutPostRedisplay();
             break;
         case 't':
             g_collisionThickness = !g_collisionThickness;
