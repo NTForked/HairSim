@@ -14,7 +14,7 @@
 #include "RenderUtils.h"
 
 #define RADPERDEG 0.0174533
-#define NUM_PER_LOCK 54
+#define NUM_PER_LOCK 31
 
 StrandRenderer::StrandRenderer():
         m_strand( NULL ), //

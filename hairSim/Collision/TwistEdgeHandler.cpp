@@ -125,7 +125,7 @@ void TwistEdgeHandler::updateTwistAngle( TwistEdge* edge, TwistEdge* startPA, Tw
         Vec3 bC1 = bS1 + times[0] * ( bF1 - bS1 );
         Vec3 bC2 = bS2 + times[0] * ( bF2 - bS2 );
         double proxsq = ClosestPtSegmentSegment( aC1, aC2, bC1, bC2, alpha, beta, colAlpha, colBeta );
-        // cout << "proxsq " << proxsq << " time: " << times[0] << endl;
+        cout << "proxsq " << proxsq << " time: " << times[0] << endl;
         intersecting = proxsq < 1e-12; // -16
 
         if( !traversal && intersecting )

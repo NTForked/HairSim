@@ -17,11 +17,7 @@ Scene("Locks", "L Locks of hair forming an N braid")
     GetIntOpt("maxNewtonIterations") = 30;
 
     AddOption("end_time","", 10.015 );
-    // GetBoolOpt("render") = false;
     GetIntOpt("numberOfThreads") = 4;
-
-    // Pre-setup to default values:
-    GetScalarOpt("stochasticPruningFraction" ) = 0.5;
 
     AddOption("hairtie", "include a hair tie", false);
     GetBoolOpt("useProxRodRodCollisions") = true;

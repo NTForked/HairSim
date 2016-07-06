@@ -38,6 +38,7 @@ bool hLoop = false;
 bool traversalsOn = false;
 bool trackGeometricRelations = true;
 bool penaltyAfter = true;
+bool penaltyOnce = true;
 void Simulation::step( const Scalar& dt )
 {
     hIter = 0;
@@ -78,7 +79,7 @@ void Simulation::step( const Scalar& dt )
         detectContinuousTimeCollisions(); // create and detect loop for missed collisions
         m_collisionDetector->m_proxyHistory->m_frozenScene = true;
         
-        deleteInvertedProxies( penaltyAfter, !trackGeometricRelations );
+        deleteInvertedProxies( penaltyAfter, penaltyOnce );
     }
 
     step_finish();

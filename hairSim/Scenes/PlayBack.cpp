@@ -26,7 +26,8 @@ AddOption( "number_of_meshes","number of meshes to load", 0 );
 AddOption( "number_of_rods","number of rods to load, -1 defaults to all", -1 );
 }
 
-Playback::~Playback(){}
+Playback::~Playback()
+{}
 
 void Playback::loadRods( int frame )
 {

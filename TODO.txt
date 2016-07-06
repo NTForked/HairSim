@@ -4,3 +4,6 @@ Experiment with not storing collisions (giving guess to SoBogus)
 Should we be using a level set for penalty/proximity with mesh?
 
 get rid of config file
+
+confirm Checkpointing works correctly after refactoring
+
